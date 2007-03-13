@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <pcap.h>
 #include <net/ethernet.h>
 #include <netinet/in_systm.h>
@@ -41,10 +42,16 @@ int CmCPacketSend ( CmC *packet, int length, int *send_socket,
 
     int bytes_sent;
 
-    if ( (bytes_sent = sendto ( *send_socket, packet, length, 0,
-             (struct sockaddr *) send_addr, sizeof(struct sockaddr))) == -1 ) {
-            return -1;
+    if ( (bytes_sent = send ( *send_socket, packet, length, 0)) == -1 ) {
+        perror("send");
+        if (! (errno == EHOSTUNREACH || 
+               errno == EHOSTDOWN || 
+               errno == ENETDOWN)) {
+            exit ( -1 );
         }
+        return -1;
+     }
+
     return bytes_sent;
 }
 
@@ -55,11 +62,17 @@ int CmIIPacketSend ( CmII *packet, int length, int *cmii_send_socket,
                     struct sockaddr_in *cmii_send_addr ) {
 
     int bytes_sent;
- 
-    if ( (bytes_sent = sendto ( *cmii_send_socket, packet, length, 0,
-         (struct sockaddr *) cmii_send_addr, sizeof(struct sockaddr))) == -1 ) {
-            return -1;
+
+    if ( (bytes_sent = send ( *cmii_send_socket, packet, length, 0)) == -1 ) {
+        perror("send");
+        if (! (errno == EHOSTUNREACH || 
+               errno == EHOSTDOWN || 
+               errno == ENETDOWN) ) {
+            exit ( -1 );
         }
+        return -1;
+    }
+ 
     return bytes_sent;
 }
 
