@@ -110,17 +110,26 @@ void* controller_thread ( void* args ) {
 
                     } else {
                         /* if this is the parent process we register 
-                           the child */
-                        /* we really should check to make sure the exec 
-                           was okay before we register something...
+                           the child 
+                           attempt to validate whether the process 
+                           actually started correctly first
                         */
-                        char cmd[1024];
-                        sprintf ( cmd, "%s %s %s %s", TAP, "-i", 
-                                  CAPTURE_IF, filter );
-                        free ( filter );
-                        pid_registry_add ( pid, cmd );
-                        syslog ( LOG_ALERT, 
-                            "starting monitoring session with pid: %d and filter: %s", pid, filter ); 
+                        int retval = 0;
+                        sleep ( 1 );
+                        retval = kill ( pid, 0 );
+                        if ( retval == 0 ) {
+                            /* process exists */
+                            char cmd[1024];
+                            sprintf ( cmd, "%s %s %s %s", TAP, "-i", 
+                                      CAPTURE_IF, filter );
+                            free ( filter );
+                            pid_registry_add ( pid, cmd );
+                            syslog ( LOG_ALERT, 
+                                "starting monitoring session with pid: %d and filter: %s", pid, filter ); 
+                        } else {
+                            syslog ( LOG_ALERT, 
+                                "tap process did not start correctly...\n");
+                        }
                     }                    
                     break;
                 case TAP_STOP:
