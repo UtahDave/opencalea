@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-SOURCES = $(lea_collection_SOURCES) $(tap_SOURCES)
+SOURCES = $(collector_SOURCES) $(controller_SOURCES) $(lea_collection_SOURCES) $(tap_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -36,7 +36,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = tap$(EXEEXT) lea_collection$(EXEEXT)
+bin_PROGRAMS = tap$(EXEEXT) lea_collection$(EXEEXT) \
+	controller$(EXEEXT) collector$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -48,6 +49,14 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
+am_collector_OBJECTS = collector-collector.$(OBJEXT) \
+	collector-process_registry.$(OBJEXT)
+collector_OBJECTS = $(am_collector_OBJECTS)
+collector_DEPENDENCIES =
+am_controller_OBJECTS = controller-controller.$(OBJEXT) \
+	controller-process_registry.$(OBJEXT)
+controller_OBJECTS = $(am_controller_OBJECTS)
+controller_DEPENDENCIES =
 am_lea_collection_OBJECTS = lea_collection-lea_collection.$(OBJEXT)
 lea_collection_OBJECTS = $(am_lea_collection_OBJECTS)
 lea_collection_DEPENDENCIES =
@@ -61,8 +70,10 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(lea_collection_SOURCES) $(tap_SOURCES)
-DIST_SOURCES = $(lea_collection_SOURCES) $(tap_SOURCES)
+SOURCES = $(collector_SOURCES) $(controller_SOURCES) \
+	$(lea_collection_SOURCES) $(tap_SOURCES)
+DIST_SOURCES = $(collector_SOURCES) $(controller_SOURCES) \
+	$(lea_collection_SOURCES) $(tap_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -146,6 +157,12 @@ tap_LDADD = -lpcap
 lea_collection_SOURCES = lea_collection.c lea_collection.h 
 lea_collection_CFLAGS = $(AM_CFLAGS)
 lea_collection_LDADD = -lpcap
+controller_SOURCES = controller.c commmon.h process_registry.c process_registry.h 
+controller_CFLAGS = $(AM_CFLAGS)
+controller_LDADD = -lpthread
+collector_SOURCES = collector.c common.h process_registry.c process_registry.h 
+collector_CFLAGS = $(AM_CFLAGS)
+collector_LDADD = -lpthread
 all: all-am
 
 .SUFFIXES:
@@ -202,6 +219,12 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+collector$(EXEEXT): $(collector_OBJECTS) $(collector_DEPENDENCIES) 
+	@rm -f collector$(EXEEXT)
+	$(LINK) $(collector_LDFLAGS) $(collector_OBJECTS) $(collector_LDADD) $(LIBS)
+controller$(EXEEXT): $(controller_OBJECTS) $(controller_DEPENDENCIES) 
+	@rm -f controller$(EXEEXT)
+	$(LINK) $(controller_LDFLAGS) $(controller_OBJECTS) $(controller_LDADD) $(LIBS)
 lea_collection$(EXEEXT): $(lea_collection_OBJECTS) $(lea_collection_DEPENDENCIES) 
 	@rm -f lea_collection$(EXEEXT)
 	$(LINK) $(lea_collection_LDFLAGS) $(lea_collection_OBJECTS) $(lea_collection_LDADD) $(LIBS)
@@ -215,6 +238,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collector-collector.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collector-process_registry.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/controller-controller.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/controller-process_registry.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lea_collection-lea_collection.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tap-calea.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tap-tap.Po@am__quote@
@@ -232,6 +259,62 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+collector-collector.o: collector.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(collector_CFLAGS) $(CFLAGS) -MT collector-collector.o -MD -MP -MF "$(DEPDIR)/collector-collector.Tpo" -c -o collector-collector.o `test -f 'collector.c' || echo '$(srcdir)/'`collector.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collector-collector.Tpo" "$(DEPDIR)/collector-collector.Po"; else rm -f "$(DEPDIR)/collector-collector.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='collector.c' object='collector-collector.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(collector_CFLAGS) $(CFLAGS) -c -o collector-collector.o `test -f 'collector.c' || echo '$(srcdir)/'`collector.c
+
+collector-collector.obj: collector.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(collector_CFLAGS) $(CFLAGS) -MT collector-collector.obj -MD -MP -MF "$(DEPDIR)/collector-collector.Tpo" -c -o collector-collector.obj `if test -f 'collector.c'; then $(CYGPATH_W) 'collector.c'; else $(CYGPATH_W) '$(srcdir)/collector.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collector-collector.Tpo" "$(DEPDIR)/collector-collector.Po"; else rm -f "$(DEPDIR)/collector-collector.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='collector.c' object='collector-collector.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(collector_CFLAGS) $(CFLAGS) -c -o collector-collector.obj `if test -f 'collector.c'; then $(CYGPATH_W) 'collector.c'; else $(CYGPATH_W) '$(srcdir)/collector.c'; fi`
+
+collector-process_registry.o: process_registry.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(collector_CFLAGS) $(CFLAGS) -MT collector-process_registry.o -MD -MP -MF "$(DEPDIR)/collector-process_registry.Tpo" -c -o collector-process_registry.o `test -f 'process_registry.c' || echo '$(srcdir)/'`process_registry.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collector-process_registry.Tpo" "$(DEPDIR)/collector-process_registry.Po"; else rm -f "$(DEPDIR)/collector-process_registry.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='process_registry.c' object='collector-process_registry.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(collector_CFLAGS) $(CFLAGS) -c -o collector-process_registry.o `test -f 'process_registry.c' || echo '$(srcdir)/'`process_registry.c
+
+collector-process_registry.obj: process_registry.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(collector_CFLAGS) $(CFLAGS) -MT collector-process_registry.obj -MD -MP -MF "$(DEPDIR)/collector-process_registry.Tpo" -c -o collector-process_registry.obj `if test -f 'process_registry.c'; then $(CYGPATH_W) 'process_registry.c'; else $(CYGPATH_W) '$(srcdir)/process_registry.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/collector-process_registry.Tpo" "$(DEPDIR)/collector-process_registry.Po"; else rm -f "$(DEPDIR)/collector-process_registry.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='process_registry.c' object='collector-process_registry.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(collector_CFLAGS) $(CFLAGS) -c -o collector-process_registry.obj `if test -f 'process_registry.c'; then $(CYGPATH_W) 'process_registry.c'; else $(CYGPATH_W) '$(srcdir)/process_registry.c'; fi`
+
+controller-controller.o: controller.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(controller_CFLAGS) $(CFLAGS) -MT controller-controller.o -MD -MP -MF "$(DEPDIR)/controller-controller.Tpo" -c -o controller-controller.o `test -f 'controller.c' || echo '$(srcdir)/'`controller.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/controller-controller.Tpo" "$(DEPDIR)/controller-controller.Po"; else rm -f "$(DEPDIR)/controller-controller.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='controller.c' object='controller-controller.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(controller_CFLAGS) $(CFLAGS) -c -o controller-controller.o `test -f 'controller.c' || echo '$(srcdir)/'`controller.c
+
+controller-controller.obj: controller.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(controller_CFLAGS) $(CFLAGS) -MT controller-controller.obj -MD -MP -MF "$(DEPDIR)/controller-controller.Tpo" -c -o controller-controller.obj `if test -f 'controller.c'; then $(CYGPATH_W) 'controller.c'; else $(CYGPATH_W) '$(srcdir)/controller.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/controller-controller.Tpo" "$(DEPDIR)/controller-controller.Po"; else rm -f "$(DEPDIR)/controller-controller.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='controller.c' object='controller-controller.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(controller_CFLAGS) $(CFLAGS) -c -o controller-controller.obj `if test -f 'controller.c'; then $(CYGPATH_W) 'controller.c'; else $(CYGPATH_W) '$(srcdir)/controller.c'; fi`
+
+controller-process_registry.o: process_registry.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(controller_CFLAGS) $(CFLAGS) -MT controller-process_registry.o -MD -MP -MF "$(DEPDIR)/controller-process_registry.Tpo" -c -o controller-process_registry.o `test -f 'process_registry.c' || echo '$(srcdir)/'`process_registry.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/controller-process_registry.Tpo" "$(DEPDIR)/controller-process_registry.Po"; else rm -f "$(DEPDIR)/controller-process_registry.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='process_registry.c' object='controller-process_registry.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(controller_CFLAGS) $(CFLAGS) -c -o controller-process_registry.o `test -f 'process_registry.c' || echo '$(srcdir)/'`process_registry.c
+
+controller-process_registry.obj: process_registry.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(controller_CFLAGS) $(CFLAGS) -MT controller-process_registry.obj -MD -MP -MF "$(DEPDIR)/controller-process_registry.Tpo" -c -o controller-process_registry.obj `if test -f 'process_registry.c'; then $(CYGPATH_W) 'process_registry.c'; else $(CYGPATH_W) '$(srcdir)/process_registry.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/controller-process_registry.Tpo" "$(DEPDIR)/controller-process_registry.Po"; else rm -f "$(DEPDIR)/controller-process_registry.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='process_registry.c' object='controller-process_registry.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(controller_CFLAGS) $(CFLAGS) -c -o controller-process_registry.obj `if test -f 'process_registry.c'; then $(CYGPATH_W) 'process_registry.c'; else $(CYGPATH_W) '$(srcdir)/process_registry.c'; fi`
 
 lea_collection-lea_collection.o: lea_collection.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collection_CFLAGS) $(CFLAGS) -MT lea_collection-lea_collection.o -MD -MP -MF "$(DEPDIR)/lea_collection-lea_collection.Tpo" -c -o lea_collection-lea_collection.o `test -f 'lea_collection.c' || echo '$(srcdir)/'`lea_collection.c; \

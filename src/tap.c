@@ -97,9 +97,10 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header,
 
 void usage ( void ) {
 
-    printf ( "Usage: main -d <dest-ip> [-i interface] [-c]" );
-    printf ( " [-m cmc-port] [-n cmii-port] [-x content-id]" );
-    printf ( " [-y case-id] [-z iap-system-id]\n" );
+    printf ( "Usage: tap -i interface -x content-id -y case-id" );
+    printf ( " -z iap-system-id [-d dest-ip] [-c]" );
+    printf ( " [-m cmc-port] [-n cmii-port]" );
+    printf ( " [-f capture-filter]\n" );
 
 }
 
@@ -159,6 +160,7 @@ int main( int argc, char *argv[] ) {
     }
     
     if ( interface == NULL ) {
+        printf ( "interface must be specified...\n");
         usage ();
         exit ( -1 );
     } 
@@ -198,31 +200,53 @@ int main( int argc, char *argv[] ) {
                  filter, pcap_geterr(handle) );
         return( 2 );
     }
+
     if ( pcap_setfilter( handle, &fp ) == -1 ) {
         fprintf( stderr, "Couldn't install filter %s: %s\n", 
                  filter, pcap_geterr(handle) );
         return( 2 );
     }
 
-    if (( send_cmc_socket = socket ( PF_INET, SOCK_DGRAM, 0 )) == -1 ) {
-        perror( "socket" );
-        exit ( 1 );
-    }
+    /* Open CmC socket only if CmC option is selected */
+    if ( content_option == 1 ) {
+        if (( send_cmc_socket = socket ( PF_INET, SOCK_DGRAM, 0 )) == -1 ) {
+            perror( "socket" );
+            exit ( 1 );
+        }
 
-    send_cmc_addr.sin_family = AF_INET;
-    send_cmc_addr.sin_port   = htons( cmc_port );
-    send_cmc_addr.sin_addr.s_addr = inet_addr(dest_ip);;
+        memset ( (char *)&send_cmc_addr, '\0', sizeof(send_cmc_addr) );
+
+        send_cmc_addr.sin_family = AF_INET;
+        send_cmc_addr.sin_port   = htons( cmc_port );
+        send_cmc_addr.sin_addr.s_addr = inet_addr(dest_ip);
+
+        if (( connect(send_cmc_socket, (struct sockaddr *)&send_cmc_addr,
+                sizeof(send_cmc_addr))  ) == -1 ) {
+            perror( "connect" );
+            exit ( 1 );
+        }
+    }
 
     if (( send_cmii_socket = socket ( PF_INET, SOCK_DGRAM, 0 )) == -1 ) {
         perror( "socket" );
         exit ( 1 );
     }
 
+    memset ( (char *)&send_cmii_addr, '\0', sizeof(send_cmii_addr) );
+
     send_cmii_addr.sin_family = AF_INET;
     send_cmii_addr.sin_port   = htons( cmii_port );
-    send_cmii_addr.sin_addr.s_addr = inet_addr(dest_ip);;
+    send_cmii_addr.sin_addr.s_addr = inet_addr(dest_ip);
 
-    printf ( "cmc send socket: %d\n", send_cmc_socket); 
+    if (( connect(send_cmii_socket, (struct sockaddr *)&send_cmii_addr,
+            sizeof(send_cmii_addr))  ) == -1 ) {
+        perror( "connect" );
+        exit ( 1 );
+    }
+
+    if ( content_option == 1 ) {
+        printf ( "cmc send socket: %d\n", send_cmc_socket); 
+    }
     printf ( "cmii send socket: %d\n", send_cmii_socket); 
 
     pcap_loop( handle, -1, process_packet, NULL );

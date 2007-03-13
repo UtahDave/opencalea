@@ -41,8 +41,8 @@ void signal_handler ( int sigval ) {
 
 void usage ( void ) {
 
-    printf ( "Usage: lea_collector -t <cmii-capture-file> " );
-    printf ( "[-f <capture-file>] " );
+    printf ( "Usage: lea_collector -t cmii-capture-file " );
+    printf ( "[-f capture-file> " );
     printf ( " [-m cmc-port] [-n cmii-port] [-x cooked-format]\n" );
 
 }
@@ -110,6 +110,8 @@ int main ( int argc, char *argv[] ) {
             exit ( 1 );
         }
 
+        memset ( (char *)&cmc_receiver_addr, '\0', sizeof(cmc_receiver_addr) );
+
         cmc_receiver_addr.sin_family = AF_INET;
         cmc_receiver_addr.sin_port = htons ( cmc_port );
         cmc_receiver_addr.sin_addr.s_addr = INADDR_ANY;
@@ -127,6 +129,8 @@ int main ( int argc, char *argv[] ) {
         perror ( "socket" );
         exit ( 1 );
     }
+
+    memset ( (char *)&cmii_receiver_addr, '\0', sizeof(cmii_receiver_addr) );
 
     cmii_receiver_addr.sin_family = AF_INET;
     cmii_receiver_addr.sin_port = htons ( cmii_port );
@@ -148,6 +152,11 @@ int main ( int argc, char *argv[] ) {
     FD_SET( cmii_receiver_socket, &sock_fds );
     cmii_fp = fopen ( cmii_capture_file , "w" );
 
+    if (cmii_fp == NULL) {
+        perror ( "fopen" );
+        exit ( 1 );
+    }
+
     if ( capture_file != NULL ) {
         FD_SET( cmc_receiver_socket, &sock_fds );
         if ( cooked_format == 1 ) {
@@ -157,7 +166,11 @@ int main ( int argc, char *argv[] ) {
             pt =  pcap_open_dead ( DLT_EN10MB,  1024 );
         }
 
-        pd =  pcap_dump_open( pt, capture_file ); 
+        pd =  pcap_dump_open( pt, capture_file );
+        if (pd == NULL) {
+            perror ( "pcap_dump_open" );
+            exit ( 1 );
+        }
     }
 
     len = sizeof ( struct sockaddr );
@@ -187,14 +200,18 @@ int main ( int argc, char *argv[] ) {
                 myaddr2.s_addr = ntohl(cmiipkt->pkt_header.dstIP);
                 snprintf ( ts, 24, "%s", cmiipkt->cmiih.ts);
 
-                fprintf ( cmii_fp, "%s, ", cmiipkt->cmiih.contentID);
-                fprintf ( cmii_fp, "%s, ", cmiipkt->cmiih.caseID);
-                fprintf ( cmii_fp, "%s, ", cmiipkt->cmiih.IAPSystemID);
-                fprintf ( cmii_fp, "%s, ", ts);
-                fprintf ( cmii_fp, "%s, ", inet_ntoa(myaddr));
-                fprintf ( cmii_fp, "%s, ", inet_ntoa(myaddr2));
-                fprintf ( cmii_fp, "%d, ", ntohs(cmiipkt->pkt_header.srcPort));
-                fprintf ( cmii_fp, "%d\n", ntohs(cmiipkt->pkt_header.dstPort));
+                if ( (fprintf ( cmii_fp, "%s, ", cmiipkt->cmiih.contentID) < 0)
+                  || (fprintf ( cmii_fp, "%s, ", cmiipkt->cmiih.caseID) < 0)
+                  || (fprintf ( cmii_fp, "%s, ", cmiipkt->cmiih.IAPSystemID) < 0)
+                  || (fprintf ( cmii_fp, "%s, ", ts) < 0)
+                  || (fprintf ( cmii_fp, "%s, ", inet_ntoa(myaddr)) < 0)
+                  || (fprintf ( cmii_fp, "%s, ", inet_ntoa(myaddr2)) < 0)
+                  || (fprintf ( cmii_fp, "%d, ", ntohs(cmiipkt->pkt_header.srcPort)) < 0)
+                  || (fprintf ( cmii_fp, "%d\n", ntohs(cmiipkt->pkt_header.dstPort)) < 0)
+                   ) {
+                    perror("fprintf");
+                    exit( -1 );
+                }
             }
 
             if ( capture_file != NULL ) {

@@ -3,8 +3,6 @@
 #ifndef _TAP_H
 #define _TAP_H
 
-#include <time.h>
-
 int send_cmc_socket;
 struct sockaddr_in send_cmc_addr;
 
