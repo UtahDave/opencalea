@@ -1,3 +1,31 @@
+/*
+ * Copyright (c) 2007, Merit Network, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of Merit Network, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY MERIT NETWORK, INC. ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL MERIT NETWORK, INC. BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -26,9 +54,15 @@ int get_command ( char* msgbuf ) {
 }
 
 int get_target_pid ( char* msgbuf ) {
-    int msg_id, target_pid;
-    sscanf ( msgbuf, "%d %d", &msg_id, &target_pid );
+    int msg_id, target_pid, batch_id;
+    sscanf ( msgbuf, "%d %d %d", &msg_id, &batch_id, &target_pid );
     return target_pid;
+}
+
+int get_batch_id ( char* msgbuf ) {
+    int msg_id, target_pid, batch_id;
+    sscanf ( msgbuf, "%d %d %d", &msg_id, &batch_id, &target_pid );
+    return batch_id;
 }
 
 void* controller_thread ( void* args ) {
@@ -59,15 +93,22 @@ void* controller_thread ( void* args ) {
             switch ( msg_id ) {
                 case TAP_START:
                     printf ( "start...\n" );
-
+                    char *f;
+             
                     /* send an ACK for the start command */ 
                     send( *handler_socket, ACK, MAX_MSGSIZE, 0 );
+
+                    /* extract the batch-id  */ 
+                    int batch_id= 0;
+                    batch_id = get_batch_id ( msg_buf );
 
                     /* extract the filter from the start command */
                     char *filter;
                     int len = 0;
+                    printf ( "the msg is: %s\n", msg_buf );
+                    f = strstr ( msg_buf, " \"" );
                     filter = (char*) malloc ( sizeof(char) * 2048 );
-                    memcpy ( filter, msg_buf+3, 2048 );
+                    memcpy ( filter, f+2, 2048 );
                     len = strlen ( filter );
                     filter[len-2] = '\0'; 
                     printf ( "the filter is: %s\n", filter );
@@ -123,7 +164,7 @@ void* controller_thread ( void* args ) {
                             sprintf ( cmd, "%s %s %s %s", TAP, "-i", 
                                       CAPTURE_IF, filter );
                             free ( filter );
-                            pid_registry_add ( pid, cmd );
+                            pid_registry_add ( batch_id, pid, cmd );
                             syslog ( LOG_ALERT, 
                                 "starting monitoring session with pid: %d and filter: %s", pid, filter ); 
                         } else {
@@ -134,31 +175,60 @@ void* controller_thread ( void* args ) {
                     break;
                 case TAP_STOP:
                     printf ( "stop...\n" );
-
+                  
                     /* send an ACK for the stop command */
                     send( *handler_socket, ACK, MAX_MSGSIZE, 0 );
 
-                    /* extract the pid which we want to stop */
-                    target_pid = get_target_pid ( msg_buf );
-                    int retval = 0;
+                    /* get batch_id */
+                    batch_id = get_batch_id ( msg_buf );
+                    
+                    if ( batch_id == 0 ) {
+                        /* this is a stop command */
+                        /* extract the pid which we want to stop */
+                        target_pid = get_target_pid ( msg_buf );
+                        int retval = 0;
 
-                    /* send kill signal to the tap pid and make
-                       sure it actually died */
+                        /* send kill signal to the tap pid and make
+                           sure it actually died */
 
-                    if ( target_pid != 0 ) {
-                        syslog ( LOG_ALERT, 
+                        if ( target_pid != 0 ) {
+                            syslog ( LOG_ALERT, 
                                  "stoping monitoring session %d", target_pid ); 
-                        retval = kill ( target_pid, SIGUSR1 ); 
-                        if ( retval == 0 ) {
-                            /* the kill worked */
-                            pid_registry_del ( target_pid );
+                            retval = kill ( target_pid, SIGUSR1 ); 
+                            if ( retval == 0 ) {
+                                /* the kill worked */
+                                pid_registry_del ( target_pid );
+                            } else {
+                                /* unable to kill the process */
+                            }
                         } else {
-                            /* unable to kill the process */
+                            /* killing with pid zero will kill all processes 
+                               in the same process group so dont do it */
                         }
 
                     } else {
-                        /* killing with pid zero will kill all processes 
-                           in the same process group so dont do it */
+                        /* batch stop: we lookup all pid for this batch id 
+                           and stop them all */
+                        int pid_list[128];
+                        int i = 0;
+                        int retval = 0;
+                        printf ( "looking up pids...\n");
+                        pid_batch_id_lookup ( batch_id, (int*) &pid_list );
+                        for ( i = 0; i <= 128; i++ ) { 
+                            printf ( "killing pids... %d\n", pid_list[i]);
+                            syslog ( LOG_ALERT, 
+                                 "stoping monitoring session %d", target_pid ); 
+                            if ( pid_list[i] != 0 ) {
+                                retval = kill ( pid_list[i], SIGUSR1 );
+                                if ( retval == 0 ) {
+                                    /* the kill worked */
+                                    pid_registry_del ( pid_list[i] );
+                                } else {
+                                    /* unable to kill the process */
+                                }
+                            }
+                        } 
+                      
                     }
                     break;
                 case SHOW_PROCESS_REGISTRY:
