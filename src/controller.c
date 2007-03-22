@@ -1,3 +1,31 @@
+/*
+ * Copyright (c) 2007, Merit Network, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of Merit Network, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY MERIT NETWORK, INC. ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL MERIT NETWORK, INC. BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -18,18 +46,22 @@ int controller_socket = 0;
 struct sockaddr_in collector_addr;
 
 int connected_flag = 0;
+int batch_mode = 0;
 
 void print_help_msg (void) {
         printf ( " Valid commands are: \n" );
-        printf ( " connect <ip-addr>\tConnect to a collector\n" );
-        printf ( " start <filter>\t\tStart a new collection process\n" );
-        printf ( " status\t\t\tShow currently running collection processes\n" );
-        printf ( " stop <pid>\t\tStop a collection process\n" );
-        printf ( " quit\t\t\tQuit this session\n" );
-        printf ( " help\t\t\tThis Message\n" );
+        printf ( " batch-start <ip-list> <filter>\tStart a new collection process\n" );
+        printf ( " batch-stop <ip-list> <batch-id>\tStop a collection process\n" );
+        printf ( " connect <ip-addr>\t\tConnect to a collector\n" );
+        printf ( " start <filter>\t\t\tStart a new collection process\n" );
+        printf ( " status\t\t\t\tShow currently running collection processes\n" );
+        printf ( " stop <pid>\t\t\tStop a collection process\n" );
+        printf ( " quit\t\t\t\tQuit this session\n" );
+        printf ( " help\t\t\t\tThis Message\n" );
         printf ( " \n" );
         printf ( " Examples: \n" );
         printf ( " start \"-n host 1.1.1.1\" \n");
+        printf ( " batch-start \"1.1.1.1 2.2.2.2\" \"-x x -y y -z z\"\n");
         printf ( " stop 9999 \n");
 }
 
@@ -50,14 +82,29 @@ int process_user_cmd ( char* user_input, char* msgbuf ) {
     }
     sscanf ( user_input, "%s", cmd );
 
+    if ( strcmp ( cmd, "batch-start" ) == 0 ) {
+        if ( controller_socket != 0 ) {
+            close ( controller_socket );
+        }
+        batch_mode = 1;
+        return 1;
+    } 
+    if ( strcmp ( cmd, "batch-stop" ) == 0 ) {
+        if ( controller_socket != 0 ) {
+            close ( controller_socket );
+        }
+        batch_mode = 2;
+        return 1;
+    } 
+
     if ( (strcmp ( cmd, "connect" ) != 0) && ( !connected_flag ) ) {
         printf ("you must be connected first before issuing this command...\n");
+        return 0;
     }
 
     if ( strcmp ( cmd, "connect" ) == 0 ) {
         char *collector_ipaddr;
         collector_ipaddr = user_input + strlen ( cmd ) + 1;
-        printf ( "connect cmd: %s", collector_ipaddr ); 
 
         controller_socket = socket ( AF_INET, SOCK_STREAM, 0 );
         if ( controller_socket == -1 ) {
@@ -89,24 +136,27 @@ int process_user_cmd ( char* user_input, char* msgbuf ) {
        
         /* if socket is already connected */
         if ( errno == EISCONN ) {
-            connected_flag = 1;
+            if ( batch_mode == 0 ) {
+                connected_flag = 1;
+            }
             snprintf ( msgbuf, 64, "%d", CONNECT ); 
         } else {
-            printf ( "connect failed..." );
+            printf ( "connect failed...\n" );
         }
         return 1;
     } 
-
     if ( strcmp ( cmd, "start" ) == 0 ) {
         char *filter;
+        int batch_id = 0;
+
         filter = user_input + strlen ( cmd ) + 1;
-        snprintf ( msgbuf, 2048, "%d %s", TAP_START, filter ); 
+        snprintf ( msgbuf, 2048, "%d %d %s", TAP_START, batch_id, filter ); 
         return 1;
     } 
     if ( strcmp ( cmd, "stop" ) == 0 ) {
         int target_pid = 0;
         sscanf ( user_input, "%s %d", cmd, &target_pid );
-        snprintf ( msgbuf, 64, "%d %d", TAP_STOP, target_pid ); 
+        snprintf ( msgbuf, 64, "%d %d %d", TAP_STOP, 0, target_pid ); 
         return 1;
     } 
     if ( strcmp ( cmd, "status" ) == 0 ) {
@@ -131,28 +181,13 @@ int process_user_cmd ( char* user_input, char* msgbuf ) {
 
 int main ( void ) {
 
-    //int s = 0;
-    //struct sockaddr_in myaddr;
     char* msgbuf;
     char* return_buf;
     char* user_input;
 
     printf ( "Starting client...\n" );
+    srand (getpid());
 
-/*    s = socket ( AF_INET, SOCK_STREAM, 0 );
-
-    if ( s == -1 ) {
-        printf ( "Error while creating server socket\n" );
-        exit ( -1 );
-    }
-
-    myaddr.sin_family = AF_INET;    
-    myaddr.sin_port = htons ( 5555 ) ;
-    myaddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
-
-    connect ( s, (struct sockaddr*) &myaddr, sizeof(struct sockaddr_in) );
-
-*/
     msgbuf = (char*) malloc ( 8 * MAX_MSGSIZE );
     user_input = (char*) malloc ( 8 * MAX_MSGSIZE );
     return_buf = (char*) malloc ( 2048 * 8 );
@@ -169,30 +204,95 @@ int main ( void ) {
 
         retval = process_user_cmd ( user_input, msgbuf );
 
-        if ( retval == 1) {
-            send_len = send ( controller_socket, msgbuf, MAX_MSGSIZE, 0 );
-            memset ( return_buf, '\0', 2048 );
-            recv_len = recv ( controller_socket, return_buf, 2048, 0 ); 
-            if ( recv_len  >  0 ) {
-                int resp_code;
-                resp_code = process_response ( return_buf );
-                if ( resp_code == atoi(QUIT) ) {
-                    /* collector ACKed our request to quit */
-                    break;
-                } else if ( resp_code == atoi(ACK) ) {
-                    /* collector ACKed our request */
-
-                } else {
-                    printf ( "%s\n", return_buf );
+        if ( batch_mode == 0 ) {
+            if ( retval == 1) {
+                send_len = send ( controller_socket, msgbuf, MAX_MSGSIZE, 0 );
+                memset ( return_buf, '\0', 2048 );
+                recv_len = recv ( controller_socket, return_buf, 2048, 0 ); 
+                if ( recv_len  >  0 ) {
+                    int resp_code;
+                    resp_code = process_response ( return_buf );
+                    if ( resp_code == atoi(QUIT) ) {
+                        /* collector ACKed our request to quit */
+                        break;
+                    } else if ( resp_code == atoi(ACK) ) {
+                        /* collector ACKed our request */
+    
+                    } else {
+                        printf ( "%s\n", return_buf );
+                    }
+                }
+            } else {
+                /* command was not valid */
+                if ( retval == -1 ) {
+                    printf ( "%s ", "Invalid command\n" );
+                    print_help_msg ( );
                 }
             }
-        } else {
-            /* command was not valid */
-            if ( retval == -1 ) {
-                printf ( "%s ", "Invalid command\n" );
-                print_help_msg ( );
+
+        } else if ( batch_mode >= 1 ) {
+
+            char *batch_cmd;
+            char *filter = NULL;
+            char *f;
+            char *start = NULL;
+            char *str_end;
+            char *tok;
+            int end;
+            char cmd[64];
+            char my_input[2048];
+            int batch_id = rand();
+
+            sscanf ( user_input, "%s", cmd );
+            batch_cmd = user_input + strlen ( cmd ) + 1;
+
+            if ( batch_mode == 1 ) {
+                /* extract the filter */
+                f = strstr ( batch_cmd, " \"" );
+                filter = strdup (f);
+                /* shorten the string to only have the ip address list */
+                f[0] = '\0';
+                /* get rid of starting and ending quote characters */
+                start = batch_cmd + 1;
+                end = strlen ( batch_cmd ) - 1;
+                batch_cmd[end] = '\0';
+            } else if ( batch_mode == 2 ) {
+                /* extract the batch_id */
+                f = strstr ( batch_cmd, "\" " );
+                f = f + 2;
+                batch_id = atoi ( f );
+                f[0] = '\0';
+                printf ( "batch_id is: %d\n", batch_id );
+                printf ( "ip list is: %s\n", batch_cmd );
+                /* get rid of starting and ending quote characters */
+                start = batch_cmd + 1;
+                end = strlen ( batch_cmd ) - 2;
+                batch_cmd[end] = '\0';
             }
-        }
+   
+            str_end = start + strlen ( batch_cmd );
+
+            while (start < str_end) {
+                tok = strtok ( start, " " );
+                printf ("tok: %s\n", tok);
+                snprintf ( my_input, 2048, "connect %s", tok );
+                retval = process_user_cmd ( my_input, msgbuf );
+                if ( batch_mode == 1 ) {
+                    snprintf ( msgbuf, 2048, "%d %d %s", 
+                               TAP_START, batch_id, filter ); 
+                } else if ( batch_mode == 2 ) {
+                    snprintf ( msgbuf, 2048, "%d %d %d", TAP_STOP, batch_id, 0 ); 
+                }
+                send_len = send ( controller_socket, msgbuf, MAX_MSGSIZE, 0 );
+                snprintf ( msgbuf, 64, "%d", CLOSE_SESSION ); 
+                send_len = send ( controller_socket, msgbuf, MAX_MSGSIZE, 0 );
+
+                start = start + strlen ( tok ) + 1;
+                memset ( msgbuf, '\0', 8 * MAX_MSGSIZE);
+            }
+            batch_mode = 0;
+            connected_flag = 0;
+        } 
         memset ( msgbuf, '\0', 8 * MAX_MSGSIZE);
     }
 
