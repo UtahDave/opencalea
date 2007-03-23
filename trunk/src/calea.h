@@ -29,27 +29,25 @@
 #ifndef _CALEA_H
 #define _CALEA_H
 
-#define CmC_PORT 6666
-#define CmII_PORT 6667
-
 #define MAX_CONTENT_ID_LENGTH 128
 #define MAX_CASE_ID_LENGTH 128
 #define MAX_IAP_SYSTEM_ID_LENGTH 128
+#define TS_LENGTH 23  // time in ascii "YYYY-MM-DDThh:mm:ss.sss"
 
 typedef struct {
     char contentID[MAX_CONTENT_ID_LENGTH];
-    char ts[24]; //time in ascii "YYYY-MM-DDThh:mm:ss.sssZ"
+    char ts[TS_LENGTH];
 } cmc_header_t; 
 #define CmCh cmc_header_t
 
-/* Defination of a Communications Content packet according to the std */
+/* Definition of a Communications Content packet according to the std */
 typedef struct {
     CmCh cmch;
     u_char pkt[9000];
 } cmc_pkt_t;
 #define CmC cmc_pkt_t
 
-/* Defination of a Header Set according to the std */
+/* Definition of a Header Set according to the std */
 typedef struct {
     uint32_t streamID;
     uint32_t srcIP;
@@ -62,7 +60,7 @@ typedef struct {
 typedef struct {
     char caseID[MAX_CASE_ID_LENGTH];
     char IAPSystemID[MAX_IAP_SYSTEM_ID_LENGTH];
-    char ts[24]; //time in ascii "YYYY-MM-DDThh:mm:ss.sssZ"
+    char ts[TS_LENGTH];
     char contentID[MAX_CONTENT_ID_LENGTH];
 } cmii_header_t; 
 #define CmIIh cmii_header_t

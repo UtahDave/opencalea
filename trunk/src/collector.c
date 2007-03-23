@@ -26,21 +26,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
+#include "common.h"
+#include "process_registry.h"
+
 #include <signal.h>
 #include <sys/wait.h>
 #include <pthread.h>
 #include <glob.h>
-
-#include "process_registry.h"
-#include "common.h"
 
 #define MAX_CONNECTIONS 10
 #define MAX_MSGSIZE 1024 

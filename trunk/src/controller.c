@@ -26,16 +26,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <fcntl.h>
-#include <errno.h>
-
 #include "common.h"
+
+#include <fcntl.h>
 
 #define MAX_CONNECTIONS 10
 #define MAX_MSGSIZE 1024 

@@ -35,6 +35,4 @@ struct sockaddr_in cmc_receiver_addr;
 int cmii_receiver_socket;
 struct sockaddr_in cmii_receiver_addr;
 
-FILE *cmii_fp;
-
 #endif

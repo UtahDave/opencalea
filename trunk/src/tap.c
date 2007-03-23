@@ -26,27 +26,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <pcap.h>
-
-#define __FAVOR_BSD
-#include <unistd.h>
-#include <net/ethernet.h>
-#include <netinet/in_systm.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
-#include <string.h>
-#include <search.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <time.h>
-
-#include "tap.h"
+#include "common.h"
 #include "calea.h"
+#include "tap.h"
+
+#include <pcap.h> 
+#include <net/ethernet.h>
 
 char contentID[MAX_CONTENT_ID_LENGTH];
 char caseID[MAX_CASE_ID_LENGTH];
@@ -70,7 +55,7 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header,
         CmC *cmcpkt;
         CmII *cmiipkt;
         int total_pkt_length;
-        char calea_time[24];
+        char calea_time[TS_LENGTH];
  
 	ip = ( struct ip* )( packet + ETHER_HDR_LEN );
         get_calea_time ( header->ts.tv_sec, 
@@ -79,8 +64,8 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header,
         if ( content_option == 1 ) {
             /* only send Communications Content CmC msg if requested*/
             CmCh cmch;
-            memcpy( cmch.ts, calea_time, 24 );
             memcpy( cmch.contentID, contentID, MAX_CONTENT_ID_LENGTH );
+            memcpy( cmch.ts, calea_time, TS_LENGTH );
 
             total_pkt_length = header->len + sizeof( CmCh );
             cmcpkt = CmCPacketBuild ( &cmch, (char*) packet, header->len );
@@ -93,8 +78,7 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header,
         CmIIh cmiih;
         HEADER payload;
 
-        memcpy( cmiih.ts, calea_time, 24 );
-
+        memcpy( cmiih.ts, calea_time, TS_LENGTH );
         memcpy( cmiih.contentID, contentID, MAX_CONTENT_ID_LENGTH );
         memcpy( cmiih.caseID, caseID, MAX_CASE_ID_LENGTH );
         memcpy( cmiih.IAPSystemID, iapID, MAX_IAP_SYSTEM_ID_LENGTH );
@@ -215,6 +199,7 @@ int main( int argc, char *argv[] ) {
         return( 2 );
     }
 
+/* chang uid and group asap ... play around with how soon that can be done */
     if ( pcap_lookupnet( interface, &net, &mask, errbuf ) == -1 ) {
         fprintf( stderr, "Can't get netmask for device %s\n", interface );
         net = 0;
