@@ -26,25 +26,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <pcap.h>
-#include <net/ethernet.h>
-#include <netinet/in_systm.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
-#include <string.h>
-#include <search.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <time.h>
+#include "common.h"
 #include "calea.h"
 
-/* generate an correctly formated timestamp
+/* generate a correctly formated timestamp
    based on seconds and milliseconds UTC
 */
 void get_calea_time ( time_t sec, time_t usec, char *buf ) {
@@ -52,7 +37,7 @@ void get_calea_time ( time_t sec, time_t usec, char *buf ) {
     struct tm *mytm;
    
     mytm = gmtime ( &sec ); 
-    sprintf ( buf, "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3dZ",
+    sprintf ( buf, "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d",
                     mytm->tm_year + 1900,
                     mytm->tm_mon + 1,
                     mytm->tm_mday, mytm->tm_hour, mytm->tm_min,
@@ -107,6 +92,10 @@ CmC* CmCPacketBuild ( CmCh *header, char *buf, int len ) {
     CmC *cmc_pkt;
 
     cmc_pkt = (CmC*) malloc ( sizeof( CmC ) );
+    if (! ( cmc_pkt = (CmC*) malloc ( sizeof( CmC ) ) ) ) {
+       perror("malloc");
+        exit ( -1 );
+    }
    
     memcpy ( &(cmc_pkt->cmch), header, sizeof( CmCh ) ); 
     memcpy ( cmc_pkt->pkt, buf, len );
@@ -123,7 +112,10 @@ CmII* CmIIPacketBuild ( CmIIh *header, char *buf, int len ) {
 
     CmII *cmii_pkt;
 
-    cmii_pkt = (CmII*) malloc ( sizeof( CmII ) );
+    if (! ( cmii_pkt = (CmII*) malloc ( sizeof( CmII ) ) ) ) {
+       perror("malloc");
+        exit ( -1 );
+    }
    
     memcpy ( &(cmii_pkt->cmiih), header, sizeof( CmII ) ); 
     memcpy ( &(cmii_pkt->pkt_header), buf, len );

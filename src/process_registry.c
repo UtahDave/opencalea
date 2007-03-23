@@ -26,10 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
+#include "common.h"
 #include "process_registry.h"
 
 int pid_registry_add ( int batch_id, int pid, char* cmd ) {

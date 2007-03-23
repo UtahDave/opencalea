@@ -26,28 +26,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <pcap.h>
-
-#include <net/ethernet.h>
-#include <netinet/in_systm.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
-#include <string.h>
-#include <sys/signal.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-
-#include <time.h>
-#include "lea_collection.h"
+#include "common.h"
 #include "calea.h"
+#include "lea_collection.h"
 
-struct pcap_dumper *pd;
+#include <pcap.h>
+#include <net/ethernet.h>
+
+FILE *cmii_fp = NULL;
+struct pcap_dumper *pd = NULL;
 
 void print_packet( const u_char *packet, u_short  size ) {
     int i = 0;
@@ -60,15 +47,18 @@ void print_packet( const u_char *packet, u_short  size ) {
 
 void signal_handler ( int sigval ) {
 
-    fclose ( cmii_fp );
-    pcap_dump_close ( pd );
+    if (cmii_fp)
+        fclose ( cmii_fp );
+    if (pd)
+        pcap_dump_close ( pd );
     exit ( 1 );
 }
 
 void usage ( void ) {
 
     printf ( "Usage: lea_collector -t cmii-capture-file " );
-    printf ( "[-f capture-file> " );
+    printf ( "[-f capture-file] " );
+    printf ( "[-u user] [-g group] " );
     printf ( " [-m cmc-port] [-n cmii-port] [-x cooked-format]\n" );
 
 }
@@ -84,16 +74,25 @@ int main ( int argc, char *argv[] ) {
     CmII *cmiipkt;
     struct tm mytm;
     time_t usec;
-    char ts[24];
+    char ts[TS_LENGTH+1];
+    char contentID[MAX_CONTENT_ID_LENGTH+1];
+    char caseID[MAX_CASE_ID_LENGTH+1];
+    char IAPSystemID[MAX_IAP_SYSTEM_ID_LENGTH+1];
     char *capture_file = NULL;
     char *cmii_capture_file = NULL;
     int i=0;
     int cmc_port = CmC_PORT;
     int cmii_port = CmII_PORT;
     int cooked_format = 0;
+    int change_user = 0;
+    int change_group = 0;
+    struct passwd *pwent;
+    struct group *grent;
+    char user[32] = USER;
+    char group[32] = GROUP;
 
     /* command line options processing */
-    while (( i = getopt ( argc, argv, "t:f:hm:n:x" )) != -1 ) {
+    while (( i = getopt ( argc, argv, "t:f:hm:n:xu:g:" )) != -1 ) {
 
         switch ( i ) {
             case 'f':   // pcap capture file 
@@ -101,6 +100,14 @@ int main ( int argc, char *argv[] ) {
                 break;
             case 't':   // cmii capture file
                 cmii_capture_file = strdup ( optarg );
+                break;
+            case 'u':   // username
+                strncpy ( (char *)user, optarg, 31 );
+                change_user = 1;
+                break;
+            case 'g':   // group name
+                strncpy ( &group[0], optarg, 31 );
+                change_group = 1;
                 break;
            case 'm':   // cmc port 
                 cmc_port = atoi ( optarg );
@@ -127,6 +134,36 @@ int main ( int argc, char *argv[] ) {
     }
     if ( capture_file == NULL ) {
         printf ( "warning!! pcap capture file not specified...\n" );
+    }
+
+    /* drop privs if running as root or told to do so */
+    if ( ((uid_t)geteuid() == 0) || change_user ) {
+        errno = 0;
+        if (! (pwent = getpwnam(user)) ) {
+            if (errno)
+                perror("getpwnam");
+            else
+                fprintf(stderr,"User %s not found\n", user);
+            exit(-1);
+        }
+        if (setuid(pwent->pw_uid) < 0) {
+            perror("setuid");
+            exit(-1);
+        }
+    }
+    if ( ((uid_t)geteuid() == 0) || change_group ) {
+        errno = 0;
+        if (! (grent = getgrnam(group)) ) {
+            if (errno)
+                perror("getgrnam");
+            else
+                fprintf(stderr,"Group %s not found\n", group);
+            exit(-1);
+        }
+        if (setgid(grent->gr_gid) < 0) {
+            perror("setgid");
+            exit(-1);
+        }
     }
 
     if ( capture_file != NULL ) {
@@ -224,11 +261,14 @@ int main ( int argc, char *argv[] ) {
                 struct in_addr myaddr, myaddr2;
                 myaddr.s_addr = ntohl(cmiipkt->pkt_header.srcIP);
                 myaddr2.s_addr = ntohl(cmiipkt->pkt_header.dstIP);
-                snprintf ( ts, 24, "%s", cmiipkt->cmiih.ts);
+                snprintf(ts, TS_LENGTH+1, "%s", cmiipkt->cmiih.ts);
+                snprintf(contentID, MAX_CONTENT_ID_LENGTH+1, "%s", cmiipkt->cmiih.contentID);
+                snprintf(caseID, MAX_CASE_ID_LENGTH+1, "%s", cmiipkt->cmiih.caseID);
+                snprintf(IAPSystemID, MAX_IAP_SYSTEM_ID_LENGTH+1, "%s", cmiipkt->cmiih.IAPSystemID);
 
-                if ( (fprintf ( cmii_fp, "%s, ", cmiipkt->cmiih.contentID) < 0)
-                  || (fprintf ( cmii_fp, "%s, ", cmiipkt->cmiih.caseID) < 0)
-                  || (fprintf ( cmii_fp, "%s, ", cmiipkt->cmiih.IAPSystemID) < 0)
+                if ( (fprintf ( cmii_fp, "%s, ", contentID) < 0)
+                  || (fprintf ( cmii_fp, "%s, ", caseID) < 0)
+                  || (fprintf ( cmii_fp, "%s, ", IAPSystemID) < 0)
                   || (fprintf ( cmii_fp, "%s, ", ts) < 0)
                   || (fprintf ( cmii_fp, "%s, ", inet_ntoa(myaddr)) < 0)
                   || (fprintf ( cmii_fp, "%s, ", inet_ntoa(myaddr2)) < 0)

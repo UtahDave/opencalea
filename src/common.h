@@ -29,17 +29,39 @@
 #ifndef _CALEA_COMMON_H
 #define _CALEA_COMMON_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <search.h>
 #include <syslog.h>
 #include <stdarg.h>
+#include <time.h>
+#include <unistd.h>
+#include <netinet/in_systm.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#include <sys/signal.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h>
+#include <pwd.h>
+#include <grp.h>
 
+/* need to move these to config file */
+#define CmC_PORT 6666
+#define CmII_PORT 6667
+
+#define USER "calea"
+#define GROUP "calea"
+#define TAP_USER USER
+#define TAP_GROUP GROUP
+
+/* temporary */
 #define TAP "./tap"
 #define CAPTURE_IF "en1"
-
 
 /* valid command codes */
 #define TAP_START              1
@@ -47,6 +69,8 @@
 #define SHOW_PROCESS_REGISTRY  3 
 #define CLOSE_SESSION          4 
 #define CONNECT                5
+
+/* valid repsonse codes */
 #define ACK "0"
 #define QUIT "1"
 
