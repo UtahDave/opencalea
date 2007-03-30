@@ -9,7 +9,7 @@ lea_collector_SOURCES = lea_collector.c lea_collector.h
 lea_collector_CFLAGS = $(AM_CFLAGS)
 lea_collector_LDADD = -lpcap
 
-controller_SOURCES = controller.c commmon.h process_registry.c process_registry.h 
+controller_SOURCES = controller.c common.h process_registry.c process_registry.h 
 controller_CFLAGS = $(AM_CFLAGS)
 controller_LDADD = -lpthread
 
