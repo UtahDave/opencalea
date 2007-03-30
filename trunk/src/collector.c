@@ -35,14 +35,13 @@
 #include <glob.h>
 
 #define MAX_CONNECTIONS 10
-#define MAX_MSGSIZE 1024 
 
 extern char **environ;
 
 int get_command ( char* msgbuf ) {
     int msg_id;
     sscanf ( msgbuf, "%d", &msg_id );
-    return msg_id;
+    return msg_id ;
 }
 
 int get_target_pid ( char* msgbuf ) {
@@ -57,6 +56,28 @@ int get_batch_id ( char* msgbuf ) {
     return batch_id;
 }
 
+void* reply ( void* args, uint reply_code ) {
+    int *handler_socket;
+    char* buf;
+
+    if (! ( buf = (char*) malloc ( 128 ) ) ) {
+       perror("malloc");
+       exit ( -1 );
+    }
+    memset ( buf, '\0', 128 );
+    snprintf ( buf, 128, "%u", reply_code );
+    printf( "about to send: %s\n", buf);
+
+    handler_socket = ( int* ) args;
+    if ( (send( *handler_socket, buf, strlen( buf ), 0 )) == -1 ) {
+        perror("send");
+        exit (-1);
+    }
+
+    free ( buf );
+    return ( NULL );
+}
+
 void* controller_thread ( void* args ) {
     int recv_len;
     char *msg_buf;
@@ -68,15 +89,25 @@ void* controller_thread ( void* args ) {
     handler_socket = ( int* ) args;
     char* return_buf;
     int send_len = 0;
-    return_buf = (char*) malloc ( 2048 * 8 ); 
-    msg_buf = (char*) malloc ( 2048 * 8 ); 
+    if (! ( return_buf = (char*) malloc ( MAX_MSGSIZE ) ) ) {
+       perror("malloc");
+        exit ( -1 );
+    }
+    if (! ( msg_buf = (char*) malloc ( MAX_MSGSIZE ) ) ) {
+       perror("malloc");
+        exit ( -1 );
+    }
 
     while ( 1 ) {
 
-        memset ( msg_buf, '\0', 2048 * 8 );
-        memset ( return_buf, '\0', 2048 * 8 );
+        memset ( msg_buf, '\0', MAX_MSGSIZE );
+        memset ( return_buf, '\0', MAX_MSGSIZE );
 
-        recv_len = recv ( *handler_socket, msg_buf, 2048, 0 ); 
+        if ( (recv_len = recv ( *handler_socket, msg_buf, MAX_MSGSIZE - 1, 0 )) == -1 )
+            if ( errno != EAGAIN ) {
+                perror("recv");
+                exit (-1);
+            }
 
         if ( recv_len > 0 ) {
 
@@ -86,21 +117,29 @@ void* controller_thread ( void* args ) {
                 case TAP_START:
                     printf ( "start...\n" );
                     char *f;
-             
-                    /* send an ACK for the start command */ 
-                    send( *handler_socket, ACK, MAX_MSGSIZE, 0 );
+
+                    /* send an ACK for the start command */
+                    reply ( handler_socket, ACK );
 
                     /* extract the batch-id  */ 
-                    int batch_id= 0;
+                    int batch_id = 0;
                     batch_id = get_batch_id ( msg_buf );
 
                     /* extract the filter from the start command */
                     char *filter;
                     int len = 0;
                     printf ( "the msg is: %s\n", msg_buf );
-                    f = strstr ( msg_buf, " \"" );
-                    filter = (char*) malloc ( sizeof(char) * 2048 );
-                    memcpy ( filter, f+2, 2048 );
+                    if ( (f = strstr ( msg_buf, " \"" )) == NULL ) {
+                        printf ( "syntax error: filter not found\n" );
+                        break;
+                    }
+                    if (! ( filter = (char*) malloc ( MAX_MSGSIZE ) ) ) {
+                       perror("malloc");
+                        exit ( -1 );
+                    }
+                    memset ( filter, '\0', MAX_MSGSIZE );
+                    memcpy ( filter, f+2, MAX_MSGSIZE - (f+2 - msg_buf) );
+
                     len = strlen ( filter );
                     filter[len-2] = '\0'; 
                     printf ( "the filter is: %s\n", filter );
@@ -169,7 +208,7 @@ void* controller_thread ( void* args ) {
                     printf ( "stop...\n" );
                   
                     /* send an ACK for the stop command */
-                    send( *handler_socket, ACK, MAX_MSGSIZE, 0 );
+                    reply ( handler_socket, ACK );
 
                     /* get batch_id */
                     batch_id = get_batch_id ( msg_buf );
@@ -225,25 +264,33 @@ void* controller_thread ( void* args ) {
                     break;
                 case SHOW_PROCESS_REGISTRY:
                     printf ( "show...\n" );
-                    memset ( return_buf, '\0', 2048 * 8 );
+                    memset ( return_buf, '\0', MAX_MSGSIZE );
                     pid_registry_show ( return_buf );
                     send_len = send ( *handler_socket, return_buf, 
-                                      MAX_MSGSIZE, 0 );
+                                      strlen ( return_buf ), 0 );
                     break;
                 case CLOSE_SESSION:
                     printf ( "close...\n" );
-                    send( *handler_socket, QUIT, MAX_MSGSIZE, 0 );
+                    reply ( handler_socket, QUIT );
                     close ( *handler_socket );
                     pthread_exit( NULL );
                     break;
                 case CONNECT:
                     printf ( "connect...\n" );
-                    memset ( return_buf, '\0', 2048 * 8 );
-                    send ( *handler_socket, "0", MAX_MSGSIZE, 0 );
+                    memset ( return_buf, '\0', MAX_MSGSIZE );
+                    reply ( handler_socket, ACK );
+                    break;
+                case PING:
+                    printf ( "ping...\n" );
+                    reply ( handler_socket, ACK );
+                    break;
+                case NOP:
+                    printf ( "nop ...\n" );
                     break;
                 default:
                     printf ( "command code not valid\n" ); 
-                    send ( *handler_socket, ACK, MAX_MSGSIZE, 0 );
+                    reply ( handler_socket, ACK );
+                    break;
             }
         }
 
@@ -274,13 +321,13 @@ int main ( void ) {
 
     memset ( (char *) &myaddr, 0, sizeof(myaddr) );
     myaddr.sin_family = AF_INET;
-    myaddr.sin_port = htons( 5555 );
+    myaddr.sin_port = htons( Collector_PORT );
     myaddr.sin_addr.s_addr = htonl ( INADDR_ANY );
 
     myaddrlen = sizeof( struct sockaddr_in );
     retval = bind ( s, (struct sockaddr*) &myaddr, sizeof(myaddr) );
     if ( retval == -1 ) {
-        printf ( "Error while bindingsocket\n" );
+        perror ( "Error while binding socket" );
         exit ( -1 );
     }
 

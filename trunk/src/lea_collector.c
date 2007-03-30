@@ -28,7 +28,7 @@
 
 #include "common.h"
 #include "calea.h"
-#include "lea_collection.h"
+#include "lea_collector.h"
 
 #include <pcap.h>
 #include <net/ethernet.h>

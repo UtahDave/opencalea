@@ -87,12 +87,12 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header,
         payload.dstIP = htonl(ip->ip_dst.s_addr); 
         if ( ip->ip_p == IPPROTO_UDP ) {
 	    udp = ( struct udphdr* ) ( (u_char *)ip + (ip->ip_hl *4) );
-            payload.srcPort = htons(udp->uh_sport); 
-            payload.dstPort = htons(udp->uh_dport); 
+            payload.srcPort = udp->uh_sport; 
+            payload.dstPort = udp->uh_dport; 
         } else if ( ip->ip_p == IPPROTO_TCP ) {
 	    tcp = ( struct tcphdr* ) ( (u_char *)ip + (ip->ip_hl *4) );
-            payload.srcPort = htons(tcp->th_sport); 
-            payload.dstPort = htons(tcp->th_dport); 
+            payload.srcPort = tcp->th_sport; 
+            payload.dstPort = tcp->th_dport; 
         } else {
             payload.srcPort = 0; 
             payload.dstPort = 0; 
@@ -114,7 +114,12 @@ void usage ( void ) {
 
 }
 
+void print_help ( void ) {
 
+    /* lets create a more informative help screen here */
+    usage();
+}
+  
 int main( int argc, char *argv[] ) {
 
     char errbuf[PCAP_ERRBUF_SIZE];
@@ -128,9 +133,16 @@ int main( int argc, char *argv[] ) {
     int i = 0;
     int cmc_port = CmC_PORT;
     int cmii_port = CmII_PORT;
+    int change_user = 0;
+    int change_group = 0;
+    struct passwd *pwent;
+    struct group *grent;
+    char user[32] = USER;
+    char group[32] = GROUP;
+
 
     /* command line options processing */
-    while (( i = getopt ( argc, argv, "i:cf:d:hm:n:x:y:z:" )) != -1 ) {
+    while (( i = getopt ( argc, argv, "i:cf:d:hm:n:x:y:z:u:g:" )) != -1 ) {
 
         switch ( i ) {
             case 'i':   // interface
@@ -145,11 +157,35 @@ int main( int argc, char *argv[] ) {
             case 'd':   // tunnel destination 
                 dest_ip = strdup ( optarg );
                 break; 
-            case 'm':   // cmc port 
-                cmc_port = atoi ( optarg );
+            case 'u':   // username
+                strncpy ( user, optarg, 31 );
+                change_user = 1;
+                break;
+            case 'g':   // group name
+                strncpy ( group, optarg, 31 );
+                change_group = 1;
+                break;
+           case 'm':   // cmc port 
+                errno = 0;
+                cmc_port = (int)strtol(optarg, (char **)NULL, 0);
+                if (cmc_port <= 0) {
+                    if (errno)
+                        perror("strtol(cmc_port)");
+                    else
+                        fprintf(stderr, "invalid cmc_port\n");
+                    exit(-1);
+                }
                 break; 
             case 'n':   // cmii port 
-                cmii_port = atoi ( optarg );
+                errno = 0;
+                cmii_port = (int)strtol(optarg, (char **)NULL, 0);
+                if (cmii_port <= 0) {
+                    if (errno)
+                        perror("strtol(cmii_port)");
+                    else
+                        fprintf(stderr, "invalid cmii_port\n");
+                    exit(-1);
+                }
                 break; 
             case 'x':   // contentID 
                 strncpy ( contentID , optarg, MAX_CONTENT_ID_LENGTH );
@@ -160,9 +196,9 @@ int main( int argc, char *argv[] ) {
             case 'z':   // iapID 
                 strncpy  ( iapID, optarg, MAX_IAP_SYSTEM_ID_LENGTH );
                 break; 
-            case 'h':   // help 
-                usage(); 
-                exit ( 1 );
+            case 'h':   // help
+                print_help();
+                exit (-1); 
             default:
                 usage ();
                 exit ( 1 );
@@ -192,6 +228,14 @@ int main( int argc, char *argv[] ) {
         usage ();
         exit ( -1 );
     }
+    if (cmc_port <= 0) {
+        fprintf(stderr, "invalid cmc_port\n");
+        exit(-1);
+    }
+    if (cmii_port <= 0) {
+        fprintf(stderr, "invalid cmii_port\n");
+        exit(-1);
+    }
 
     handle = pcap_open_live( interface, BUFSIZ, 1, 1000, errbuf );
     if ( handle == NULL ) {
@@ -199,7 +243,36 @@ int main( int argc, char *argv[] ) {
         return( 2 );
     }
 
-/* chang uid and group asap ... play around with how soon that can be done */
+    /* drop privs if running as root or if told to do so */
+    if ( change_user == 1) {
+        errno = 0;
+        if (! (pwent = getpwnam(user)) ) {
+            if (errno)
+                perror("getpwnam");
+            else
+                fprintf(stderr,"User %s not found\n", user);
+            exit(-1);
+        }
+        if (setuid(pwent->pw_uid) < 0) {
+            perror("setuid");
+            exit(-1);
+        }
+    }
+    if ( change_group == 1 ) {
+        errno = 0;
+        if (! (grent = getgrnam(group)) ) {
+            if (errno)
+                perror("getgrnam");
+            else
+                fprintf(stderr,"Group %s not found\n", group);
+            exit(-1);
+        }
+        if (setgid(grent->gr_gid) < 0) {
+            perror("setgid");
+            exit(-1);
+        }
+    }
+
     if ( pcap_lookupnet( interface, &net, &mask, errbuf ) == -1 ) {
         fprintf( stderr, "Can't get netmask for device %s\n", interface );
         net = 0;

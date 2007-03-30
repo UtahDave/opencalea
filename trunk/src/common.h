@@ -38,6 +38,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <unistd.h>
+#define __FAVOR_BSD
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -53,6 +54,7 @@
 /* need to move these to config file */
 #define CmC_PORT 6666
 #define CmII_PORT 6667
+#define Collector_PORT 5555
 
 #define USER "calea"
 #define GROUP "calea"
@@ -65,13 +67,18 @@
 
 /* valid command codes */
 #define TAP_START              1
-#define TAP_STOP               2 
-#define SHOW_PROCESS_REGISTRY  3 
-#define CLOSE_SESSION          4 
+#define TAP_STOP               2
+#define SHOW_PROCESS_REGISTRY  3
+#define CLOSE_SESSION          4
 #define CONNECT                5
+#define PING                   6
+#define NOP                    7
 
 /* valid repsonse codes */
-#define ACK "0"
-#define QUIT "1"
+#define ACK                   0
+#define NACK                  1 
+#define QUIT                  2 
+
+#define MAX_MSGSIZE 1024       /* max size of control message/response */
 
 #endif

@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-SOURCES = $(collector_SOURCES) $(controller_SOURCES) $(lea_collection_SOURCES) $(tap_SOURCES)
+SOURCES = $(collector_SOURCES) $(controller_SOURCES) $(lea_collector_SOURCES) $(tap_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -36,8 +36,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = tap$(EXEEXT) lea_collection$(EXEEXT) \
-	controller$(EXEEXT) collector$(EXEEXT)
+bin_PROGRAMS = tap$(EXEEXT) lea_collector$(EXEEXT) controller$(EXEEXT) \
+	collector$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -57,9 +57,9 @@ am_controller_OBJECTS = controller-controller.$(OBJEXT) \
 	controller-process_registry.$(OBJEXT)
 controller_OBJECTS = $(am_controller_OBJECTS)
 controller_DEPENDENCIES =
-am_lea_collection_OBJECTS = lea_collection-lea_collection.$(OBJEXT)
-lea_collection_OBJECTS = $(am_lea_collection_OBJECTS)
-lea_collection_DEPENDENCIES =
+am_lea_collector_OBJECTS = lea_collector-lea_collector.$(OBJEXT)
+lea_collector_OBJECTS = $(am_lea_collector_OBJECTS)
+lea_collector_DEPENDENCIES =
 am_tap_OBJECTS = tap-tap.$(OBJEXT) tap-calea.$(OBJEXT)
 tap_OBJECTS = $(am_tap_OBJECTS)
 tap_DEPENDENCIES =
@@ -71,9 +71,9 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(collector_SOURCES) $(controller_SOURCES) \
-	$(lea_collection_SOURCES) $(tap_SOURCES)
+	$(lea_collector_SOURCES) $(tap_SOURCES)
 DIST_SOURCES = $(collector_SOURCES) $(controller_SOURCES) \
-	$(lea_collection_SOURCES) $(tap_SOURCES)
+	$(lea_collector_SOURCES) $(tap_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -154,9 +154,9 @@ AM_CFLAGS = -g -O2 -Wall
 tap_SOURCES = tap.c tap.h calea.c calea.h
 tap_CFLAGS = $(AM_CFLAGS)
 tap_LDADD = -lpcap
-lea_collection_SOURCES = lea_collection.c lea_collection.h 
-lea_collection_CFLAGS = $(AM_CFLAGS)
-lea_collection_LDADD = -lpcap
+lea_collector_SOURCES = lea_collector.c lea_collector.h 
+lea_collector_CFLAGS = $(AM_CFLAGS)
+lea_collector_LDADD = -lpcap
 controller_SOURCES = controller.c commmon.h process_registry.c process_registry.h 
 controller_CFLAGS = $(AM_CFLAGS)
 controller_LDADD = -lpthread
@@ -225,9 +225,9 @@ collector$(EXEEXT): $(collector_OBJECTS) $(collector_DEPENDENCIES)
 controller$(EXEEXT): $(controller_OBJECTS) $(controller_DEPENDENCIES) 
 	@rm -f controller$(EXEEXT)
 	$(LINK) $(controller_LDFLAGS) $(controller_OBJECTS) $(controller_LDADD) $(LIBS)
-lea_collection$(EXEEXT): $(lea_collection_OBJECTS) $(lea_collection_DEPENDENCIES) 
-	@rm -f lea_collection$(EXEEXT)
-	$(LINK) $(lea_collection_LDFLAGS) $(lea_collection_OBJECTS) $(lea_collection_LDADD) $(LIBS)
+lea_collector$(EXEEXT): $(lea_collector_OBJECTS) $(lea_collector_DEPENDENCIES) 
+	@rm -f lea_collector$(EXEEXT)
+	$(LINK) $(lea_collector_LDFLAGS) $(lea_collector_OBJECTS) $(lea_collector_LDADD) $(LIBS)
 tap$(EXEEXT): $(tap_OBJECTS) $(tap_DEPENDENCIES) 
 	@rm -f tap$(EXEEXT)
 	$(LINK) $(tap_LDFLAGS) $(tap_OBJECTS) $(tap_LDADD) $(LIBS)
@@ -242,7 +242,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collector-process_registry.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/controller-controller.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/controller-process_registry.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lea_collection-lea_collection.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lea_collector-lea_collector.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tap-calea.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tap-tap.Po@am__quote@
 
@@ -316,19 +316,19 @@ controller-process_registry.obj: process_registry.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(controller_CFLAGS) $(CFLAGS) -c -o controller-process_registry.obj `if test -f 'process_registry.c'; then $(CYGPATH_W) 'process_registry.c'; else $(CYGPATH_W) '$(srcdir)/process_registry.c'; fi`
 
-lea_collection-lea_collection.o: lea_collection.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collection_CFLAGS) $(CFLAGS) -MT lea_collection-lea_collection.o -MD -MP -MF "$(DEPDIR)/lea_collection-lea_collection.Tpo" -c -o lea_collection-lea_collection.o `test -f 'lea_collection.c' || echo '$(srcdir)/'`lea_collection.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/lea_collection-lea_collection.Tpo" "$(DEPDIR)/lea_collection-lea_collection.Po"; else rm -f "$(DEPDIR)/lea_collection-lea_collection.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='lea_collection.c' object='lea_collection-lea_collection.o' libtool=no @AMDEPBACKSLASH@
+lea_collector-lea_collector.o: lea_collector.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collector_CFLAGS) $(CFLAGS) -MT lea_collector-lea_collector.o -MD -MP -MF "$(DEPDIR)/lea_collector-lea_collector.Tpo" -c -o lea_collector-lea_collector.o `test -f 'lea_collector.c' || echo '$(srcdir)/'`lea_collector.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/lea_collector-lea_collector.Tpo" "$(DEPDIR)/lea_collector-lea_collector.Po"; else rm -f "$(DEPDIR)/lea_collector-lea_collector.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='lea_collector.c' object='lea_collector-lea_collector.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collection_CFLAGS) $(CFLAGS) -c -o lea_collection-lea_collection.o `test -f 'lea_collection.c' || echo '$(srcdir)/'`lea_collection.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collector_CFLAGS) $(CFLAGS) -c -o lea_collector-lea_collector.o `test -f 'lea_collector.c' || echo '$(srcdir)/'`lea_collector.c
 
-lea_collection-lea_collection.obj: lea_collection.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collection_CFLAGS) $(CFLAGS) -MT lea_collection-lea_collection.obj -MD -MP -MF "$(DEPDIR)/lea_collection-lea_collection.Tpo" -c -o lea_collection-lea_collection.obj `if test -f 'lea_collection.c'; then $(CYGPATH_W) 'lea_collection.c'; else $(CYGPATH_W) '$(srcdir)/lea_collection.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/lea_collection-lea_collection.Tpo" "$(DEPDIR)/lea_collection-lea_collection.Po"; else rm -f "$(DEPDIR)/lea_collection-lea_collection.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='lea_collection.c' object='lea_collection-lea_collection.obj' libtool=no @AMDEPBACKSLASH@
+lea_collector-lea_collector.obj: lea_collector.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collector_CFLAGS) $(CFLAGS) -MT lea_collector-lea_collector.obj -MD -MP -MF "$(DEPDIR)/lea_collector-lea_collector.Tpo" -c -o lea_collector-lea_collector.obj `if test -f 'lea_collector.c'; then $(CYGPATH_W) 'lea_collector.c'; else $(CYGPATH_W) '$(srcdir)/lea_collector.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/lea_collector-lea_collector.Tpo" "$(DEPDIR)/lea_collector-lea_collector.Po"; else rm -f "$(DEPDIR)/lea_collector-lea_collector.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='lea_collector.c' object='lea_collector-lea_collector.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collection_CFLAGS) $(CFLAGS) -c -o lea_collection-lea_collection.obj `if test -f 'lea_collection.c'; then $(CYGPATH_W) 'lea_collection.c'; else $(CYGPATH_W) '$(srcdir)/lea_collection.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collector_CFLAGS) $(CFLAGS) -c -o lea_collector-lea_collector.obj `if test -f 'lea_collector.c'; then $(CYGPATH_W) 'lea_collector.c'; else $(CYGPATH_W) '$(srcdir)/lea_collector.c'; fi`
 
 tap-tap.o: tap.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -MT tap-tap.o -MD -MP -MF "$(DEPDIR)/tap-tap.Tpo" -c -o tap-tap.o `test -f 'tap.c' || echo '$(srcdir)/'`tap.c; \
