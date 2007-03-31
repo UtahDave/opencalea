@@ -112,7 +112,6 @@ void* controller_thread ( void* args ) {
         if ( recv_len > 0 ) {
 
             msg_id = get_command ( msg_buf );
-
             switch ( msg_id ) {
                 case TAP_START:
                     printf ( "start...\n" );
@@ -274,6 +273,7 @@ void* controller_thread ( void* args ) {
                     reply ( handler_socket, QUIT );
                     close ( *handler_socket );
                     pthread_exit( NULL );
+                    exit(-1);
                     break;
                 case CONNECT:
                     printf ( "connect...\n" );
@@ -286,6 +286,7 @@ void* controller_thread ( void* args ) {
                     break;
                 case NOP:
                     printf ( "nop ...\n" );
+                    reply ( handler_socket, ACK );
                     break;
                 default:
                     printf ( "command code not valid\n" ); 
