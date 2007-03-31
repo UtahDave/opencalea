@@ -95,7 +95,9 @@ int process_user_cmd ( char* user_input, char* msgbuf ) {
         batch_mode = 2;
         return 1;
     } 
-
+    if ( strcmp ( cmd, "quit" ) == 0 ) {
+        exit ( 0 ) ;
+    }
     if ( ( strcmp ( cmd, "exit" ) == 0 ) || ( strcmp ( cmd, "quit" ) == 0 ) ) {
         if ( connected_flag ) {
             snprintf ( msgbuf, 64, "%d", CLOSE_SESSION );
@@ -160,6 +162,7 @@ int process_user_cmd ( char* user_input, char* msgbuf ) {
                 break;
             sleep ( 1 );
             if ( errno == EISCONN ) {
+                printf ( "Done." );
                 break;
             }
             printf ( "." );
@@ -168,40 +171,28 @@ int process_user_cmd ( char* user_input, char* msgbuf ) {
         printf ( "\n" );
         fcntl ( controller_socket, F_SETFL, 2 );
 
-/* what is "2"?  maybe FWRITE?  need to check retval if applicable.
-   or is this just to check socket connection status? */
-
-        if ( errno == EISCONN ) {
+        char return_buf[MAX_MSGSIZE];
+        snprintf ( msgbuf, MAX_MSGSIZE, "%d", NOP );
+        if ( send ( controller_socket, msgbuf, strlen ( msgbuf ), 0 ) != -1 ) {
+            if ( recv ( controller_socket, return_buf, MAX_MSGSIZE, 0 ) == -1 ) {
+                if ( errno != EAGAIN ) {
+                    perror("recv");
+                    exit (-1);
+                }
+            }
+                /* we were able to send on socket and recv ACK so we must be connected */
             if ( batch_mode == 0 ) {
                 connected_flag = 1;
             }
-            snprintf ( msgbuf, 64, "%d", CONNECT );
+            snprintf ( msgbuf, MAX_MSGSIZE, "%d", CONNECT );
         } else {
-            printf ( "Connect failed.\n" );
+            perror ( "Connect failed" );
+            return 0;
         }
-
-
-//        snprintf ( msgbuf, 64, "%d", NOP );
-//        if ( send ( controller_socket, msgbuf, strlen ( msgbuf ), 0 ) == -1 ) {
-//            memset ( msgbuf, '\0', strlen ( msgbuf ) );
-//            /* if socket is already connected */
-//            if ( errno == EPIPE ) {
-//                if ( batch_mode == 0 )
-//                    connected_flag = 1;
-//                snprintf ( msgbuf, 64, "%d", CONNECT );
-//            } else {
-//                perror ( "Connect failed" );
-//                return 0;
-//           }
-//        } else {
-//            if ( batch_mode == 0 )
-//                connected_flag = 1;
-//            memset ( msgbuf, '\0', strlen ( msgbuf ) );
-//            snprintf ( msgbuf, 64, "%d", CONNECT );
-//        }
-//
+                                           
         return 1;
     }
+
     if ( strcmp ( cmd, "start" ) == 0 ) {
         char *filter;
         int batch_id = 0;
