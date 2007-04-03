@@ -153,6 +153,7 @@ int main( int argc, char *argv[] ) {
                 break;
             case 'f':   // filter
                 filter = strdup ( optarg );
+                printf ( "tap filter is: %s\n", filter );
                 break; 
             case 'd':   // tunnel destination 
                 dest_ip = strdup ( optarg );

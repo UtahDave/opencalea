@@ -45,5 +45,6 @@ int pid_registry_add ( int batch_id, int pid, char* cmd );
 void pid_registry_del ( int target_pid );
 void pid_registry_show ( char* buf );
 void pid_batch_id_lookup ( int batch_id, int* pid_list );
+int pid_validate ( int pid );
 
 #endif 

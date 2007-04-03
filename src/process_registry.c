@@ -100,3 +100,25 @@ void pid_batch_id_lookup ( int batch_id, int* pid_list ) {
     }
 }
 
+
+/* make sure that a given pid is in the process registry */
+int pid_validate ( int pid ) {
+
+    int i = 0;
+    int retval = 0;
+
+    for ( i = 0; i < MAX_REGISTRY_ENTRIES; i++ ) {
+        if ( pid_registry[i].valid == 1) {
+               if ( pid == pid_registry[i].process_id ) {
+                   retval = 1;
+                   break;
+               }
+        } else {
+            /* entry not valid */
+        }
+    } 
+    return retval;
+}
+
+
+
