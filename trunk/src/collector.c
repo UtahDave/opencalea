@@ -159,6 +159,8 @@ void* controller_thread ( void* args ) {
                         /* get the arguments with which to run the tap */
                         char* argv[32];
                         char item[64];
+                        char filter_item[1024];
+                        int filter_start = 0 ;
                         pid = getpid ( );
                         argv[0] = strdup ( "tap" );
                         argv[1] = strdup ( "-i" );
@@ -168,13 +170,32 @@ void* controller_thread ( void* args ) {
                         while ( iter < filter + strlen ( filter ) ) {
                             n++;
                             sscanf ( iter, "%s", item );
-                            argv[n] = strdup ( item );
+                            if ( strncmp ( item , "\"", 1 ) == 0 ) {
+                                if ( filter_start == 0 ) {
+                                    n--;
+                                    filter_start = 1;
+                                } else {
+                                    /* end of filter */
+                                    printf ( "filter_item: %s\n", filter_item );
+                                    argv[n] = strdup ( filter_item );
+                                    memset ( filter_item , '\0', 1024 );
+                                }
+                            } else {
+                                if ( filter_start == 0 ) {
+                                    argv[n] = strdup ( item );
+                                } else {
+                                    n--;
+                                    strcat ( filter_item, " " ); 
+                                    strcat ( filter_item, item ); 
+                                }
+                            }
                             iter = iter + strlen ( item ) + 1;
                         }
                         argv[n+1] = NULL;
                         free ( filter );
-
+                         
                         /* run the tap program with the correct args */
+                        printf ( "attempting to run tap...\n" );
                         execv ( TAP, argv );
 
                         exit( 0 );
@@ -216,6 +237,10 @@ void* controller_thread ( void* args ) {
                         /* this is a stop command */
                         /* extract the pid which we want to stop */
                         target_pid = get_target_pid ( msg_buf );
+                        if ( pid_validate ( target_pid ) == 0 ) {
+                            /* pid was not in our process registry */
+                            break;
+                        }
                         int retval = 0;
 
                         /* send kill signal to the tap pid and make
