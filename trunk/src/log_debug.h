@@ -26,7 +26,39 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LOG_DEBUG_H
-#define _LOG_DEBUG_H
+#ifndef _CALEA_LOG_DEBUG_H
+#define _CALEA_LOG_DEBUG_H
+
+#define MAX_LOG_MSG_LEN 1024
+#define MAX_DEBUG_MSG_LEN 1024
+#define MAX_LOG_DEBUG_MSG_LEN 1024    // Max of the previous 2
+#define ERROR_DEBUG_FUNC debug_1
+#define ERROR_LOGG_FUNC log_2
+
+extern FILE *debug_file;
+extern FILE *log_file;
+
+void setdebug ( int level, char * );
+void setlog ( int level, char * );
+
+extern void (*debug_1)( char *, ... );
+extern void (*debug_2)( char *, ... );
+extern void (*debug_3)( char *, ... );
+extern void (*debug_4)( char *, ... );
+extern void (*debug_5)( char *, ... );
+
+extern void (*log_1)( char *, ... );
+extern void (*log_2)( char *, ... );
+extern void (*log_3)( char *, ... );
+extern void (*log_4)( char *, ... );
+extern void (*log_5)( char *, ... );
+
+void my_debug ( char *, ... );
+void my_log ( char *, ... );
+static void my_nulllog ( char *, ... );
+
+void error ( char *, ... );
+void die ( char *, ... );
+void pdie ( char * );
 
 #endif

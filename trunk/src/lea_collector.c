@@ -33,6 +33,9 @@
 #include <pcap.h>
 #include <net/ethernet.h>
 
+char *prog_name = "lea_collector";
+int syslog_facility = DEF_SYSLOG_FACILITY;
+
 FILE *cmii_fp = NULL;
 struct pcap_dumper *pd = NULL;
 
@@ -88,8 +91,8 @@ int main ( int argc, char *argv[] ) {
     int change_group = 0;
     struct passwd *pwent;
     struct group *grent;
-    char user[32] = USER;
-    char group[32] = GROUP;
+    char user[32] = DEF_USER;
+    char group[32] = DEF_GROUP;
 
     /* command line options processing */
     while (( i = getopt ( argc, argv, "t:f:hm:n:xu:g:" )) != -1 ) {

@@ -34,6 +34,9 @@
 #include <pthread.h>
 #include <glob.h>
 
+char *prog_name = "collector";
+int syslog_facility = DEF_SYSLOG_FACILITY;
+
 #define MAX_CONNECTIONS 10
 
 extern char **environ;

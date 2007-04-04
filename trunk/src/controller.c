@@ -30,6 +30,9 @@
 
 #include <fcntl.h>
 
+char *prog_name = "controller";
+int syslog_facility = DEF_SYSLOG_FACILITY;
+
 #define MAX_MSGSIZE 1024 
 
 #define PROMPT "CALEA-CTRL> "
