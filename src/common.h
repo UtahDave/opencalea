@@ -51,15 +51,21 @@
 #include <pwd.h>
 #include <grp.h>
 
+#include "log_debug.h"
+
+#define DEF_SYSLOG_FACILITY LOG_USER
+#define DEF_DEBUG_LEVEL 0
+#define DEF_LOG_LEVEL 1
+
 /* need to move these to config file */
 #define CmC_PORT 6666
 #define CmII_PORT 6667
 #define Collector_PORT 5555
 
-#define USER "calea"
-#define GROUP "calea"
-#define TAP_USER USER
-#define TAP_GROUP GROUP
+#define DEF_USER "calea"
+#define DEF_GROUP "calea"
+#define DEF_TAP_USER DEF_USER
+#define DEF_TAP_GROUP DEF_GROUP
 
 /* temporary */
 #define TAP "./tap"
