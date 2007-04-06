@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
  	
 AC_PREREQ(2.59)
 	
-AC_INIT([open_calea], [0.5], [mkarir@merit.edu])
+AC_INIT([open_calea], [0.52], [mkarir@merit.edu])
 AC_CONFIG_SRCDIR(src/tap.c)
 AM_INIT_AUTOMAKE([1.9 foreign])
 

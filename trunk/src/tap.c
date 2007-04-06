@@ -143,7 +143,8 @@ void usage ( void ) {
     printf ( " [-m cmc-port] [-n cmii-port]" );
     printf ( " [-v [...]] [-D debug-file]" );
     printf ( " [-l log-level ] [-L logfile]" );
-    printf ( " [-f capture-filter]\n" );
+    printf ( " [-f capture-filter]" );
+    printf ( "\n" );
 }
 
 void print_help ( void ) {
@@ -215,13 +216,11 @@ int main( int argc, char *argv[] ) {
                 change_group = 1;
                 break;
            case 'm':   // cmc port 
-                errno = 0;
                 if ( ( cmc_port = strdup ( optarg ) ) == NULL )
                     pdie ( "strdup" );
                 debug_5 ( "got opt %c: %s", i, optarg );
                 break; 
             case 'n':   // cmii port 
-                errno = 0;
                 if ( ( cmii_port = strdup ( optarg ) ) == NULL )
                     pdie ( "strdup" );
                 debug_5 ( "got opt %c: %s", i, optarg );
@@ -275,24 +274,6 @@ int main( int argc, char *argv[] ) {
         }
     }
 
-    if ( debug_file && strlen ( debug_file ) ) {
-        debug_level_set = ( debug_level_set ) ? debug_level_set : DEF_DEBUG_LEVEL;
-        debug_5 ( "resetting debug level (%d) and destination (%s)",
-            debug_level_set, debug_file );
-        setdebug( debug_level_set, debug_file );
-    } else {
-        debug_5 ( "resetting debug level (%d)", debug_level_set );
-        setdebug( debug_level_set, "syslog" );
-    }
-    if ( log_file && strlen ( log_file ) ) {
-        log_level_set = ( log_level_set ) ? log_level_set : DEF_LOG_LEVEL;
-        debug_5 ( "resetting log level (%d) and destination (%s)",
-            log_level_set, log_file );
-        setlog( log_level_set, log_file );
-    } else {
-        debug_5 ( "resetting log level (%d)", log_level_set );
-        setlog( log_level_set, "syslog" );
-    }
     if ( strcmp ( contentID, "\0" )  == 0 ) {
         error ( "Error: contentID must be specified" );
         usage ();
@@ -340,9 +321,8 @@ int main( int argc, char *argv[] ) {
                 die ( "User %s not found\n", user );
             }
         }
-        if ( setuid(pwent->pw_uid) < 0 ) {
+        if ( setuid(pwent->pw_uid) < 0 )
             pdie ( "setuid" );
-        }
     }
     if ( change_group == 1 ) {
         debug_3 ( "changing group id to: %s", group );
@@ -354,8 +334,42 @@ int main( int argc, char *argv[] ) {
                 die ( "Group %s not found\n", group );
             }
         }
-        if ( setgid(grent->gr_gid) < 0 ) {
+        if ( setgid(grent->gr_gid) < 0 )
             pdie ( "setgid" );
+    }
+
+    /* do as much as possible after dropping privs */
+    if ( debug_file && strlen ( debug_file ) ) {
+        debug_level_set = ( debug_level_set ) ? debug_level_set : DEF_DEBUG_LEVEL;
+        debug_5 ( "resetting debug level (%d) and destination (%s)",
+            debug_level_set, debug_file );
+        setdebug( debug_level_set, debug_file );
+    } else {
+        debug_5 ( "resetting debug level (%d)", debug_level_set );
+        setdebug( debug_level_set, "syslog" );
+    }
+    if ( log_file && strlen ( log_file ) ) {
+        log_level_set = ( log_level_set ) ? log_level_set : DEF_LOG_LEVEL;
+        debug_5 ( "resetting log level (%d) and destination (%s)",
+            log_level_set, log_file );
+        setlog( log_level_set, log_file );
+    } else {
+        debug_5 ( "resetting log level (%d)", log_level_set );
+        setlog( log_level_set, "syslog" );
+    }
+
+    if ( cmii_port == NULL ) {  
+        if ( ! ( cmii_port = malloc ( 64 ) ) )
+            perror ( "malloc" );
+        snprintf ( cmii_port, 64, "%d", CmII_PORT );
+        debug_5 ( "using default cmii port (%s)", cmii_port );
+    }
+    if ( content_option == 1 ) {
+        if ( cmc_port == NULL ) {
+            if ( ! ( cmc_port = malloc ( 64 ) ) )
+                perror ( "malloc" );
+            snprintf ( cmc_port, 64, "%d", CmC_PORT );
+            debug_5 ( "using default cmc port (%s)", cmc_port );
         }
     }
 
@@ -382,7 +396,7 @@ int main( int argc, char *argv[] ) {
         debug_5 ( "CmC option is set" );
 
         memset ( &hints, 0, sizeof ( hints ) );
-        hints.ai_family = PF_UNSPEC;
+        hints.ai_family = PF_INET;
         hints.ai_socktype = SOCK_DGRAM;
 
         debug_5 ( "calling getaddrinfo" );
@@ -407,7 +421,8 @@ int main( int argc, char *argv[] ) {
             if (send_cmc_socket < 0) {
                 debug_5 ( "socket: %s", strerror ( errno ) );
                 strncpy ( errbuf, "socket", PCAP_ERRBUF_SIZE );
-                debug_5 ( "socket failed, trying next ip addr" );
+                if ( res->ai_next )
+                     debug_5 ( "socket failed, trying next ip addr" );
                 continue;
             }
 
@@ -418,7 +433,8 @@ int main( int argc, char *argv[] ) {
                 if ( close( send_cmc_socket ) == -1 )
                     pdie ( "close" );
                 send_cmc_socket = -1;
-                debug_5 ( "connect failed, trying next ip addr" );
+                if ( res->ai_next )
+                     debug_5 ( "connect failed, trying next ip addr" );
                 continue;
             }
 

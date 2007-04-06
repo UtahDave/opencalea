@@ -66,6 +66,8 @@ void my_debug ( char *format, ... ) {
     char msg[MAX_DEBUG_MSG_LEN];
     char *append = NULL;
     char myname[64];
+    char *curtime;
+    time_t tim;
 
     va_start( ap, format );
     vsnprintf ( msg, MAX_DEBUG_MSG_LEN, format, ap );
@@ -74,8 +76,13 @@ void my_debug ( char *format, ... ) {
     append = ( msg [ strlen ( msg ) ] != '\n' ) ? "\n" : "\0";
 
     if ( debug_to_file ) {
-        /* need to prepend a timestamp */
-        if ( fprintf ( debug_fp, "%s%s", msg, append ) == -1 ) {
+        if ( ( tim = time ( NULL ) ) == -1 ) {
+            perror ( "time" );
+            exit ( -1 );
+        }
+        curtime = ctime ( &tim );
+        curtime[ strlen ( curtime ) - 1 ] = 0;        // remove \n
+        if ( fprintf ( debug_fp, "%s  %s%s", curtime, msg, append ) == -1 ) {
             perror ( "fprintf" );
             exit ( -1 );
         }
@@ -90,6 +97,8 @@ void my_log ( char *format, ... ) {
     va_list ap;
     char msg[MAX_LOG_MSG_LEN];
     char *append = NULL;
+    char *curtime;
+    time_t tim;
 
     va_start( ap, format );
     vsnprintf ( msg, MAX_LOG_MSG_LEN, format, ap );
@@ -98,7 +107,13 @@ void my_log ( char *format, ... ) {
     append = ( msg [ strlen ( msg ) ] != '\n' ) ? "\n" : "\0";
 
     if ( log_to_file ) {
-        if ( fprintf ( log_fp, "%s%s", msg, append ) == -1 ) {
+        if ( ( tim = time ( NULL ) ) == -1 ) {
+            perror ( "time" );
+            exit ( -1 );
+        }
+        curtime = ctime ( &tim );
+        curtime[ strlen ( curtime ) - 1 ] = 0;        // remove \n
+        if ( fprintf ( log_fp, "%s  %s%s", curtime, msg, append ) == -1 ) {
             perror ( "fprintf" );
             exit ( -1 );
         }
