@@ -54,13 +54,22 @@ int CmCPacketSend ( CmC *packet, int length, int *send_socket,
     int bytes_sent;
 
     if ( (bytes_sent = send ( *send_socket, packet, length, 0)) == -1 ) {
-        perror("send");
-        if (! (errno == EHOSTUNREACH || 
-               errno == EHOSTDOWN || 
-               errno == ENETDOWN)) {
+        pdie ( "send" );
+        switch ( errno ) {
+        case EHOSTUNREACH:
+        case EHOSTDOWN:
+        case ENETDOWN:
+            return -1;
+            break;
+        case ENOBUFS:
+            log_1 ( "%s%s%s", "Whoah, slow down there!  You're sending packets too fast.\n",
+                "Check your filter (eg. you're not capturing the very packets your sending out),\n",
+                "and make sure you're capturing on the right interface." );
+            break;
+        default:
             exit ( -1 );
-        }
-        return -1;
+            break;
+         }
      }
 
     return bytes_sent;
@@ -75,13 +84,22 @@ int CmIIPacketSend ( CmII *packet, int length, int *cmii_send_socket,
     int bytes_sent;
 
     if ( (bytes_sent = send ( *cmii_send_socket, packet, length, 0)) == -1 ) {
-        perror("send");
-        if (! (errno == EHOSTUNREACH || 
-               errno == EHOSTDOWN || 
-               errno == ENETDOWN) ) {
+        pdie ( "send" );
+        switch ( errno ) {
+        case EHOSTUNREACH:
+        case EHOSTDOWN:
+        case ENETDOWN:
+            return -1;
+            break;
+        case ENOBUFS:
+            log_1 ( "%s%s%s", "Whoah, slow down there!  You're sending packets too fast.\n",
+                "Check your filter (eg. you're not capturing the very packets your sending out),\n",
+                "and make sure you're capturing on the right interface." );
+            break;
+        default:
             exit ( -1 );
-        }
-        return -1;
+            break;
+         }
     }
  
     return bytes_sent;
@@ -93,7 +111,7 @@ CmC* CmCPacketBuild ( CmCh *header, char *buf, int len ) {
 
     cmc_pkt = (CmC*) malloc ( sizeof( CmC ) );
     if (! ( cmc_pkt = (CmC*) malloc ( sizeof( CmC ) ) ) ) {
-       perror("malloc");
+        perror("malloc");
         exit ( -1 );
     }
    
@@ -113,7 +131,7 @@ CmII* CmIIPacketBuild ( CmIIh *header, char *buf, int len ) {
     CmII *cmii_pkt;
 
     if (! ( cmii_pkt = (CmII*) malloc ( sizeof( CmII ) ) ) ) {
-       perror("malloc");
+        perror("malloc");
         exit ( -1 );
     }
    

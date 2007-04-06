@@ -74,6 +74,7 @@ void my_debug ( char *format, ... ) {
     append = ( msg [ strlen ( msg ) ] != '\n' ) ? "\n" : "\0";
 
     if ( debug_to_file ) {
+        /* need to prepend a timestamp */
         if ( fprintf ( debug_fp, "%s%s", msg, append ) == -1 ) {
             perror ( "fprintf" );
             exit ( -1 );
