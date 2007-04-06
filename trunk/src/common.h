@@ -47,6 +47,7 @@
 #include <sys/signal.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <arpa/inet.h>
 #include <pwd.h>
 #include <grp.h>
@@ -69,7 +70,6 @@
 
 /* temporary */
 #define TAP "./tap"
-#define CAPTURE_IF "en1"
 
 /* valid command codes */
 #define TAP_START              1

@@ -138,8 +138,8 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header,
 
 
 void usage ( void ) {
-    printf ( "Usage: tap -i interface -x content-id -y case-id" );
-    printf ( " -z iap-system-id [-d dest-ip] [-c]" );
+    printf ( "Usage: tap -x content-id -y case-id" );
+    printf ( " -z iap-system-id [-i interface]  [-d destination ] [-c]" );
     printf ( " [-m cmc-port] [-n cmii-port]" );
     printf ( " [-v [...]] [-D debug-file]" );
     printf ( " [-l log-level ] [-L logfile]" );
@@ -162,10 +162,11 @@ int main( int argc, char *argv[] ) {
     bpf_u_int32 net;		
     char *interface = NULL;
     char *filter = NULL;
-    char *dest_ip = NULL;
+    char *dest = NULL;
+    struct addrinfo hints, *res, *res0;
     int i = 0;
-    int cmc_port = CmC_PORT;
-    int cmii_port = CmII_PORT;
+    char *cmc_port = 0;
+    char *cmii_port = 0;
     int change_user = 0;
     int change_group = 0;
     struct passwd *pwent;
@@ -199,7 +200,7 @@ int main( int argc, char *argv[] ) {
                 debug_5 ( "got opt %c: %s", i, optarg );
                 break; 
             case 'd':   // tunnel destination 
-                if ( ( dest_ip = strdup ( optarg ) ) == NULL )
+                if ( ( dest = strdup ( optarg ) ) == NULL )
                     pdie ( "strdup" );
                 debug_5 ( "got opt %c: %s", i, optarg );
                 break; 
@@ -215,25 +216,15 @@ int main( int argc, char *argv[] ) {
                 break;
            case 'm':   // cmc port 
                 errno = 0;
-                cmc_port = (int)strtol(optarg, (char **)NULL, 0);
-                if ( cmc_port <= 0 ) {
-                    if ( errno )
-                        pdie ( "strtol(cmc_port)" );
-                    else
-                        die ( "invalid cmc_port" );
-                }
-                debug_5 ( "got opt %c: %d", i, cmc_port );
+                if ( ( cmc_port = strdup ( optarg ) ) == NULL )
+                    pdie ( "strdup" );
+                debug_5 ( "got opt %c: %s", i, optarg );
                 break; 
             case 'n':   // cmii port 
                 errno = 0;
-                cmii_port = (int)strtol(optarg, (char **)NULL, 0);
-                if ( cmii_port <= 0 ) {
-                    if ( errno )
-                        pdie ( "strtol(cmii_port)" );
-                    else
-                        die ( "invalid cmii_port" );
-                }
-                debug_5 ( "got opt %c: %d", i, cmii_port );
+                if ( ( cmii_port = strdup ( optarg ) ) == NULL )
+                    pdie ( "strdup" );
+                debug_5 ( "got opt %c: %s", i, optarg );
                 break; 
             case 'x':   // contentID 
                 strncpy ( contentID , optarg, MAX_CONTENT_ID_LENGTH );
@@ -284,36 +275,23 @@ int main( int argc, char *argv[] ) {
         }
     }
 
-    if ( debug_level_set || debug_file ) {
+    if ( debug_file && strlen ( debug_file ) ) {
         debug_level_set = ( debug_level_set ) ? debug_level_set : DEF_DEBUG_LEVEL;
-        if ( debug_file && strlen ( debug_file ) ) {
-            debug_5 ( "resetting debug level (%d) and destination (%s)",
-                debug_level_set, debug_file );
-            setdebug( debug_level_set, debug_file );
-        } else {
-            debug_5 ( "resetting debug level (%d)", debug_level_set );
-            setdebug( debug_level_set, "syslog" );
-        }
+        debug_5 ( "resetting debug level (%d) and destination (%s)",
+            debug_level_set, debug_file );
+        setdebug( debug_level_set, debug_file );
+    } else {
+        debug_5 ( "resetting debug level (%d)", debug_level_set );
+        setdebug( debug_level_set, "syslog" );
     }
-    if ( log_level_set || log_file ) {
+    if ( log_file && strlen ( log_file ) ) {
         log_level_set = ( log_level_set ) ? log_level_set : DEF_LOG_LEVEL;
-        if ( log_file && strlen ( log_file ) ) {
-            debug_5 ( "resetting log level (%d) and destination (%s)",
-                log_level_set, log_file );
-            setlog( log_level_set, log_file );
-        } else {
-            debug_5 ( "resetting log level (%d)", log_level_set );
-            setlog( log_level_set, "syslog" );
-        }
-    }
-    if ( interface == NULL ) {
-        die ( "Error: interface must be specified" );
-        debug_2 ( "using default interface" );
-    } 
-    if ( dest_ip == NULL ) {
-        if ( ( dest_ip = strdup ( "127.0.0.1" ) ) == NULL )
-            pdie ( "strdup" );
-        debug_2 ( "using default dest_ip (%s)", dest_ip );
+        debug_5 ( "resetting log level (%d) and destination (%s)",
+            log_level_set, log_file );
+        setlog( log_level_set, log_file );
+    } else {
+        debug_5 ( "resetting log level (%d)", log_level_set );
+        setlog( log_level_set, "syslog" );
     }
     if ( strcmp ( contentID, "\0" )  == 0 ) {
         error ( "Error: contentID must be specified" );
@@ -330,11 +308,19 @@ int main( int argc, char *argv[] ) {
         usage ();
         exit ( -1 );
     }
-    if (cmc_port <= 0) {
-        die ( "Error: invalid cmc_port" );
-    }
-    if (cmii_port <= 0) {
-        die ( "Error: invalid cmii_port" );
+    if ( interface == NULL ) {
+        debug_4 ( "looking up pcap capable device" );
+        interface = pcap_lookupdev( errbuf );
+        if ( interface == NULL ) {
+            die ( "pcap_lookupdev: %s\n", errbuf );
+        }
+        debug_2 ( "using default interface: %s", interface );
+    } 
+    /* getaddrinfo defaults to loopback, but we'll specify it anyways */
+    if ( dest == NULL ) {
+        if ( ( dest = strdup ( "127.0.0.1" ) ) == NULL )
+            pdie ( "strdup" );
+        debug_2 ( "using default dest (%s)", dest );
     }
 
     debug_4 ( "opening pcap handle" );
@@ -354,7 +340,7 @@ int main( int argc, char *argv[] ) {
                 die ( "User %s not found\n", user );
             }
         }
-        if (setuid(pwent->pw_uid) < 0) {
+        if ( setuid(pwent->pw_uid) < 0 ) {
             pdie ( "setuid" );
         }
     }
@@ -368,7 +354,7 @@ int main( int argc, char *argv[] ) {
                 die ( "Group %s not found\n", group );
             }
         }
-        if (setgid(grent->gr_gid) < 0) {
+        if ( setgid(grent->gr_gid) < 0 ) {
             pdie ( "setgid" );
         }
     }
@@ -394,42 +380,125 @@ int main( int argc, char *argv[] ) {
     /* Open CmC socket only if CmC option is selected */
     if ( content_option == 1 ) {
         debug_5 ( "CmC option is set" );
-        debug_5 ( "creating send_cmc_socket" );
-        if (( send_cmc_socket = socket ( PF_INET, SOCK_DGRAM, 0 )) == -1 ) {
-            pdie ( "socket" );
+
+        memset ( &hints, 0, sizeof ( hints ) );
+        hints.ai_family = PF_UNSPEC;
+        hints.ai_socktype = SOCK_DGRAM;
+
+        debug_5 ( "calling getaddrinfo" );
+        i = getaddrinfo ( dest, cmc_port, &hints, &res0 );
+        if ( i ) {
+            die ( "getaddrinfo: %s", gai_strerror( i ) );
         }
 
-        memset ( (char *)&send_cmc_addr, '\0', sizeof(send_cmc_addr) );
+        send_cmc_socket = -1;
+        for (res = res0; res; res = res->ai_next) {
+            memset ( (char *)&send_cmc_addr, '\0', sizeof(send_cmc_addr) );
 
-        send_cmc_addr.sin_family = AF_INET;
-        send_cmc_addr.sin_port   = htons( cmc_port );
-        send_cmc_addr.sin_addr.s_addr = inet_addr(dest_ip);
+            send_cmc_addr.sin_family = res->ai_family;
+            send_cmc_addr.sin_port   = ((struct sockaddr_in *)res->ai_addr)->sin_port;
+            send_cmc_addr.sin_addr.s_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
 
-        debug_5 ( "connecting send_cmc_socket" );
-        if (( connect(send_cmc_socket, (struct sockaddr *)&send_cmc_addr,
-                sizeof(send_cmc_addr))  ) == -1 ) {
-            pdie ( "connect" );
+            debug_5 ( "trying send_cmc_addr %s:%d",
+                inet_ntoa ( send_cmc_addr.sin_addr ), htons ( send_cmc_addr.sin_port ) );
+
+            debug_5 ( "creating send_cmc_socket" );
+            send_cmc_socket = socket( res->ai_family, res->ai_socktype, res->ai_protocol );
+            if (send_cmc_socket < 0) {
+                debug_5 ( "socket: %s", strerror ( errno ) );
+                strncpy ( errbuf, "socket", PCAP_ERRBUF_SIZE );
+                debug_5 ( "socket failed, trying next ip addr" );
+                continue;
+            }
+
+            debug_5 ( "connecting send_cmc_socket" );
+            if ( connect ( send_cmc_socket, res->ai_addr, res->ai_addrlen ) < 0 ) {
+                strncpy ( errbuf, "connect", PCAP_ERRBUF_SIZE );
+                debug_5 ( "connect: %s", strerror ( errno ) );
+                if ( close( send_cmc_socket ) == -1 )
+                    pdie ( "close" );
+                send_cmc_socket = -1;
+                debug_5 ( "connect failed, trying next ip addr" );
+                continue;
+            }
+
+            debug_5 ( "connect succeeded" );
+            break;
         }
+        if ( send_cmc_socket < 0 ) {
+            pdie ( errbuf );
+        }
+
+        freeaddrinfo(res0);
     } else {
         debug_5 ( "CmC option is not set" );
     }
 
-    debug_5 ( "creating send_cmii_socket" );
-    if (( send_cmii_socket = socket ( PF_INET, SOCK_DGRAM, 0 )) == -1 ) {
-        pdie( "socket" );
+    memset ( &hints, 0, sizeof ( hints ) );
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+
+    debug_5 ( "calling getaddrinfo" );
+    i = getaddrinfo ( dest, cmii_port, &hints, &res0 );
+    if ( i ) {
+        die ( "getaddrinfo: %s", gai_strerror( i ) );
     }
 
-    memset ( (char *)&send_cmii_addr, '\0', sizeof(send_cmii_addr) );
+    send_cmii_socket = -1;
+    for (res = res0; res; res = res->ai_next) {
+        memset ( (char *)&send_cmii_addr, '\0', sizeof(send_cmii_addr) );
 
-    send_cmii_addr.sin_family = AF_INET;
-    send_cmii_addr.sin_port   = htons( cmii_port );
-    send_cmii_addr.sin_addr.s_addr = inet_addr(dest_ip);
+        send_cmii_addr.sin_family = res->ai_family;
+        send_cmii_addr.sin_port   = ((struct sockaddr_in *)res->ai_addr)->sin_port;
+        send_cmii_addr.sin_addr.s_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
 
-    debug_5 ( "connecting send_cmii_socket" );
-    if (( connect(send_cmii_socket, (struct sockaddr *)&send_cmii_addr,
-            sizeof(send_cmii_addr))  ) == -1 ) {
-        pdie ( "connect" );
+        if ( content_option ) {
+            send_cmii_addr.sin_family = send_cmc_addr.sin_family;
+            send_cmii_addr.sin_addr.s_addr = send_cmc_addr.sin_addr.s_addr;
+            debug_5 ( "using send_cmii_addr %s:%d",
+                inet_ntoa ( send_cmii_addr.sin_addr ), htons ( send_cmii_addr.sin_port ) );
+        } else {
+            debug_5 ( "trying send_cmii_addr %s:%d",
+                inet_ntoa ( send_cmii_addr.sin_addr ), htons ( send_cmii_addr.sin_port ) );
+        }
+
+        debug_5 ( "creating send_cmii_socket" );
+        send_cmii_socket = socket( res->ai_family, res->ai_socktype, res->ai_protocol );
+        if (send_cmii_socket < 0) {
+            debug_5 ( "socket: %s", strerror ( errno ) );
+            strncpy ( errbuf, "socket", PCAP_ERRBUF_SIZE );
+            if ( ! content_option ) {
+                debug_5 ( "socket failed, trying next ip addr" );
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        debug_5 ( "connecting send_cmii_socket" );
+        if ( connect ( send_cmii_socket, (struct sockaddr *)&send_cmii_addr,
+                sizeof(send_cmii_addr) ) < 0 ) {
+            strncpy ( errbuf, "connect", PCAP_ERRBUF_SIZE );
+            debug_5 ( "connect: %s", strerror ( errno ) );
+            if ( close( send_cmii_socket ) == -1 )
+                pdie ( "close" );
+            send_cmii_socket = -1;
+            if ( ! content_option ) {
+                debug_5 ( "connect failed, trying next ip addr" );
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        debug_5 ( "connect succeeded" );
+        break;
     }
+    if ( send_cmii_socket < 0 ) {
+        pdie ( errbuf );
+    }
+
+    freeaddrinfo(res0);
 
     debug_4 ( "begining pcap_loop" );
     pcap_loop( handle, -1, process_packet, NULL );

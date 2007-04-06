@@ -166,9 +166,7 @@ void* controller_thread ( void* args ) {
                         int filter_start = 0 ;
                         pid = getpid ( );
                         argv[0] = strdup ( "tap" );
-                        argv[1] = strdup ( "-i" );
-                        argv[2] = strdup ( CAPTURE_IF );
-                        int n = 2;
+                        int n = 0;
                         char* iter = filter;
                         while ( iter < filter + strlen ( filter ) ) {
                             n++;
@@ -215,8 +213,7 @@ void* controller_thread ( void* args ) {
                         if ( retval == 0 ) {
                             /* process exists */
                             char cmd[1024];
-                            sprintf ( cmd, "%s %s %s %s", TAP, "-i", 
-                                      CAPTURE_IF, filter );
+                            sprintf ( cmd, "%s %s", TAP, filter );
                             free ( filter );
                             pid_registry_add ( batch_id, pid, cmd );
                             syslog ( LOG_ALERT, 
