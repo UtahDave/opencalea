@@ -1,0 +1,57 @@
+
+	OpenCALEA  --  http://www.opencalea.org/
+
+ABOUT:
+
+  OpenCALEA is a project intiated by Merit Network Inc. whose goal is
+to develop simple OpenSource based tools that can help the Internet
+Service Provider community to meet their CALEA compliance needs.  Some
+work towards sip voip support is also being done.
+
+  Merely downloading and installing OpenCALEA will NOT make you CALEA
+compliant.  CALEA includes administrative / procedural requirements
+that can not be accomplished by simply executing a program.  Even to
+use OpenCALEA as a component of your overall CALEA compliance requires
+an understanding of, and often modification to your physical network,
+and integration with various services you may run.
+
+STATUS:
+
+  OpenCALEA is a very young project and constantly changing.  Anything
+from command names, invocation arguments and syntax, and even core
+design are currently in flux.  Expect, but please report, bugs.
+
+STANDARDS:
+
+  OpenCALEA is currently working to impliment ATIS-1000013.2007,
+Lawfully Authorized Electronic Surveillance (LAES) for Internet Access
+and Services.
+
+    https://www.atis.org/docstore/product.aspx?id=22665
+      (currently a pre-published draft proposed ANSI standard)
+
+  OpenCALEA sip support follows ATIS-PP-1000678.2006,
+Lawfully Authorized Electronic Surveillance (LAES) for Voice over
+Packet Technologies in Wireline Telecommunications Networks, Version 2.
+
+    https://www.atis.org/docstore/product.aspx?id=21221
+      (currently a pre-published ANSI standard)
+
+LICENSE:
+
+  OpenCALEA is distributed under terms of the BSD license.
+
+CONTRIBUTING:
+
+  Contributions are very welcome, in most any form, including discussion
+on the mailing lists, code contributions, documentation, and CALEA
+procedural guidelines/forms.  Bug reports/fixes can go to the mailing list
+at <opencalea@merit.edu>.
+
+MORE INFO:
+
+  Much information can be found reguarding CALEA searching the Internet.  
+For OpenCALEA specific information, see http://www.opencalea.org/
+The mailing lists are currently quite active, and you may be able to
+catch someone on irc://www.freenode.net/calea
+

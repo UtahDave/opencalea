@@ -1,0 +1,18 @@
+OpenCALEA lea_collector TODO
+
+-- implement -b bind-addr
+
+-- change to receive ASN/BER from df_collector once df_collector is created
+
+-- Save data to a default location based on CaseID, time, pid and optionally
+IaspID.  Eg.
+
+/var/lib/opencalea/<caseID>/CmC-<timestamp>-<pid>.pcap
+/var/lib/opencalea/<caseID>/CmII-<timestamp>-<pid>.txt
+
+or
+
+/var/lib/opencalea/<caseID>/<IASP ID>/CmC-<timestamp>-<pid>.pcap
+/var/lib/opencalea/<caseID>/<IASP ID>/CmII-<timestamp>-<pid>.txt
+
+
