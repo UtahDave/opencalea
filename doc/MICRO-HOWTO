@@ -1,0 +1,33 @@
+
+A micro HOWTO for OpenCALEA:
+
+BUILDING / INSTALLATION
+
+-- Download and if needed, unpack source (tarball or svn).
+
+  svn checkout http://opencalea.googlecode.com/svn/trunk/ opencalea
+
+-- configure and make
+
+  cd opencalea
+  ./configure
+  make
+  make install    #   optional
+
+
+PROGRAMS
+
+lea_collector:
+        Currently accepts data from tap(8); needs started before tap(8).
+
+tap:
+        A network tap, currently sends data to a lea_collector(8).
+        Install on IAPs that will collect packets from the network.
+
+collector:
+        Used to start/stop taps by a controller(8) client; install on
+        same machines as tap(8).
+
+controller:
+        Connects to a collector(8) to start/stop taps(8).
+

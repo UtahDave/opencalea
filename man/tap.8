@@ -1,0 +1,159 @@
+.\" This is part of a set of commands and information released under the OpenCALEA Project.
+.\" http://www.opencalea.org/
+.TH "tap" "8" "svn-20070406" "The OpenCALEA Project" "OpenCALEA"
+.SH "NAME"
+.LP 
+tap \- OpenCALEA network tap
+.SH "SYNTAX"
+.LP 
+tap
+\-x \fIcontent\-id\fR
+\-y \fIcase\-id\fR
+\-z \fIiap\-system\-id\fR
+[\-i \fIinterface\fR]
+[\-d \fIdestination\fR]
+[\-c]
+[\-m \fIcmc\-port\fR]
+[\-n \fIcmii\-port\fR]
+[\-v [...]]
+[\-D \fIdebug\-file\fR]
+[\-l \fIlog\-level\fR]
+[\-L \fIlogfile\fR]
+[\-f \fIcapture\-filter\fR]
+.SH "DESCRIPTION"
+.LP 
+This program is a network tap (packet sniffer) from the OpenCALEA project.  It can be invoked to collect CACmII (Content Associated Communications Identifying Information) and CmC (Communication Content) for an intercept subject, which is sent to a running lea_collector(8) program somewhere in the network.  tap(8) can be invoked by itself or started via the controller(8) program.
+.SH "OPTIONS"
+.LP 
+
+.TP 
+\fB\-x\fR \fIcontent\-id\fP
+Specifies the Content ID; placed in CmII and CmC messages.
+.br 
+Default: none, must be specified.
+
+.TP 
+\fB\-y\fR \fIcase\-id\fP
+Specifies the Case ID; placed in CmII and CmC messages.
+.br 
+Default: none, must be specified.
+
+.TP 
+\fB\-z\fR \fIiap\-system\-id\fP
+Specifies the IAP System ID for this system; placed in CmII and CmC messages.
+.br 
+Default: IAPSystemID from config file.
+
+.TP 
+\fB\-i\fR \fIinterface\fP
+Specifies the network interface to capture on.
+.br 
+Default: system dependent.
+
+.TP 
+\fB\-d\fR \fIdestination\fP
+Specifies the destination host to send CmII and CmC messages to.
+This host should be running lea_collector(8).
+.br 
+Default: localhost (127.0.0.1).
+
+.TP 
+\fB\-c\fP
+Specifies to capture/send CmC (packet contents) as well as CACmII.
+.br 
+Default: off.
+
+.TP 
+\fB\-m\fR \fIcmc\-port\fP
+Specifies the port on \fIdestination\fP above to send CmC data to.
+.br 
+Default: CmC_Port from config file or 6666 (this will change).
+
+.TP 
+\fB\-n\fR \fIcmii\-port\fP
+Specifies the port on \fIdestination\fP above to send CmII data to.
+.br 
+Default: CmII_Port from config file or 6667 (this will change).
+
+.TP 
+\fB\-v\fR [...]
+Enable debugging (\fB\-d\fR was taken).  Use multiple times to increase verbosity.
+.br 
+Default: Debug_Level from config file or off.
+
+
+.TP 
+\fB\-D\fR \fIdebug\-file\fP
+Specifies where to debug to.  Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a filename.
+.br 
+Default: syslog.
+
+.TP 
+\fB\-l\fR \fIlog\-level\fP
+Specifies log level.  \fIlog\-level\fP should be a numeric value from 1 (least) to 5 (most).
+.br 
+Default: Log_Level from config file or 1.
+
+.TP 
+\fB\-L\fR \fIlogfile\fP
+Specifies where to log to.  Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a filename.
+.br 
+Default: syslog.
+
+.TP 
+\fB\-f\fR \fIcapture\-filter\fP
+Specify packet capture filter in libpcap syntax.
+.br 
+Default: none.
+.SH "FILES"
+.LP 
+Note: config files are not yet used
+
+\fI/etc/opencalea/tap.conf\fP
+
+\fI/etc/opencalea/opencalea.conf\fP
+.SH "EXAMPLES"
+.LP 
+To run tap(8) with the minimum content\-id, case\-id and iap\-system\-id and intercepting ip address 123.45.67.89, with lea_collector(8) running on 192.168.0.20:
+.LP 
+tap \-x "Content ID" \-y Case\-ID \-z IAP_System_ID \-d 192.168.0.20 \-f "host 123.45.67.89"
+
+.LP 
+To run tap(8) capturing all data on the "eth2" interface, debugging to standard out, with lea_collector(8) running on localhost:
+.LP 
+tap \-x x \-y y \-z z \-i eth2 \-vvv \-D stdout
+.IP 
+or
+.LP 
+tap \-x x \-y y \-z z \-i eth2 \-vvv \-D stdout \-d localhost
+
+.LP 
+To run tap(8) capturing both CACmII and CmC traffic to/from mac address "00:11:22:33:44:55", logging to a file, with lea_collector(8) running on cmii port 1234, cmc port 1235 on host lea\-collector.mydomain.com:
+.LP 
+tap \-x x \-y y \-z z \-c \-f "ether host 00:11:22:33:44:55" \-l 5 \-L /tmp/tap.log \-n 1234 \-m 1235 \-d lea\-collector.mydomain.com
+.SH "AUTHORS"
+.LP 
+Manish Karir <mkarir@merit.edu>
+.br 
+Jesse Norell <jesse@kci.net>
+.SH "SEE ALSO"
+.LP 
+tap.conf(5),
+controller(8), collector(8), lea_collector(8)
+.LP 
+http://www.opencalea.org/
+.SH "STANDARDS"
+.LP 
+OpenCALEA conforms to the following standards, which are intended to provide "safe harbor" as per Section 107 of CALEA, Public Law 103\-414.
+.LP 
+ATIS\-1000013.2007,
+Lawfully Authorized Electronic Surveillance (LAES) for Internet Access and Services.
+.LP 
+ATIS\-PP\-1000678.2006,
+Lawfully Authorized Electronic Surveillance (LEAS) for Voice over
+Packet Technologies in Wireline Telecommunications Networks, Version 2.
+.SH "BUGS"
+.LP 
+Please report all bugs to the OpenCALEA mailing list at:
+.IP 
+<opencalea@merit.edu>

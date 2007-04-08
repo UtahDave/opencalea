@@ -1,0 +1,11 @@
+OpenCALEA df_collector TODO
+
+-- define an interface to send CmII and CmC events to,
+potentially using xml so 3rd party CmII/CmC agents are
+easier to create
+
+-- convert the CmII/CmC agent interface data to ASN.1/BER
+to send to lea_collector
+
+-- accept CmII (and CmC?) on tcp socket
+

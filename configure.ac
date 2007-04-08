@@ -25,6 +25,6 @@ AC_SUBST(PCAP_LIBS)
 AC_CHECK_LIB(m, pow, MATH_LIBS="-lm", AC_MSG_ERROR([libm not found]))
 AC_SUBST(MATH_LIBS)
 
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile man/Makefile])
 AC_OUTPUT
 

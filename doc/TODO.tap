@@ -1,0 +1,11 @@
+OpenCALEA tap TODO
+
+-- change to use df_collector interface
+
+-- re-impliment always dropping root privs once some install
+documentation covers that
+
+-- remove "-f" flag, and use all remaining commandline args
+(after getopt) as the filter
+
+

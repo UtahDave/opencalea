@@ -1,0 +1,14 @@
+OpenCALEA TODO
+
+-- create man pages
+
+-- implement config files, including some variables like:
+
+[LEA_COLLECTOR]
+capturefile_basedir  =  /var/lib/opencalea/{CaseID}/{IASP_ID}
+
+
+-- define interface to, and create df_collector
+
+-- implement ASN/BER between df_collector and lea_collector
+

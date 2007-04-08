@@ -1,0 +1,15 @@
+OpenCALEA collector TODO
+
+- rename to "cmd_collector" or something more self-descriptive
+
+- create a method to invoke other commands beside tap(8)
+  (or rename to "tap_collector", and make similar "collector"
+   programs for other CmII/CmC agents)
+
+- better command parsing
+
+- fix process monitoring (eg. if a tap(8) exits/dies, need
+  to catch that and clean up the process list)
+
+- implement authentication for controller!!
+
