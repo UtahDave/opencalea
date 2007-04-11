@@ -1,6 +1,8 @@
 OpenCALEA controller TODO
 
-- better command parsing
+-- better command parsing
 
-- implement authentication to collector!!
+-- implement authentication to collector!!
+
+-- tcp connection to controller
 

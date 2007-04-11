@@ -73,7 +73,7 @@ void usage ( void ) {
     printf ( "Usage: lea_collector -t cmii-capture-file " );
     printf ( "[-f cmc-capture-file] " );
     printf ( "[-u user] [-g group] " );
-    printf ( " [-m cmc-port] [-n cmii-port] [-x cooked-format]" );
+    printf ( " [-m cmc-port] [-n cmii-port] [-x]" );
     printf ( " [-v [...]] [-D debug-file]" );
     printf ( " [-l log-level ] [-L logfile]" );
     printf ( "\n" );
@@ -151,7 +151,7 @@ int main ( int argc, char *argv[] ) {
                     pdie ( "strdup" );
                 debug_5 ( "got opt %c: %s", i, optarg );
                 break; 
-            case 'x':   // cmii port 
+            case 'x':   // what is this?
                 cooked_format = 1;
                 break; 
             case 'v':   // debug ('d' was taken)
@@ -182,7 +182,7 @@ int main ( int argc, char *argv[] ) {
                 break;
             case 'h':   // help
                 usage();
-                exit (-1); 
+                exit ( 0 ); 
             default:
                 usage ();
                 exit ( 1 );
@@ -209,9 +209,8 @@ int main ( int argc, char *argv[] ) {
     }
 
     if ( cmii_capture_file == NULL ) {
-        error ( "cmii capture file not specified (need -f)." );
         usage();
-        exit(-1);
+        die ( "cmii capture file not specified (need -f)." );
     }
     if ( capture_file == NULL ) {
         log_2 ( "CmC capture file not specified, CmC collection disabled." );

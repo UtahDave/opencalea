@@ -55,7 +55,6 @@ extern void (*log_5)( char *, ... );
 
 void my_debug ( char *, ... );
 void my_log ( char *, ... );
-static void my_nulllog ( char *, ... );
 
 void error ( char *, ... );
 void die ( char *, ... );

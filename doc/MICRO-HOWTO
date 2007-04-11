@@ -15,6 +15,17 @@ BUILDING / INSTALLATION
   make install    #   optional
 
 
+RUNNING
+
+-- Start a lea_collector, say on localhost
+
+  lea_collector -t /tmp/cmii.txt
+
+-- Start a tap sending data to it
+
+  tap -x x -y y -z z -f "host 1.2.3.4"
+
+
 PROGRAMS
 
 lea_collector:

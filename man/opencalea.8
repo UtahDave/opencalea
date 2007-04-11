@@ -1,0 +1,137 @@
+.\" This is part of a set of commands and information released under the OpenCALEA Project.
+.\" http://www.opencalea.org/
+.\" 
+.\" OpenCalea is distributed under the terms of the BSD license:
+.\" 
+.\" /*
+.\" * Copyright (c) 2007, Merit Network, Inc.
+.\" * All rights reserved.
+.\" *
+.\" * Redistribution and use in source and binary forms, with or without
+.\" * modification, are permitted provided that the following conditions are met:
+.\" *
+.\" *     * Redistributions of source code must retain the above copyright
+.\" *       notice, this list of conditions and the following disclaimer.
+.\" *     * Redistributions in binary form must reproduce the above copyright
+.\" *       notice, this list of conditions and the following disclaimer in the
+.\" *       documentation and/or other materials provided with the distribution.
+.\" *     * Neither the name of Merit Network, Inc. nor the names of its
+.\" *       contributors may be used to endorse or promote products derived
+.\" *       from this software without specific prior written permission.
+.\" *
+.\" * THIS SOFTWARE IS PROVIDED BY MERIT NETWORK, INC. ``AS IS'' AND ANY
+.\" * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" * DISCLAIMED. IN NO EVENT SHALL MERIT NETWORK, INC. BE LIABLE FOR ANY
+.\" * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\" */
+.TH "OpenCALEA" "8" "svn-20070411" "The OpenCALEA Project" "OpenCALEA"
+.SH "NAME"
+.LP 
+opencalea \- OpenCALEA Overview
+.SH "DESCRIPTION"
+.LP 
+\fBOpenCALEA\fR is a project intiated by Merit Network Inc. whose goal is
+to develop simple OpenSource based tools and collect a body of information
+that can help the Internet Service Provider (ISP) community to meet their
+CALEA compliance needs.  \fBOpenCALEA\fR is additionally expanding with
+tools to facilitate CALEA requirements for Voice over Internet Protocol (VOIP)
+telephone service (currently sip).
+.LP 
+CALEA is the Communications Assistance for Law Enforcement Act,
+Public Law 103\-414, October 25, 1994.  It is "to make clear a
+telecommunications carrier's duty to cooperate in the interception of
+communications for law enforcement purposes" and has more recently been
+construed to place broadband internet providers under its regulations.
+.LP 
+Installing \fBOpenCALEA\fR will \fInot\fR in itsself make you CALEA
+compliant.  CALEA includes administrative, procedural and documentary
+requirements that can not be accomplished by simply executing a program.
+Using \fBOpenCALEA\fR as a component of your overall CALEA compliance
+requires proper implementation, with an understanding of both the network
+and services, and of the OpenCALEA tools, and often even modification to
+the physical network.
+.SH "SECURITY"
+.LP 
+In the extreme case, a fully configured \fBOpenCALEA\fR implementation would potentially allow easy access to any traffic on a given network, with delivery to any arbitrary destination; it's designed to be distributed and handle very large networks; and it, or rather CALEA compliance, comes with a deadline.  This is an obvious recipe for disaster.
+.LP 
+In the short term, the May 14 deadline for which to have minimal functionality to achieve CALEA compliance is driving OpenCALEA development.  There are many known problems and potential problems with current programs and designs; some will be addressed prior to the May 14 deadline, some will not.  Some can be alleviated through proper implementation (knowledgable installation practices); some will require fundamental redesign.  Please see the individual man pages of the \fBOpenCALEA\fR tools for specific known issues.
+.LP 
+It is up to each individual entity both to evaluate if CALEA applies to it, as well as to become compliant if so.  Each entity considering \fBOpenCALEA\fR as part of their CALEA compliance program must understand how it works and how it can be implemented in their network.  Upon implementation, keep in mind CALEA Sec. 105:
+.IP 
+A telecommunications carrier shall ensure that any interception of communications or access to call\-identifying information effected within its switching premises can be activated only in accordance with a court order or other lawful authorization and with the affirmative intervention of an individual officer or employee of the carrier acting in accordance with regulations prescribed by the Commission.
+.LP 
+Improper implementation of an \fBOpenCALEA\fR system will fail to be CALEA compliant.  Currently you must implement your own authentication and limit access to the \fBOpenCALEA\fR components.  Of particular note, currently \fIcollector\fR(8) does not in any way authenticate the \fIcontroller\fR(8) and uses udp for control messages; installing with unrestricted access from the public internet would be a blatent violation of CALEA Sec. 105.  Installed in a properly restricted environment, even in it's current form, \fBOpenCALEA\fR can be made compliant in this point.
+.LP 
+In the long term, expect security issues to be adaquately addressed.  Core security features will be built in.  Fundamental design can be reconsidered and changed.  Known security problems will be addressed.  Security discussion and code contributions are both quite welcome.
+.SH "FILES"
+.LP 
+
+    \fBNote: config files are not yet used\fR
+.TP 
+\fI/etc/opencalea/opencalea.conf\fP
+OpenCALEA shared settings
+.TP 
+\fI/etc/opencalea/tap.conf\fP
+\fItap\fR(8) specific configuration
+.TP 
+\fI/etc/opencalea/lea_collector.conf\fP
+\fIlea_collector\fR(8) specific configuration
+.TP 
+\fI/etc/opencalea/controller.conf\fP
+\fIcontroller\fR(8) specific configuration
+.TP 
+\fI/etc/opencalea/collector.conf\fP
+\fIcollector\fR(8) specific configuration
+.TP 
+\fI/etc/opencalea/df_collector.conf\fP
+\fIdf_collector\fR(8) specific configuration
+.SH "AUTHORS"
+.LP 
+Manish Karir <mkarir@merit.edu>
+.br 
+Norman Brandinger <norm@goes.com>
+.br 
+Jesse Norell <jesse@kci.net>
+.SH "SEE ALSO"
+.LP 
+\fIcontroller\fR(8), \fIcollector\fR(8), \fIdf_collector\fR(8),
+\fIlea_collector\fR(8), \fItap\fR(8)
+.LP 
+\fIopencalea.conf\fR(5), \fIcontroller.conf\fR(5), \fIcollector.conf\fR(5),
+\fIdf_collector.conf\fR(5), \fIlea_collector.conf\fR(5), \fItap.conf\fR(5)
+.LP 
+http://www.opencalea.org/
+.SH "BUGS"
+.LP 
+Please report all bugs to the OpenCALEA mailing list at:
+.IP 
+<opencalea@merit.edu>
+.SH "CALEA INFO"
+.LP 
+There is a lot more info to be found reguarding CALEA searching the Internet,
+but here are some useful links.
+.TP 
+http://www.fcc.gov/calea/
+FCC CALEA website.
+.TP 
+http://www.askcalea.com/
+FBI sponsored CALEA information website.
+.TP 
+http://www.baller.com/calea.html
+Provides "potentially affected parties guidance on the history and purposes of CALEA, the entities that it covers, the obligations that it imposes, and the legal and technical options available to them."
+.SH "STANDARDS"
+.LP 
+OpenCALEA conforms to the following standards, which are intended to provide "safe harbor" as per Section 107 of \fICALEA, Public Law 103\-414\fR.
+.LP 
+\fIATIS\-1000013.2007,
+Lawfully Authorized Electronic Surveillance (LAES) for Internet Access and Services.\fR
+.LP 
+\fIATIS\-PP\-1000678.2006,
+Lawfully Authorized Electronic Surveillance (LAES) for Voice over
+Packet Technologies in Wireline Telecommunications Networks, Version 2.\fR

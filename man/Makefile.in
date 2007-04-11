@@ -121,7 +121,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-man_MANS = tap.8
+man_MANS = tap.8 opencalea.8 lea_collector.8
 all: all-am
 
 .SUFFIXES:
