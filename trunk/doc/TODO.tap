@@ -8,4 +8,7 @@ documentation covers that
 -- remove "-f" flag, and use all remaining commandline args
 (after getopt) as the filter
 
+-- target design for running as root and changing uid asap
+(though support running as a user with appropriate capabilities).
+ultimately collector should run as non-root, with tap setuid.
 

@@ -1,6 +1,7 @@
 OpenCALEA TODO
 
--- create man pages
+GENERAL
+------
 
 -- implement config files, including some variables like:
 
@@ -11,4 +12,15 @@ capturefile_basedir  =  /var/lib/opencalea/{CaseID}/{IASP_ID}
 -- define interface to, and create df_collector
 
 -- implement ASN/BER between df_collector and lea_collector
+
+-- change default port numbers to something not reserved
+
+
+DOCUMENTATION
+-------------
+
+-- create man pages
+
+-- create some security pointers/info
+        (currently going in man pages)
 

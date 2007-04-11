@@ -140,6 +140,7 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header,
 void usage ( void ) {
     printf ( "Usage: tap -x content-id -y case-id" );
     printf ( " -z iap-system-id [-i interface]  [-d destination ] [-c]" );
+    printf ( "[-u user] [-g group] " );
     printf ( " [-m cmc-port] [-n cmii-port]" );
     printf ( " [-v [...]] [-D debug-file]" );
     printf ( " [-l log-level ] [-L logfile]" );
@@ -266,7 +267,7 @@ int main( int argc, char *argv[] ) {
             case 'h':   // help
                 debug_5 ( "got opt %c", i );
                 print_help();
-                exit (-1); 
+                exit ( 0 ); 
             default:
                 debug_5 ( "got opt %c", i );
                 usage ();
@@ -275,19 +276,16 @@ int main( int argc, char *argv[] ) {
     }
 
     if ( strcmp ( contentID, "\0" )  == 0 ) {
-        error ( "Error: contentID must be specified" );
         usage ();
-        exit ( -1 );
+        die ( "Error: contentID must be specified" );
     }
     if ( strcmp ( caseID, "\0" )  == 0 ) {
-        error ( "Error: caseID must be specified" );
         usage ();
-        exit ( -1 );
+        die ( "Error: caseID must be specified" );
     }
     if ( strcmp ( iapID, "\0" )  == 0 ) {
-        error ( "Error: iapID must be specified" );
         usage ();
-        exit ( -1 );
+        die ( "Error: iapID must be specified" );
     }
     if ( interface == NULL ) {
         debug_4 ( "looking up pcap capable device" );

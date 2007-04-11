@@ -30,72 +30,53 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.TH "tap" "8" "svn-20070411" "The OpenCALEA Project" "OpenCALEA"
+.TH "lea_collector" "8" "svn-20070411" "The OpenCALEA Project" "OpenCALEA"
 .SH "NAME"
 .LP 
-tap \- OpenCALEA network tap
+lea_collector \- OpenCALEA Law Enforcement Agency (LEA) Collection Function (CF)
 .SH "SYNTAX"
 .LP 
-\fBtap\fR
-\fB\-x\fR \fIcontent\-id\fR
-\fB\-y\fR \fIcase\-id\fR
-\fB\-z\fR \fIiap\-system\-id\fR
+\fBlea_collector\fR
+\fB\-t\fR \fIcmii\-capture\-file\fR
+[\fB\-f\fR \fIcmc\-capture\-file\fR]
 [\fB\-i\fR \fIinterface\fR]
-[\fB\-d\fR \fIdestination\fR]
-[\fB\-c\fR]
 [\fB\-u\fR \fIuser\fR]
 [\fB\-g\fR \fIgroup\fR]
 [\fB\-m\fR \fIcmc\-port\fR]
 [\fB\-n\fR \fIcmii\-port\fR]
+[\fB\-x\fR]
 [\fB\-v\fR [\fI...\fR]]
 [\fB\-D\fR \fIdebug\-file\fR]
 [\fB\-l\fR \fIlog\-level\fR]
 [\fB\-L\fR \fIlogfile\fR]
-[\fB\-f\fR \fIcapture\-filter\fR]
 .SH "DESCRIPTION"
 .LP 
-This program is a network tap (packet sniffer) from the OpenCALEA project.  It can be invoked to collect CACmII (Content Associated Communications Identifying Information) and CmC (Communication Content) for an intercept subject, which is sent to a running \fBlea_collector\fR(8) program somewhere in the network.  \fBtap\fR(8) can be invoked by itself or started via the \fBcontroller\fR(8) program.
+This program is a LEA (Law Enforcement Agency) CF (Collection Function) from the OpenCALEA project.  It currently only accepts data from one or more \fItap\fR(8) programs, outputs a plaintext \fIcmii\-capture\-file\fR and optionally also a \fIcmc\-capture\-file\fR in pcap format.
 .LP 
-\fBtap\fR(8) is planned to talk with \fBdf_collector\fR(8) rather than directly to \fBlea_collector\fR(8), but will otherwise remain largely the same.
+\fBlea_collector\fR(8) is planned to undergo substantial redesign with the implementation of \fBdf_collector\fR(8).
 .SH "OPTIONS"
 .LP 
 
 .TP 
-\fB\-x\fR \fIcontent\-id\fR
-Specifies the Content ID; placed in CmII and CmC messages.
+\fB\-t\fR \fIcmii\-capture\-file\fR
+Specify the file to write CmII data to (plaintext).
 .br 
-Default: none, must be specified.
+Default: none.
 
 .TP 
-\fB\-y\fR \fIcase\-id\fR
-Specifies the Case ID; placed in CmII and CmC messages.
+\fB\-f\fR \fIcmc\-capture\-file\fR
+Specify file to save CmC data to (pcap format).
+\fBlea_collector\fR will not listen on the
+\fIcmc\-port\fR if you do not use this option.
 .br 
-Default: none, must be specified.
+Default: none.
 
 .TP 
-\fB\-z\fR \fIiap\-system\-id\fR
-Specifies the IAP System ID for this system; placed in CmII and CmC messages.
+\fB\-b\fR \fIbind\-addr\fR
+Specifies the ip address to bind to.
+\fBNot implemented yet.\fR
 .br 
-Default: \fBIAPSystemID\fR from config file.
-
-.TP 
-\fB\-i\fR \fIinterface\fR
-Specifies the network \fIinterface\fR to capture on.
-.br 
-Default: system dependent.
-
-.TP 
-\fB\-d\fR \fIdestination\fR
-Specifies the destination host to send CmII and CmC messages to.
-This host should be running \fIlea_collector\fR(8).
-.br 
-Default: localhost (127.0.0.1).
-
-.TP 
-\fB\-c\fR
-Specifies to capture/send CmC (packet contents) as well as CACmII (header info).
-.br 
-Default: off.
+Default: \fBBind_Addr\fR from config file or any (0.0.0.0)
 
 .TP 
 \fB\-u\fR \fIuser\fR
@@ -111,7 +92,8 @@ Default: \fBGroup\fR from config file or \fBcalea\fR.
 
 .TP 
 \fB\-m\fR \fIcmc\-port\fR
-Specifies the \fIport\fR on \fIdestination\fR above to send CmC data to.
+Specifies the \fIport\fR to listen on for CmC data.
+Requires \fB\-f\fR to be specified.
 .br 
 Default: \fBCmC_Port\fR from config file or \fB6666\fR (this will change).
 
@@ -120,6 +102,12 @@ Default: \fBCmC_Port\fR from config file or \fB6666\fR (this will change).
 Specifies the \fIport\fR on \fIdestination\fR above to send CmII data to.
 .br 
 Default: \fBCmII_Port\fR from config file or \fB6667\fR (this will change).
+
+.TP 
+\fB\-x\fR
+Enable cooked format.  A description of that would be great.
+.br 
+Default: disabled.
 
 .TP 
 \fB\-v\fR [\fI...\fR]
@@ -148,12 +136,6 @@ Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a \fIfilename\fR.
 .br 
 Default: \fBsyslog\fR.
 
-.TP 
-\fB\-f\fR \fIcapture\-filter\fR
-Specify packet capture filter in libpcap syntax.
-See \fItcpdump\fR(8) man page for syntax.
-.br 
-Default: none.
 .SH "FILES"
 .LP 
     \fBNote: config files are not yet used\fR
@@ -162,35 +144,33 @@ Default: none.
 \fI/etc/opencalea/opencalea.conf\fP
 OpenCALEA shared settings
 .TP 
-\fI/etc/opencalea/tap.conf\fP
-\fItap\fR(8) specific configuration
+\fI/etc/opencalea/lea_collector.conf\fP
+\fIlea_collector\fR(8) specific configuration
 .SH "EXAMPLES"
 .LP 
-To run \fItap\fR(8) with the minimum of \fIcontent\-id\fR, \fIcase\-id\fR and \fIiap\-system\-id\fR and intercepting ip address 123.45.67.89, with \fIlea_collector\fR(8) running on 192.168.0.20:
+To run \fBlea_collector\fR(8) saving CmII data to /tmp/output.txt:
 .LP 
-\fBtap\fR
-\fB\-x\fR "Content ID" \fB\-y\fR Case\-ID \fB\-z\fR IAP_System_ID
-\fB\-d\fR 192.168.0.20 \fB\-f\fR "host 123.45.67.89"
+\fBlea_collector\fR
+\fB\-t\fR /tmp/output.txt
 .LP 
-To run \fItap\fR(8) capturing all data on the "eth2" \fIinterface\fR, \fIdebug\fRging to standard out, with \fIlea_collector\fR(8) running on localhost:
+To run \fBlea_collector\fR(8) as \fIuser\fR nobody and \fIgroup\fR nogroup, saving CmII data to /tmp/output.txt with \fIdebug\fRging to standard out:
 .LP 
-\fBtap\fR
-\fB\-x\fR x \fB\-y\fR y \fB\-z\fR z 
-\fB\-i\fR eth2 \fB\-vvv \-D\fR stdout
-.IP 
-or
+\fBlea_collector\fR
+\fB\-t\fR /tmp/output.txt
+\fB\-u\fR nobody
+\fB\-g\fR nogroup
+\fB\-D\fR stdout
 .LP 
-\fBtap\fR
-\fB\-x\fR x \fB\-y\fR y \fB\-z\fR z 
-\fB\-i\fR eth2 \fB\-vvv \-D\fR stdout \fB\-d\fR localhost\fR
+To run \fBlea_collector\fR(8) saving CmII data to cmii.txt, CmC data to cmc.pcap, with \fIcmii port\fR 1234, \fIcmc port\fR 1235, and logging to a file:
 .LP 
-To run \fItap\fR(8) capturing both CACmII and CmC traffic to/from mac address "00:11:22:33:44:55", \fIlog\fRging to a file, with \fIlea_collector\fR(8) running on \fIcmii port\fR 1234, \fIcmc port\fR 1235 on host lea\-collector.mydomain.com:
-.LP 
-\fBtap\fR
-\fB\-x\fR x \fB\-y\fR y \fB\-z\fR z
-\fB\-c\fR \fB\-f\fR "ether host 00:11:22:33:44:55"
-\fB\-l\fR 5 \fB\-L\fR /tmp/tap.log
-\fB\-n\fR 1234 \fB\-m\fR 1235 \fB\-d\fR lea\-collector.mydomain.com
+\fBlea_collector\fR
+\fB\-t\fR cmii.txt
+\fB\-f\fR cmc.pcap
+\fB\-m\fR 1235
+\fB\-n\fR 1234
+\fB\-D\fR stdout
+\fB\-l\fR 5
+\fB\-L\fR /tmp/lea_collector.log
 .SH "AUTHORS"
 .LP 
 Manish Karir <mkarir@merit.edu>
@@ -201,22 +181,26 @@ Jesse Norell <jesse@kci.net>
 \fIcontroller\fR(8), \fIcollector\fR(8), \fIlea_collector\fR(8),
 \fIopencalea\fR(8)
 .LP 
-\fItap.conf\fR(5), \fIopencalea.conf\fR(5)
+\fIlea_collector.conf\fR(5), \fIopencalea.conf\fR(5)
 .LP 
 http://www.opencalea.org/
 .SH "STANDARDS"
 .LP 
-OpenCALEA conforms to the following standards, which are intended to provide "safe harbor" as per Section 107 of \fICALEA, Public Law 103\-414\fR.
+OpenCALEA conforms to the following standards, which are intended to provide "safe harbor" as per Section 107 of CALEA, Public Law 103\-414.
 .LP 
-\fIATIS\-1000013.2007,
-Lawfully Authorized Electronic Surveillance (LAES) for Internet Access and Services.\fR
+ATIS\-1000013.2007,
+Lawfully Authorized Electronic Surveillance (LAES) for Internet Access and Services.
 .LP 
-\fIATIS\-PP\-1000678.2006,
+ATIS\-PP\-1000678.2006,
 Lawfully Authorized Electronic Surveillance (LAES) for Voice over
-Packet Technologies in Wireline Telecommunications Networks, Version 2.\fR
+Packet Technologies in Wireline Telecommunications Networks, Version 2.
 .SH "SECURITY"
 .LP 
-\fItap\fR(8) is effectively a packet sniffer designed to ship captured traffic to an arbitrary location; ie. a prime target for misuse.  It needs to be run either by root or a user with appropriate (OS specific) capabilities/setup to access bpf or open raw devices.  Please use \-u and \-g to change the user/group id once started.
+\fBlea_collector\fR(8) currently has no authentication to or from its \fBtap\fR(8) clients, no encryption of the data sent, and only supports udp transport.  This leaves it wide open to packet spoofing and eavesdropping if on a public network.  A vpn link between the \fBlea_collector\fR and the OpenCALEA collection network would currently be a big step in the right direction.
+.LP 
+With the implementation of \fBdf_collector\fR(8), there will be a single endpoint between the DF and the CF, and the capabilities of \fBlea_collector\fR(8) will be expanded to the full set needed as a CF.  This brings new possibilities for improvement, as well as new security issues to address.
+.LP 
+\fBlea_collector\fR(8) can, and should, be run as a non\-root \fIuser\fR.
 .SH "BUGS"
 .LP 
 Please report all bugs to the OpenCALEA mailing list at:
