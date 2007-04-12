@@ -207,7 +207,7 @@ ASN_MODULE_SOURCES+=per_decoder.c
 ASN_MODULE_HEADERS+=per_encoder.h
 ASN_MODULE_SOURCES+=per_encoder.c
 
-ASN_MODULEdir = /usr/local/include/T1.678/VoP
+ASN_MODULEdir = $(pkgincludedir)/T1.678/VoP
 
 lib_LTLIBRARIES=libvop.la
 libvop_la_SOURCES=$(ASN_MODULE_SOURCES) $(ASN_MODULE_HEADERS)

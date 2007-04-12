@@ -157,7 +157,7 @@ ASN_MODULE_SOURCES+=per_decoder.c
 ASN_MODULE_HEADERS+=per_encoder.h
 ASN_MODULE_SOURCES+=per_encoder.c
 
-ASN_MODULEdir = /usr/local/include/T1.IAS/CmII
+ASN_MODULEdir = $(pkgincludedir)/T1.IAS/CmII
 
 lib_LTLIBRARIES=libias.la
 libias_la_SOURCES=$(ASN_MODULE_SOURCES) $(ASN_MODULE_HEADERS)
