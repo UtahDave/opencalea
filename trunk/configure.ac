@@ -2,9 +2,11 @@ dnl Process this file with autoconf to produce a configure script.
  	
 AC_PREREQ(2.59)
 	
-AC_INIT([open_calea], [0.52], [mkarir@merit.edu])
+AC_INIT([opencalea], [0.52], [mkarir@merit.edu])
 AC_CONFIG_SRCDIR(src/tap.c)
 AM_INIT_AUTOMAKE([1.9 foreign])
+
+AC_PROG_LIBTOOL
 
 AC_PROG_CC
 	
@@ -25,6 +27,7 @@ AC_SUBST(PCAP_LIBS)
 AC_CHECK_LIB(m, pow, MATH_LIBS="-lm", AC_MSG_ERROR([libm not found]))
 AC_SUBST(MATH_LIBS)
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile man/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile man/Makefile src/asn.1/T1.678/VoP/Makefile src/asn.1/T1.IAS/CmII/Makefile])
+
 AC_OUTPUT
 
