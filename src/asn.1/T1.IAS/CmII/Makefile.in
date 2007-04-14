@@ -51,7 +51,7 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(ASN_MODULEdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libias_la_LIBADD =
+libCmII_la_LIBADD =
 am__objects_1 = IAS-LAES-CmII-Abstract-Syntax-Module-OID.lo \
 	IasProtocol.lo IasMessage.lo Access-Attempt.lo \
 	Access-Accepted.lo Access-Failed.lo Access-Session-End.lo \
@@ -80,8 +80,8 @@ am__objects_1 = IAS-LAES-CmII-Abstract-Syntax-Module-OID.lo \
 	constraints.lo xer_support.lo xer_decoder.lo xer_encoder.lo \
 	per_support.lo per_decoder.lo per_encoder.lo
 am__objects_2 =
-am_libias_la_OBJECTS = $(am__objects_1) $(am__objects_2)
-libias_la_OBJECTS = $(am_libias_la_OBJECTS)
+am_libCmII_la_OBJECTS = $(am__objects_1) $(am__objects_2)
+libCmII_la_OBJECTS = $(am_libCmII_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -94,8 +94,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libias_la_SOURCES)
-DIST_SOURCES = $(libias_la_SOURCES)
+SOURCES = $(libCmII_la_SOURCES)
+DIST_SOURCES = $(libCmII_la_SOURCES)
 ASN_MODULEHEADERS_INSTALL = $(INSTALL_HEADER)
 HEADERS = $(ASN_MODULE_HEADERS)
 ETAGS = etags
@@ -260,8 +260,8 @@ ASN_MODULE_HEADERS = IAS-LAES-CmII-Abstract-Syntax-Module-OID.h \
 	constraints.h xer_support.h xer_decoder.h xer_encoder.h \
 	per_support.h per_decoder.h per_encoder.h
 ASN_MODULEdir = $(pkgincludedir)/T1.IAS/CmII
-lib_LTLIBRARIES = libias.la
-libias_la_SOURCES = $(ASN_MODULE_SOURCES) $(ASN_MODULE_HEADERS)
+lib_LTLIBRARIES = libCmII.la
+libCmII_la_SOURCES = $(ASN_MODULE_SOURCES) $(ASN_MODULE_HEADERS)
 all: all-am
 
 .SUFFIXES:
@@ -322,8 +322,8 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libias.la: $(libias_la_OBJECTS) $(libias_la_DEPENDENCIES) 
-	$(LINK) -rpath $(libdir) $(libias_la_OBJECTS) $(libias_la_LIBADD) $(LIBS)
+libCmII.la: $(libCmII_la_OBJECTS) $(libCmII_la_DEPENDENCIES) 
+	$(LINK) -rpath $(libdir) $(libCmII_la_OBJECTS) $(libCmII_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

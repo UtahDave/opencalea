@@ -23,6 +23,7 @@ ASN_MODULE_SOURCES=	\
 	Generic.c	\
 	SubjectSignal.c	\
 	TerminationAttempt.c	\
+	ConnectionTest.c	\
 	UUContent.c	\
 	AddressRegistrationType.c	\
 	AdmissionControlStatus.c	\
@@ -67,7 +68,65 @@ ASN_MODULE_SOURCES=	\
 	TimeStamp.c	\
 	TerminalDisplayInfo.c	\
 	TransitCarrierIdentity.c	\
-	RedirectedFromInformation.c
+	RedirectedFromInformation.c	\
+	H225RAS.c	\
+	OriginationProtocolSpecificParameterContents.c	\
+	ReleaseProtocolSpecificParameterContents.c	\
+	ServingSystemProtocolSpecificParameterContents.c	\
+	TerminationAttemptProtocolSpecificParameterContents.c	\
+	MediaAndAddressReportingProtocolSpecificParameterContents.c	\
+	BandwidthChangeInfo.c	\
+	BCTransactionType.c	\
+	Bandwidth.c	\
+	BandWidth.c	\
+	BandwidthDetails.c	\
+	H323CallModel.c	\
+	AliasAddress.c	\
+	AddressPattern.c	\
+	PartyNumber.c	\
+	PublicPartyNumber.c	\
+	PrivatePartyNumber.c	\
+	NumberDigits.c	\
+	PublicTypeOfNumber.c	\
+	PrivateTypeOfNumber.c	\
+	MobileUIM.c	\
+	TBCD-STRING.c	\
+	ANSI-41-UIM.c	\
+	GSM-UIM.c	\
+	ExtendedAliasAddress.c	\
+	TransportAddress.c	\
+	SupportedProtocols.c	\
+	H310Caps.c	\
+	H320Caps.c	\
+	H321Caps.c	\
+	H322Caps.c	\
+	H323Caps.c	\
+	H324Caps.c	\
+	VoiceCaps.c	\
+	T120OnlyCaps.c	\
+	NonStandardProtocol.c	\
+	T38FaxAnnexbOnlyCaps.c	\
+	CallType.c	\
+	RasUsageInformation.c	\
+	TransportChannelInfo.c	\
+	PresentationIndicator.c	\
+	ScreeningIndicator.c	\
+	H221NonStandard.c	\
+	TunnelledProtocol.c	\
+	TunnelledProtocolAlternateIdentifier.c	\
+	NonStandardParameter.c	\
+	NonStandardIdentifier.c	\
+	DataRate.c	\
+	CallLinkage.c	\
+	SupportedPrefix.c	\
+	DataProtocolCapability.c	\
+	CompressionType.c	\
+	V42bis.c	\
+	T38FaxProfile.c	\
+	T38FaxRateManagement.c	\
+	T38FaxUdpOptions.c	\
+	T38FaxTcpOptions.c	\
+	GloballyUniqueID.c
 
 ASN_MODULE_HEADERS=	\
 	T1S1-LAES-VoP-Abstract-Syntax-Module-OID.h	\
@@ -94,6 +153,7 @@ ASN_MODULE_HEADERS=	\
 	Generic.h	\
 	SubjectSignal.h	\
 	TerminationAttempt.h	\
+	ConnectionTest.h	\
 	UUContent.h	\
 	AddressRegistrationType.h	\
 	AdmissionControlStatus.h	\
@@ -138,8 +198,68 @@ ASN_MODULE_HEADERS=	\
 	TimeStamp.h	\
 	TerminalDisplayInfo.h	\
 	TransitCarrierIdentity.h	\
-	RedirectedFromInformation.h
+	RedirectedFromInformation.h	\
+	H225RAS.h	\
+	OriginationProtocolSpecificParameterContents.h	\
+	ReleaseProtocolSpecificParameterContents.h	\
+	ServingSystemProtocolSpecificParameterContents.h	\
+	TerminationAttemptProtocolSpecificParameterContents.h	\
+	MediaAndAddressReportingProtocolSpecificParameterContents.h	\
+	BandwidthChangeInfo.h	\
+	BCTransactionType.h	\
+	Bandwidth.h	\
+	BandWidth.h	\
+	BandwidthDetails.h	\
+	H323CallModel.h	\
+	AliasAddress.h	\
+	AddressPattern.h	\
+	PartyNumber.h	\
+	PublicPartyNumber.h	\
+	PrivatePartyNumber.h	\
+	NumberDigits.h	\
+	PublicTypeOfNumber.h	\
+	PrivateTypeOfNumber.h	\
+	MobileUIM.h	\
+	TBCD-STRING.h	\
+	ANSI-41-UIM.h	\
+	GSM-UIM.h	\
+	ExtendedAliasAddress.h	\
+	TransportAddress.h	\
+	SupportedProtocols.h	\
+	H310Caps.h	\
+	H320Caps.h	\
+	H321Caps.h	\
+	H322Caps.h	\
+	H323Caps.h	\
+	H324Caps.h	\
+	VoiceCaps.h	\
+	T120OnlyCaps.h	\
+	NonStandardProtocol.h	\
+	T38FaxAnnexbOnlyCaps.h	\
+	CallType.h	\
+	RasUsageInformation.h	\
+	TransportChannelInfo.h	\
+	PresentationIndicator.h	\
+	ScreeningIndicator.h	\
+	H221NonStandard.h	\
+	TunnelledProtocol.h	\
+	TunnelledProtocolAlternateIdentifier.h	\
+	NonStandardParameter.h	\
+	NonStandardIdentifier.h	\
+	DataRate.h	\
+	CallLinkage.h	\
+	SupportedPrefix.h	\
+	DataProtocolCapability.h	\
+	CompressionType.h	\
+	V42bis.h	\
+	T38FaxProfile.h	\
+	T38FaxRateManagement.h	\
+	T38FaxUdpOptions.h	\
+	T38FaxTcpOptions.h	\
+	GloballyUniqueID.h
 
+ASN_MODULE_HEADERS+=BMPString.h
+ASN_MODULE_SOURCES+=BMPString.c
 ASN_MODULE_HEADERS+=UTF8String.h
 ASN_MODULE_HEADERS+=BOOLEAN.h
 ASN_MODULE_SOURCES+=BOOLEAN.c
@@ -147,6 +267,8 @@ ASN_MODULE_HEADERS+=INTEGER.h
 ASN_MODULE_HEADERS+=NativeEnumerated.h
 ASN_MODULE_HEADERS+=GeneralizedTime.h
 ASN_MODULE_SOURCES+=GeneralizedTime.c
+ASN_MODULE_HEADERS+=IA5String.h
+ASN_MODULE_SOURCES+=IA5String.c
 ASN_MODULE_SOURCES+=INTEGER.c
 ASN_MODULE_HEADERS+=NULL.h
 ASN_MODULE_SOURCES+=NULL.c
@@ -209,5 +331,5 @@ ASN_MODULE_SOURCES+=per_encoder.c
 
 ASN_MODULEdir = $(pkgincludedir)/T1.678/VoP
 
-lib_LTLIBRARIES=libvop.la
-libvop_la_SOURCES=$(ASN_MODULE_SOURCES) $(ASN_MODULE_HEADERS)
+lib_LTLIBRARIES=libVoP.la
+libVoP_la_SOURCES=$(ASN_MODULE_SOURCES) $(ASN_MODULE_HEADERS)
