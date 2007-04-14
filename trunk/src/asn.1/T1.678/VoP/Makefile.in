@@ -51,7 +51,7 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(ASN_MODULEdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libvop_la_LIBADD =
+libVoP_la_LIBADD =
 am__objects_1 = T1S1-LAES-VoP-Abstract-Syntax-Module-OID.lo \
 	LAESProtocol.lo EnhancedProtocol.lo LaesMessage.lo Answer.lo \
 	CCChange.lo CCClose.lo CCOpen.lo CCUnavailable.lo Change.lo \
@@ -59,16 +59,16 @@ am__objects_1 = T1S1-LAES-VoP-Abstract-Syntax-Module-OID.lo \
 	DialedDigitExtraction.lo DirectSignalReporting.lo \
 	MediaAndAddressReporting.lo NetworkSignal.lo Origination.lo \
 	Redirection.lo Release.lo ServingSystem.lo Generic.lo \
-	SubjectSignal.lo TerminationAttempt.lo UUContent.lo \
-	AddressRegistrationType.lo AdmissionControlStatus.lo \
-	CallIdentity.lo Cause.lo CCAddress.lo CCDeliveryFormat.lo \
-	ContentIdentifier.lo CorrelationIdentifier.lo \
-	DeliveryIdentifier.lo ForkedCallInformation.lo \
-	EncapsulatedSignalingMessage.lo H225CallSignaling.lo H245.lo \
-	H323CallTransfer.lo H323Media.lo H323MediaParameterType.lo \
-	IpAddress.lo IPvalue.lo Location.lo MediaInformation.lo \
-	ParameterFormat.lo PartyIdentity.lo PortNumber.lo \
-	ProtocolSpecificParameters.lo SipHeader.lo \
+	SubjectSignal.lo TerminationAttempt.lo ConnectionTest.lo \
+	UUContent.lo AddressRegistrationType.lo \
+	AdmissionControlStatus.lo CallIdentity.lo Cause.lo \
+	CCAddress.lo CCDeliveryFormat.lo ContentIdentifier.lo \
+	CorrelationIdentifier.lo DeliveryIdentifier.lo \
+	ForkedCallInformation.lo EncapsulatedSignalingMessage.lo \
+	H225CallSignaling.lo H245.lo H323CallTransfer.lo H323Media.lo \
+	H323MediaParameterType.lo IpAddress.lo IPvalue.lo Location.lo \
+	MediaInformation.lo ParameterFormat.lo PartyIdentity.lo \
+	PortNumber.lo ProtocolSpecificParameters.lo SipHeader.lo \
 	SurveillanceStatus.lo CurrentSurveillanceStatus.lo \
 	SurveillanceStatusEventType.lo FeatureManagement.lo \
 	FeatureManagementType.lo CCDeliveryHeaderModuleOID.lo \
@@ -76,19 +76,43 @@ am__objects_1 = T1S1-LAES-VoP-Abstract-Syntax-Module-OID.lo \
 	AlertingSignal.lo AudibleSignal.lo BearerCapability.lo \
 	CaseIdentity.lo CCCIdentity.lo IAPSystemIdentity.lo \
 	TimeStamp.lo TerminalDisplayInfo.lo TransitCarrierIdentity.lo \
-	RedirectedFromInformation.lo BOOLEAN.lo GeneralizedTime.lo \
-	INTEGER.lo NULL.lo NativeEnumerated.lo NativeInteger.lo \
-	OBJECT_IDENTIFIER.lo UTF8String.lo VisibleString.lo \
-	asn_SEQUENCE_OF.lo asn_SET_OF.lo constr_CHOICE.lo \
-	constr_SEQUENCE.lo constr_SEQUENCE_OF.lo constr_SET.lo \
-	constr_SET_OF.lo OCTET_STRING.lo BIT_STRING.lo \
-	asn_codecs_prim.lo ber_tlv_length.lo ber_tlv_tag.lo \
-	ber_decoder.lo der_encoder.lo constr_TYPE.lo constraints.lo \
-	xer_support.lo xer_decoder.lo xer_encoder.lo per_support.lo \
-	per_decoder.lo per_encoder.lo
+	RedirectedFromInformation.lo H225RAS.lo \
+	OriginationProtocolSpecificParameterContents.lo \
+	ReleaseProtocolSpecificParameterContents.lo \
+	ServingSystemProtocolSpecificParameterContents.lo \
+	TerminationAttemptProtocolSpecificParameterContents.lo \
+	MediaAndAddressReportingProtocolSpecificParameterContents.lo \
+	BandwidthChangeInfo.lo BCTransactionType.lo Bandwidth.lo \
+	BandWidth.lo BandwidthDetails.lo H323CallModel.lo \
+	AliasAddress.lo AddressPattern.lo PartyNumber.lo \
+	PublicPartyNumber.lo PrivatePartyNumber.lo NumberDigits.lo \
+	PublicTypeOfNumber.lo PrivateTypeOfNumber.lo MobileUIM.lo \
+	TBCD-STRING.lo ANSI-41-UIM.lo GSM-UIM.lo \
+	ExtendedAliasAddress.lo TransportAddress.lo \
+	SupportedProtocols.lo H310Caps.lo H320Caps.lo H321Caps.lo \
+	H322Caps.lo H323Caps.lo H324Caps.lo VoiceCaps.lo \
+	T120OnlyCaps.lo NonStandardProtocol.lo T38FaxAnnexbOnlyCaps.lo \
+	CallType.lo RasUsageInformation.lo TransportChannelInfo.lo \
+	PresentationIndicator.lo ScreeningIndicator.lo \
+	H221NonStandard.lo TunnelledProtocol.lo \
+	TunnelledProtocolAlternateIdentifier.lo \
+	NonStandardParameter.lo NonStandardIdentifier.lo DataRate.lo \
+	CallLinkage.lo SupportedPrefix.lo DataProtocolCapability.lo \
+	CompressionType.lo V42bis.lo T38FaxProfile.lo \
+	T38FaxRateManagement.lo T38FaxUdpOptions.lo \
+	T38FaxTcpOptions.lo GloballyUniqueID.lo BMPString.lo \
+	BOOLEAN.lo GeneralizedTime.lo IA5String.lo INTEGER.lo NULL.lo \
+	NativeEnumerated.lo NativeInteger.lo OBJECT_IDENTIFIER.lo \
+	UTF8String.lo VisibleString.lo asn_SEQUENCE_OF.lo \
+	asn_SET_OF.lo constr_CHOICE.lo constr_SEQUENCE.lo \
+	constr_SEQUENCE_OF.lo constr_SET.lo constr_SET_OF.lo \
+	OCTET_STRING.lo BIT_STRING.lo asn_codecs_prim.lo \
+	ber_tlv_length.lo ber_tlv_tag.lo ber_decoder.lo der_encoder.lo \
+	constr_TYPE.lo constraints.lo xer_support.lo xer_decoder.lo \
+	xer_encoder.lo per_support.lo per_decoder.lo per_encoder.lo
 am__objects_2 =
-am_libvop_la_OBJECTS = $(am__objects_1) $(am__objects_2)
-libvop_la_OBJECTS = $(am_libvop_la_OBJECTS)
+am_libVoP_la_OBJECTS = $(am__objects_1) $(am__objects_2)
+libVoP_la_OBJECTS = $(am_libVoP_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -101,8 +125,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libvop_la_SOURCES)
-DIST_SOURCES = $(libvop_la_SOURCES)
+SOURCES = $(libVoP_la_SOURCES)
+DIST_SOURCES = $(libVoP_la_SOURCES)
 ASN_MODULEHEADERS_INSTALL = $(INSTALL_HEADER)
 HEADERS = $(ASN_MODULE_HEADERS)
 ETAGS = etags
@@ -222,8 +246,8 @@ ASN_MODULE_SOURCES = T1S1-LAES-VoP-Abstract-Syntax-Module-OID.c \
 	DialedDigitExtraction.c DirectSignalReporting.c \
 	MediaAndAddressReporting.c NetworkSignal.c Origination.c \
 	Redirection.c Release.c ServingSystem.c Generic.c \
-	SubjectSignal.c TerminationAttempt.c UUContent.c \
-	AddressRegistrationType.c AdmissionControlStatus.c \
+	SubjectSignal.c TerminationAttempt.c ConnectionTest.c \
+	UUContent.c AddressRegistrationType.c AdmissionControlStatus.c \
 	CallIdentity.c Cause.c CCAddress.c CCDeliveryFormat.c \
 	ContentIdentifier.c CorrelationIdentifier.c \
 	DeliveryIdentifier.c ForkedCallInformation.c \
@@ -238,8 +262,30 @@ ASN_MODULE_SOURCES = T1S1-LAES-VoP-Abstract-Syntax-Module-OID.c \
 	PacketDirection.c AlertingSignal.c AudibleSignal.c \
 	BearerCapability.c CaseIdentity.c CCCIdentity.c \
 	IAPSystemIdentity.c TimeStamp.c TerminalDisplayInfo.c \
-	TransitCarrierIdentity.c RedirectedFromInformation.c BOOLEAN.c \
-	GeneralizedTime.c INTEGER.c NULL.c NativeEnumerated.c \
+	TransitCarrierIdentity.c RedirectedFromInformation.c H225RAS.c \
+	OriginationProtocolSpecificParameterContents.c \
+	ReleaseProtocolSpecificParameterContents.c \
+	ServingSystemProtocolSpecificParameterContents.c \
+	TerminationAttemptProtocolSpecificParameterContents.c \
+	MediaAndAddressReportingProtocolSpecificParameterContents.c \
+	BandwidthChangeInfo.c BCTransactionType.c Bandwidth.c \
+	BandWidth.c BandwidthDetails.c H323CallModel.c AliasAddress.c \
+	AddressPattern.c PartyNumber.c PublicPartyNumber.c \
+	PrivatePartyNumber.c NumberDigits.c PublicTypeOfNumber.c \
+	PrivateTypeOfNumber.c MobileUIM.c TBCD-STRING.c ANSI-41-UIM.c \
+	GSM-UIM.c ExtendedAliasAddress.c TransportAddress.c \
+	SupportedProtocols.c H310Caps.c H320Caps.c H321Caps.c \
+	H322Caps.c H323Caps.c H324Caps.c VoiceCaps.c T120OnlyCaps.c \
+	NonStandardProtocol.c T38FaxAnnexbOnlyCaps.c CallType.c \
+	RasUsageInformation.c TransportChannelInfo.c \
+	PresentationIndicator.c ScreeningIndicator.c H221NonStandard.c \
+	TunnelledProtocol.c TunnelledProtocolAlternateIdentifier.c \
+	NonStandardParameter.c NonStandardIdentifier.c DataRate.c \
+	CallLinkage.c SupportedPrefix.c DataProtocolCapability.c \
+	CompressionType.c V42bis.c T38FaxProfile.c \
+	T38FaxRateManagement.c T38FaxUdpOptions.c T38FaxTcpOptions.c \
+	GloballyUniqueID.c BMPString.c BOOLEAN.c GeneralizedTime.c \
+	IA5String.c INTEGER.c NULL.c NativeEnumerated.c \
 	NativeInteger.c OBJECT_IDENTIFIER.c UTF8String.c \
 	VisibleString.c asn_SEQUENCE_OF.c asn_SET_OF.c constr_CHOICE.c \
 	constr_SEQUENCE.c constr_SEQUENCE_OF.c constr_SET.c \
@@ -254,8 +300,8 @@ ASN_MODULE_HEADERS = T1S1-LAES-VoP-Abstract-Syntax-Module-OID.h \
 	DialedDigitExtraction.h DirectSignalReporting.h \
 	MediaAndAddressReporting.h NetworkSignal.h Origination.h \
 	Redirection.h Release.h ServingSystem.h Generic.h \
-	SubjectSignal.h TerminationAttempt.h UUContent.h \
-	AddressRegistrationType.h AdmissionControlStatus.h \
+	SubjectSignal.h TerminationAttempt.h ConnectionTest.h \
+	UUContent.h AddressRegistrationType.h AdmissionControlStatus.h \
 	CallIdentity.h Cause.h CCAddress.h CCDeliveryFormat.h \
 	ContentIdentifier.h CorrelationIdentifier.h \
 	DeliveryIdentifier.h ForkedCallInformation.h \
@@ -270,10 +316,32 @@ ASN_MODULE_HEADERS = T1S1-LAES-VoP-Abstract-Syntax-Module-OID.h \
 	PacketDirection.h AlertingSignal.h AudibleSignal.h \
 	BearerCapability.h CaseIdentity.h CCCIdentity.h \
 	IAPSystemIdentity.h TimeStamp.h TerminalDisplayInfo.h \
-	TransitCarrierIdentity.h RedirectedFromInformation.h \
-	UTF8String.h BOOLEAN.h INTEGER.h NativeEnumerated.h \
-	GeneralizedTime.h NULL.h NativeInteger.h OBJECT_IDENTIFIER.h \
-	VisibleString.h asn_SEQUENCE_OF.h asn_SET_OF.h constr_CHOICE.h \
+	TransitCarrierIdentity.h RedirectedFromInformation.h H225RAS.h \
+	OriginationProtocolSpecificParameterContents.h \
+	ReleaseProtocolSpecificParameterContents.h \
+	ServingSystemProtocolSpecificParameterContents.h \
+	TerminationAttemptProtocolSpecificParameterContents.h \
+	MediaAndAddressReportingProtocolSpecificParameterContents.h \
+	BandwidthChangeInfo.h BCTransactionType.h Bandwidth.h \
+	BandWidth.h BandwidthDetails.h H323CallModel.h AliasAddress.h \
+	AddressPattern.h PartyNumber.h PublicPartyNumber.h \
+	PrivatePartyNumber.h NumberDigits.h PublicTypeOfNumber.h \
+	PrivateTypeOfNumber.h MobileUIM.h TBCD-STRING.h ANSI-41-UIM.h \
+	GSM-UIM.h ExtendedAliasAddress.h TransportAddress.h \
+	SupportedProtocols.h H310Caps.h H320Caps.h H321Caps.h \
+	H322Caps.h H323Caps.h H324Caps.h VoiceCaps.h T120OnlyCaps.h \
+	NonStandardProtocol.h T38FaxAnnexbOnlyCaps.h CallType.h \
+	RasUsageInformation.h TransportChannelInfo.h \
+	PresentationIndicator.h ScreeningIndicator.h H221NonStandard.h \
+	TunnelledProtocol.h TunnelledProtocolAlternateIdentifier.h \
+	NonStandardParameter.h NonStandardIdentifier.h DataRate.h \
+	CallLinkage.h SupportedPrefix.h DataProtocolCapability.h \
+	CompressionType.h V42bis.h T38FaxProfile.h \
+	T38FaxRateManagement.h T38FaxUdpOptions.h T38FaxTcpOptions.h \
+	GloballyUniqueID.h BMPString.h UTF8String.h BOOLEAN.h \
+	INTEGER.h NativeEnumerated.h GeneralizedTime.h IA5String.h \
+	NULL.h NativeInteger.h OBJECT_IDENTIFIER.h VisibleString.h \
+	asn_SEQUENCE_OF.h asn_SET_OF.h constr_CHOICE.h \
 	constr_SEQUENCE.h constr_SEQUENCE_OF.h constr_SET_OF.h \
 	constr_SET.h asn_application.h asn_system.h asn_codecs.h \
 	asn_internal.h OCTET_STRING.h BIT_STRING.h asn_codecs_prim.h \
@@ -281,8 +349,8 @@ ASN_MODULE_HEADERS = T1S1-LAES-VoP-Abstract-Syntax-Module-OID.h \
 	constr_TYPE.h constraints.h xer_support.h xer_decoder.h \
 	xer_encoder.h per_support.h per_decoder.h per_encoder.h
 ASN_MODULEdir = $(pkgincludedir)/T1.678/VoP
-lib_LTLIBRARIES = libvop.la
-libvop_la_SOURCES = $(ASN_MODULE_SOURCES) $(ASN_MODULE_HEADERS)
+lib_LTLIBRARIES = libVoP.la
+libVoP_la_SOURCES = $(ASN_MODULE_SOURCES) $(ASN_MODULE_HEADERS)
 all: all-am
 
 .SUFFIXES:
@@ -343,8 +411,8 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libvop.la: $(libvop_la_OBJECTS) $(libvop_la_DEPENDENCIES) 
-	$(LINK) -rpath $(libdir) $(libvop_la_OBJECTS) $(libvop_la_LIBADD) $(LIBS)
+libVoP.la: $(libVoP_la_OBJECTS) $(libVoP_la_DEPENDENCIES) 
+	$(LINK) -rpath $(libdir) $(libVoP_la_OBJECTS) $(libVoP_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -352,13 +420,22 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ANSI-41-UIM.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AddressPattern.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AddressRegistrationType.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AdmissionControlStatus.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AlertingSignal.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AliasAddress.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Answer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AudibleSignal.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BCTransactionType.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BIT_STRING.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BMPString.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BOOLEAN.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BandWidth.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Bandwidth.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BandwidthChangeInfo.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BandwidthDetails.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/BearerCapability.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CC-APDU.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CCAddress.Plo@am__quote@
@@ -371,30 +448,49 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CCOpen.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CCUnavailable.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CallIdentity.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CallLinkage.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CallType.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CaseIdentity.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Cause.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Change.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CompressionType.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ConfPartyChange.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Connection.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ConnectionBreak.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ConnectionTest.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ContentIdentifier.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CorrelationIdentifier.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CurrentSurveillanceStatus.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DataProtocolCapability.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DataRate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DeliveryIdentifier.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DialedDigitExtraction.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DirectSignalReporting.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/EncapsulatedSignalingMessage.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/EnhancedProtocol.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ExtendedAliasAddress.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FeatureManagement.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FeatureManagementType.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ForkedCallInformation.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GSM-UIM.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GeneralizedTime.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Generic.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GloballyUniqueID.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H221NonStandard.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H225CallSignaling.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H225RAS.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H245.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H310Caps.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H320Caps.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H321Caps.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H322Caps.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H323CallModel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H323CallTransfer.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H323Caps.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H323Media.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H323MediaParameterType.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/H324Caps.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/IA5String.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/IAPSystemIdentity.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/INTEGER.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/IPvalue.Plo@am__quote@
@@ -403,35 +499,68 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LaesMessage.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Location.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MediaAndAddressReporting.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MediaAndAddressReportingProtocolSpecificParameterContents.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MediaInformation.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MobileUIM.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NULL.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NativeEnumerated.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NativeInteger.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NetworkSignal.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NonStandardIdentifier.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NonStandardParameter.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NonStandardProtocol.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NumberDigits.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OBJECT_IDENTIFIER.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OCTET_STRING.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Origination.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/OriginationProtocolSpecificParameterContents.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PacketDirection.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ParameterFormat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PartyIdentity.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PartyNumber.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PortNumber.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PresentationIndicator.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrivatePartyNumber.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PrivateTypeOfNumber.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ProtocolSpecificParameters.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PublicPartyNumber.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PublicTypeOfNumber.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RasUsageInformation.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RedirectedFromInformation.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Redirection.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Release.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ReleaseProtocolSpecificParameterContents.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ScreeningIndicator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ServingSystem.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ServingSystemProtocolSpecificParameterContents.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SipHeader.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SubjectSignal.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SupportedPrefix.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SupportedProtocols.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SurveillanceStatus.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SurveillanceStatusEventType.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/T120OnlyCaps.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/T1S1-LAES-VoP-Abstract-Syntax-Module-OID.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/T38FaxAnnexbOnlyCaps.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/T38FaxProfile.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/T38FaxRateManagement.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/T38FaxTcpOptions.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/T38FaxUdpOptions.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TBCD-STRING.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TerminalDisplayInfo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TerminationAttempt.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TerminationAttemptProtocolSpecificParameterContents.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TimeStamp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TransitCarrierIdentity.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TransportAddress.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TransportChannelInfo.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TunnelledProtocol.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TunnelledProtocolAlternateIdentifier.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/UTF8String.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/UUContent.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/V42bis.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/VisibleString.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/VoiceCaps.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/asn_SEQUENCE_OF.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/asn_SET_OF.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/asn_codecs_prim.Plo@am__quote@

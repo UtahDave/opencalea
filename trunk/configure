@@ -20377,7 +20377,7 @@ fi
 
 
 
-ac_config_files="$ac_config_files Makefile src/Makefile doc/Makefile man/Makefile src/asn.1/T1.678/VoP/Makefile src/asn.1/T1.IAS/CmII/Makefile"
+ac_config_files="$ac_config_files Makefile src/Makefile doc/Makefile man/Makefile src/asn.1/T1.678/VoP/Makefile src/asn.1/T1.678/CCDeliveryHeader/Makefile src/asn.1/T1.IAS/CmII/Makefile src/asn.1/T1.IAS/CmCC/Makefile src/asn.1/T1.IAS/CmIIOptionalMessages/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -20992,7 +20992,10 @@ do
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "man/Makefile") CONFIG_FILES="$CONFIG_FILES man/Makefile" ;;
     "src/asn.1/T1.678/VoP/Makefile") CONFIG_FILES="$CONFIG_FILES src/asn.1/T1.678/VoP/Makefile" ;;
+    "src/asn.1/T1.678/CCDeliveryHeader/Makefile") CONFIG_FILES="$CONFIG_FILES src/asn.1/T1.678/CCDeliveryHeader/Makefile" ;;
     "src/asn.1/T1.IAS/CmII/Makefile") CONFIG_FILES="$CONFIG_FILES src/asn.1/T1.IAS/CmII/Makefile" ;;
+    "src/asn.1/T1.IAS/CmCC/Makefile") CONFIG_FILES="$CONFIG_FILES src/asn.1/T1.IAS/CmCC/Makefile" ;;
+    "src/asn.1/T1.IAS/CmIIOptionalMessages/Makefile") CONFIG_FILES="$CONFIG_FILES src/asn.1/T1.IAS/CmIIOptionalMessages/Makefile" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
