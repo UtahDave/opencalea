@@ -49,7 +49,7 @@ if(argc < 2) {
 //ret = ccopen(fp);
 //ret = ccchange(fp);
 //ret = ccunavailable(fp);
-//ret = subjectsignal(fp);
+ret = subjectsignal(fp);
 //ret = origination(fp);
 //ret = change(fp);
 //ret = redirection(fp);
@@ -64,7 +64,7 @@ if(argc < 2) {
 //ret = networksignal(fp);
 //ret = directsignalreporting(fp);
 //ret = mediaandaddressreporting(fp);
-ret = cc_apdu(fp);
+//ret = cc_apdu(fp);
 
 if (fp) 
   fclose(fp);
