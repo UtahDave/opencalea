@@ -89,7 +89,7 @@ Default: system dependent.
 Specifies the destination host to send CmII and CmC messages to.
 This host should be running \fIlea_collector\fR(8).
 .br 
-Default: localhost (127.0.0.1).
+Default: \fBlocalhost\fR (127.0.0.1).
 
 .TP 
 \fB\-c\fR
@@ -132,21 +132,21 @@ Default: \fBDebug_Level\fR from config file or off.
 Specifies where to debug to.
 Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a \fIfilename\fR.
 .br 
-Default: \fBsyslog\fR.
+Default: \fBDebug_Destination\fR from config file or \fBsyslog\fR.
 
 .TP 
 \fB\-l\fR \fIlog\-level\fR
 Specifies log level.
 \fIlog\-level\fR should be a numeric value from \fB1\fR (least) to \fB5\fR (most).
 .br 
-Default: \fBLog_Level\fR from config file or 1.
+Default: \fBLog_Level\fR from config file or \fB1\fR.
 
 .TP 
 \fB\-L\fR \fIlogfile\fR
 Specifies where to log to.
 Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a \fIfilename\fR.
 .br 
-Default: \fBsyslog\fR.
+Default: \fBLog_Destination\fR from config file or \fBsyslog\fR.
 
 .TP 
 \fB\-f\fR \fIcapture\-filter\fR
@@ -198,8 +198,7 @@ Manish Karir <mkarir@merit.edu>
 Jesse Norell <jesse@kci.net>
 .SH "SEE ALSO"
 .LP 
-\fIcontroller\fR(8), \fIcollector\fR(8), \fIlea_collector\fR(8),
-\fIopencalea\fR(8)
+\fIcontroller\fR(8), \fIcollector\fR(8), \fIdf_collector\fR(8), \fIlea_collector\fR(8), \fIopencalea\fR(8)
 .LP 
 \fItap.conf\fR(5), \fIopencalea.conf\fR(5)
 .LP 

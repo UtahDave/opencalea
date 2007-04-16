@@ -1,7 +1,5 @@
 OpenCALEA lea_collector TODO
 
--- implement -b bind-addr
-
 -- change to receive ASN/BER from df_collector once df_collector is created
 
 -- Save data to a default location based on CaseID, time, pid and optionally
