@@ -49,7 +49,7 @@ if(argc < 2) {
 //ret = ccopen(fp);
 //ret = ccchange(fp);
 //ret = ccunavailable(fp);
-ret = subjectsignal(fp);
+// ret = subjectsignal(fp);
 //ret = origination(fp);
 //ret = change(fp);
 //ret = redirection(fp);
@@ -62,7 +62,7 @@ ret = subjectsignal(fp);
 //ret = connectionbreak(fp);
 //ret = dialeddgtextrn(fp);
 //ret = networksignal(fp);
-//ret = directsignalreporting(fp);
+ret = directsignalreporting(fp);
 //ret = mediaandaddressreporting(fp);
 //ret = cc_apdu(fp);
 
