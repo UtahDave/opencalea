@@ -6,7 +6,7 @@ CFLAGS	+= -I. -I/usr/local/include/opencalea/T1.678/VoP
 LDFLAGS += -lVoP
 OBJS	 = main.o
 OBJS	+= routines.o
-OBJS	+= subjectsignal.o
+OBJS	+= directsignalreporting.o
 
 all: $(TARGET)
 

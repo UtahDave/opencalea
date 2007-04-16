@@ -31,33 +31,35 @@
 #include <time.h>
 #include "LAESProtocol.h"
 
-#define LAES_DIRECTSIGNALREPORTING(parm) (LAESProtocol->choice.enhancedProtocol.laesMessage.choice.directSignalReporting.parm)
+#define CALLOC(parm) (parm *)Calloc(sizeof(parm))
 
-/* This is a custom function which writes the encoded output into some FILE stream. */
-static int write_out(const void *buffer, size_t size, void *app_key) {
-FILE *out_fp = app_key;
-size_t wrote;
-wrote = fwrite(buffer, 1, size, out_fp);
-return (wrote == size) ? 0 : -1;
-}
+void *Calloc(size_t size);
 
 int directsignalreporting(FILE *fp) {
 
-  LAESProtocol_t *LAESProtocol;
+  LAESProtocol_t                 *LAESProtocol;
+  EnhancedProtocol_t             *enhancedProtocol;
+  ProtocolSpecificParameters_t	 *protocolSpecificParameters;
+  DirectSignalReporting_t        *directSignalReporting;
+  CorrelationIdentifier_t        *correlationIdentifier;
+  EncapsulatedSignalingMessage_t *encapsulatedSignalingMessage;
 
-  ProtocolSpecificParameters_t	*protocolSpecificParameters;
-  CorrelationIdentifier_t *correlationIdentifier;
+  struct ProtocolSpecificParameters__sip            *psp_sip;
+  struct ProtocolSpecificParameters__sip__sipHeader *psp_sipHeader;
+  struct ProtocolSpecificParameters__sip__sipBody   *psp_sipBody;
+
+  struct DirectSignalReporting__signalingMsg *signalingMsg;
 
   IpAddress_t *IPAddress1, *IPAddress2;
 
-  SipHeader_t *SipHeader, *SipBodyHeader;
+  SipHeader_t *SipHeader, *psp_sipBodyHeader;
   SipHeader_t *SipFromHeader;
   SipHeader_t *SipToHeader;
   SipHeader_t *SipViaHeader;
   SipHeader_t *SipContactHeader;
   SipHeader_t *SipHeaderArray[10];
 
-  A_SET_OF(SipHeader_t) *SipHeaders, *SipBodyHeaders;
+  A_SET_OF(SipHeader_t) *SipHeaders, *psp_sipBodyHeaders;
 
   struct ProtocolSpecificParameters__sip__sipBody *SipBody;
 
@@ -66,6 +68,11 @@ int directsignalreporting(FILE *fp) {
   char systemID[] = "DialedDigitExtraction SystemID";
 
   char *sip_data[] = {"1111","2222","3333","4444","5555","6666","7777","8888","9999","0000"};
+  char sip_header[] = "SIP HEADER";
+  char sip_bodyheader[] = "SIP BODY HEADER";
+  char sip_bodycontents[] = "SIP BODY CONTENTS";
+  char sigprot[] = "Encaps Sig Prot";
+  char sigmsg[] = "Encaps Sig Msg";
 
   int frac_value = 1234;
   int frac_digits = 4;
@@ -74,30 +81,27 @@ int directsignalreporting(FILE *fp) {
   int i;
 
   time_t rawtime;
-  struct tm *ptm;
+  struct tm *timestamp;
 
   asn_enc_rval_t ec;      /* Encoder return value  */
 
   time ( &rawtime );
-  ptm = gmtime ( &rawtime );
+  timestamp = gmtime ( &rawtime );
 
-  LAESProtocol = calloc(1, sizeof(LAESProtocol_t));
-  if(!LAESProtocol) {
-    perror("LAESProtocol calloc() failed");
-    exit(-1);
-  }
+  LAESProtocol                 = CALLOC(LAESProtocol_t);
+  enhancedProtocol             = CALLOC(EnhancedProtocol_t);
+  protocolSpecificParameters   = CALLOC(ProtocolSpecificParameters_t);
+  directSignalReporting        = CALLOC(DirectSignalReporting_t);
+  correlationIdentifier        = CALLOC(CorrelationIdentifier_t);
+  encapsulatedSignalingMessage = CALLOC(EncapsulatedSignalingMessage_t);
+  IPAddress1 		       = CALLOC(IpAddress_t);
+  IPAddress2 		       = CALLOC(IpAddress_t);
 
-  protocolSpecificParameters = calloc(1, sizeof(ProtocolSpecificParameters_t));
-  if(!protocolSpecificParameters) {
-    perror("protocolSpecificParameters calloc() failed");
-    exit(-1);
-  }
+  signalingMsg = CALLOC(struct DirectSignalReporting__signalingMsg);
 
-  correlationIdentifier = calloc(1, sizeof(CorrelationIdentifier_t));
-  if(!correlationIdentifier) {
-    perror("correlationIdentifier calloc() failed");
-    exit(-1);
-  }
+  psp_sip          = CALLOC(struct ProtocolSpecificParameters__sip);
+  psp_sipHeader    = CALLOC(struct ProtocolSpecificParameters__sip__sipHeader);
+  psp_sipBody      = CALLOC(struct ProtocolSpecificParameters__sip__sipBody);
 
   SipHeaders = calloc(1, sizeof(A_SET_OF(SipHeader_t)));
   if(!SipHeaders) {
@@ -105,9 +109,9 @@ int directsignalreporting(FILE *fp) {
     exit(-1);
   }
 
-  SipBodyHeaders = calloc(1, sizeof(A_SET_OF(SipHeader_t)));
-  if(!SipBodyHeaders) {
-    perror("SipBodyHeaders calloc() failed");
+  psp_sipBodyHeaders = calloc(1, sizeof(A_SET_OF(SipHeader_t)));
+  if(!psp_sipBodyHeaders) {
+    perror("psp_sipBodyHeaders calloc() failed");
     exit(-1);
   }
 
@@ -117,76 +121,68 @@ int directsignalreporting(FILE *fp) {
     exit(-1);
   }
 
-  IPAddress1 = calloc(1, sizeof(IpAddress_t));
-  IPAddress2 = calloc(1, sizeof(IpAddress_t));
-
+  LAESProtocol->enhancedProtocol = enhancedProtocol;
   LAESProtocol->present = LAESProtocol_PR_enhancedProtocol;
-  ret = OBJECT_IDENTIFIER_set_arcs(&LAESProtocol->choice.enhancedProtocol.protocolIdentifier, oid, sizeof(oid[0]), sizeof(oid) / sizeof(oid[0])); 
+
+  ret = OBJECT_IDENTIFIER_set_arcs(&enhancedProtocol->protocolIdentifier, oid, sizeof(oid[0]), sizeof(oid) / sizeof(oid[0]));
   assert(ret == 0);
 
-  /* Laes_Message */
-  LAESProtocol->choice.enhancedProtocol.laesMessage.present = LaesMessage_PR_directSignalReporting;
+  /* LAESMessage: DirectSignalReporting */
+  enhancedProtocol->laesMessage.present = LaesMessage_PR_directSignalReporting;
+  enhancedProtocol->laesMessage.directSignalReporting = directSignalReporting;
 
   /* caseId */
-  OCTET_STRING_fromString(&LAES_DIRECTSIGNALREPORTING(caseId), caseId);
+  OCTET_STRING_fromString(&directSignalReporting->caseId, caseId);
 
   /* iAPSystemId */
-  LAES_DIRECTSIGNALREPORTING(iAPSystemId)  = OCTET_STRING_new_fromBuf(&asn_DEF_OCTET_STRING, systemID, strlen(systemID));;
+  directSignalReporting->iAPSystemId  = OCTET_STRING_new_fromBuf(&asn_DEF_OCTET_STRING, systemID, strlen(systemID));;
 
   /* timestamp */
-  asn_time2GT_frac(&LAES_DIRECTSIGNALREPORTING(timestamp),ptm,frac_value, frac_digits, force_gmt);
+  asn_time2GT_frac(&directSignalReporting->timestamp,timestamp,frac_value, frac_digits, force_gmt);
 
   /* correlationID */
   OCTET_STRING_fromString(correlationIdentifier, "CorrelationID 1234");
-  memcpy(&LAES_DIRECTSIGNALREPORTING(correlationID), correlationIdentifier, sizeof(CorrelationIdentifier_t));
+  memcpy(&directSignalReporting->correlationID, correlationIdentifier, sizeof(CorrelationIdentifier_t));
 
   /* protocolSpecificParameters */
   protocolSpecificParameters->present = ProtocolSpecificParameters_PR_sip;
 
-  SipFromHeader = OCTET_STRING_new_fromBuf(&asn_DEF_UTF8String, "From", 4);
-  asn_set_add(SipHeaders, SipFromHeader);
+  /*------------------*/
+  /* encode sipHeader */
+  /*------------------*/
+  SipHeader = OCTET_STRING_new_fromBuf(&asn_DEF_UTF8String, sip_header, strlen(sip_header));
+  asn_set_add(SipHeaders, SipHeader);
+  asn_set_add(SipHeaders, SipHeader);
+  asn_set_add(SipHeaders, SipHeader);
 
-  SipToHeader = OCTET_STRING_new_fromBuf(&asn_DEF_UTF8String, "To", 2);
-  asn_set_add(SipHeaders, SipToHeader);
-  SipViaHeader = OCTET_STRING_new_fromBuf(&asn_DEF_UTF8String, "Via", 3);
-  asn_set_add(SipHeaders, SipViaHeader);
-  SipContactHeader = OCTET_STRING_new_fromBuf(&asn_DEF_UTF8String, "Contact", 7);
-  asn_set_add(SipHeaders, SipContactHeader);
+  memcpy(&psp_sipHeader->list, SipHeaders, sizeof(A_SET_OF(SipHeader_t)));
 
-  for (i=0; i<4; i++) {
-    SipHeaderArray[i] = OCTET_STRING_new_fromBuf(&asn_DEF_UTF8String, sip_data[i], strlen(sip_data[i]));
-    asn_set_add(SipHeaders, SipHeaderArray[i]);
-  }
+  psp_sip->sipHeader = psp_sipHeader;
 
-  protocolSpecificParameters->choice.sip.sipHeader = SipHeaders;
+  /*----------------------*/
+  /* encode sipBodyHeader */
+  /*----------------------*/
 
-  for (i=4; i<6; i++) {
-    SipHeaderArray[i] = OCTET_STRING_new_fromBuf(&asn_DEF_UTF8String, sip_data[i], strlen(sip_data[i]));
-    asn_set_add(SipBodyHeaders, SipHeaderArray[i]);
-  }
-  
-  memcpy(&SipBody->sipBodyHeader.list, SipBodyHeaders, sizeof(A_SET_OF(SipHeader_t)));
-  OCTET_STRING_fromString(&SipBody->sipBodyContents, "SIP BODY CONTENTS");
-  protocolSpecificParameters->choice.sip.sipBody = SipBody;
+  psp_sipBodyHeader = OCTET_STRING_new_fromBuf(&asn_DEF_UTF8String, sip_bodyheader, strlen(sip_bodyheader));
 
-  LAES_DIRECTSIGNALREPORTING(protocolSpecificParameters) = protocolSpecificParameters;
+  asn_set_add(psp_sipBodyHeaders, psp_sipBodyHeader);
+  asn_set_add(psp_sipBodyHeaders, psp_sipBodyHeader);
+  asn_set_add(psp_sipBodyHeaders, psp_sipBodyHeader);
 
-  /*------------------------------------------*/
-  /* BER encode the data if FILE fp is open   */
-  /*------------------------------------------*/
+  memcpy(&psp_sipBody->sipBodyHeader.list, psp_sipBodyHeaders, sizeof(A_SET_OF(SipHeader_t)));
+  OCTET_STRING_fromString(&psp_sipBody->sipBodyContents, "SIP BODY CONTENTS");
+  psp_sip->sipBody = psp_sipBody;
 
-  if (fp) {
-    ec = der_encode(&asn_DEF_LAESProtocol, LAESProtocol, write_out, fp);
-    if(ec.encoded == -1) {
-      fprintf(stderr, "Could not encode LAESProtocol (at %s)\n", ec.failed_type ? ec.failed_type->name : "unknown");
-      exit(65); /* better, EX_DATAERR */
-    } else {
-      fprintf(stderr, "Wrote DirectSignalReporting message\n");
-    }
-  }
+  protocolSpecificParameters->sip = psp_sip;
+  directSignalReporting->protocolSpecificParameters = protocolSpecificParameters;
 
-/* Also print the constructed LAESProtocol XER encoded (XML) */
-xer_fprint(stdout, &asn_DEF_LAESProtocol, LAESProtocol);
+  /* signalingMsg */
+  OCTET_STRING_fromString(&encapsulatedSignalingMessage->signalingProt, sigprot);
+  OCTET_STRING_fromString(&encapsulatedSignalingMessage->sigMsg, sigmsg);
 
-return 0;
+  asn_set_add(signalingMsg, encapsulatedSignalingMessage);
+  memcpy(&directSignalReporting->signalingMsg, signalingMsg, sizeof(struct DirectSignalReporting__signalingMsg));
+
+  encode(fp, LAESProtocol);
+  return 0;
 }
