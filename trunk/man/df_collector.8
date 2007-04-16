@@ -30,52 +30,39 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.TH "lea_collector" "8" "svn-20070416" "The OpenCALEA Project" "OpenCALEA"
+.TH "df_collector" "8" "conceptware-0.0.1" "The OpenCALEA Project" "OpenCALEA"
 .SH "NAME"
 .LP 
-lea_collector \- OpenCALEA Law Enforcement Agency (LEA) Collection Function (CF)
+df_collector \- OpenCALEA Delivery Function (DF)
 .SH "SYNTAX"
 .LP 
-\fBlea_collector\fR
-\fB\-t\fR \fIcmii\-capture\-file\fR
-[\fB\-f\fR \fIcmc\-capture\-file\fR]
-[\fB\-b\fR \fIbind\-addr\fR]
+\fBdf_collector\fR
+[\fB\-f\fR \fIconfig\-file\fR]
 [\fB\-u\fR \fIuser\fR]
 [\fB\-g\fR \fIgroup\fR]
-[\fB\-m\fR \fIcmc\-port\fR]
-[\fB\-n\fR \fIcmii\-port\fR]
-[\fB\-x\fR]
+[\fB\-b\fR \fIbind\-addr\fR]
+[\fB\-m\fR \fIdf\-cmc\-port\fR]
+[\fB\-n\fR \fIdf\-cmii\-port\fR]
+[\fB\-d\fR \fIdestination\fR]
+[\fB\-M\fR \fIcf\-cmc\-port\fR]
+[\fB\-N\fR \fIcf\-cmii\-port\fR]
+[\fB\-o\fR \fIcmii\-output\-format\fR]
 [\fB\-v\fR [\fI...\fR]]
 [\fB\-D\fR \fIdebug\-file\fR]
 [\fB\-l\fR \fIlog\-level\fR]
 [\fB\-L\fR \fIlogfile\fR]
+
 .SH "DESCRIPTION"
 .LP 
-This program is a LEA (Law Enforcement Agency) CF (Collection Function) from the OpenCALEA project.  It currently only accepts data from one or more \fItap\fR(8) programs, outputs a plaintext \fIcmii\-capture\-file\fR and optionally also a \fIcmc\-capture\-file\fR in pcap format.
-.LP 
-\fBlea_collector\fR(8) is planned to undergo substantial redesign with the implementation of \fBdf_collector\fR(8).
+This program is the DF (Delivery Function) from the OpenCALEA project.  It accepts data from one or more CmII or CmC agents and sends it to a CF (Collection Function), such as \fBlea_collector\fR(8).
 .SH "OPTIONS"
 .LP 
 
 .TP 
-\fB\-t\fR \fIcmii\-capture\-file\fR
-Specify the file to write CmII data to (plaintext).
+\fB\-f\fR \fIconfig\-file\fR
+Specifies an alternate \fIconfig\-file\fR.
 .br 
-Default: none.
-
-.TP 
-\fB\-f\fR \fIcmc\-capture\-file\fR
-Specify file to save CmC data to (pcap format).
-\fBlea_collector\fR will not listen on the
-\fIcmc\-port\fR if you do not use this option.
-.br 
-Default: none.
-
-.TP 
-\fB\-b\fR \fIbind\-addr\fR
-Specifies the ip address to bind to.
-.br 
-Default: \fBBind_Addr\fR from config file or 0.0.0.0 (any)
+Default: \fB/etc/opencalea/df_collector.conf\fR.
 
 .TP 
 \fB\-u\fR \fIuser\fR
@@ -90,23 +77,49 @@ Specifies the \fIgroup\fR to change to if run as root.
 Default: \fBGroup\fR from config file or \fBcalea\fR.
 
 .TP 
-\fB\-m\fR \fIcmc\-port\fR
-Specifies the \fIport\fR to listen on for CmC data.
+\fB\-b\fR \fIbind\-addr\fR
+Specifies the ip address to bind to.
+.br 
+Default: \fBBind_Addr\fR from config file or 0.0.0.0 (any)
+
+.TP 
+\fB\-m\fR \fIdf\-cmc\-port\fR
+Specifies the \fIport\fR to listen on for CmC agent data.
 Requires \fB\-f\fR to be specified.
 .br 
-Default: \fBCmC_Port\fR from config file or \fB6666\fR (this will change).
+Default: \fBDF_CmC_Port\fR from config file or \fB41805\fR.
 
 .TP 
-\fB\-n\fR \fIcmii\-port\fR
-Specifies the \fIport\fR to listen on for CmII data.
+\fB\-n\fR \fIdf\-cmii\-port\fR
+Specifies the \fIport\fR to listen on for CmII agent data.
 .br 
-Default: \fBCmII_Port\fR from config file or \fB6667\fR (this will change).
+Default: \fBDF_CmII_Port\fR from config file or \fB41800\fR.
 
 .TP 
-\fB\-x\fR
-Enable cooked format.  A description of that would be great.
+\fB\-d\fR \fIdestination\fR
+Specifies the \fIdestination\fR CF host to send CmII and CmC to.
+For testing this host should be running \fIlea_collector\fR(8).
 .br 
-Default: disabled.
+Default: \fBCF_Destination\fR \fBlocalhost\fR (127.0.0.1).
+
+.TP 
+\fB\-M\fR \fIcf\-cmc\-port\fR
+Specifies the \fIport\fR on \fIdestination\fR above to send CmC data to.
+Requires \fB\-f\fR to be specified.
+.br 
+Default: \fBCF_CmC_Port\fR from config file or \fB41815\fR.
+
+.TP 
+\fB\-N\fR \fIcf\-cmii\-port\fR
+Specifies the \fIport\fR on \fIdestination\fR above to send CmII data to.
+.br 
+Default: \fBCF_CmII_Port\fR from config file or \fB41810\fR.
+
+.TP 
+\fB\-o\fR \fIcmii\-output\-format\fR
+Specifies the \fICmII output format\fR.  Valid values are \fBber\fR or \fBxml\fR.
+.br 
+Default: \fBCmII_Output_Format\fR from config file or \fBber\fR.
 
 .TP 
 \fB\-v\fR [\fI...\fR]
@@ -134,6 +147,7 @@ Specifies where to log to.
 Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a \fIfilename\fR.
 .br 
 Default: \fBLog_Destination\fR from config file or \fBsyslog\fR.
+
 .SH "FILES"
 .LP 
     \fBNote: config files are not yet used\fR
@@ -142,34 +156,12 @@ Default: \fBLog_Destination\fR from config file or \fBsyslog\fR.
 \fI/etc/opencalea/opencalea.conf\fP
 OpenCALEA shared settings
 .TP 
-\fI/etc/opencalea/lea_collector.conf\fP
-\fIlea_collector\fR(8) specific configuration
+\fI/etc/opencalea/df_collector.conf\fP
+\fIdf_collector\fR(8) specific configuration
 .SH "EXAMPLES"
 .LP 
-To run \fBlea_collector\fR(8) saving CmII data to /tmp/output.txt:
-.LP 
-\fBlea_collector\fR
-\fB\-t\fR /tmp/output.txt
-.LP 
-To run \fBlea_collector\fR(8) as \fIuser\fR nobody and \fIgroup\fR nogroup, saving CmII data to /tmp/output.txt with \fIdebug\fRging to standard out:
-.LP 
-\fBlea_collector\fR
-\fB\-t\fR /tmp/output.txt
-\fB\-u\fR nobody
-\fB\-g\fR nogroup
-\fB\-D\fR stdout
-.LP 
-To run \fBlea_collector\fR(8) saving CmII data to cmii.txt, CmC data to cmc.pcap, with \fIcmii port\fR 1234, \fIcmc port\fR 1235, listening only on localhost (127.0.0.1), and logging to a file:
-.LP 
-\fBlea_collector\fR
-\fB\-t\fR cmii.txt
-\fB\-f\fR cmc.pcap
-\fB\-m\fR 1235
-\fB\-n\fR 1234
-\fB\-b\fR 127.0.0.1
-\fB\-D\fR stdout
-\fB\-l\fR 5
-\fB\-L\fR /tmp/lea_collector.log
+There's nothing to see just yet.
+
 .SH "AUTHORS"
 .LP 
 Manish Karir <mkarir@merit.edu>
@@ -177,10 +169,10 @@ Manish Karir <mkarir@merit.edu>
 Jesse Norell <jesse@kci.net>
 .SH "SEE ALSO"
 .LP 
-\fIcontroller\fR(8), \fIcollector\fR(8), \fIdf_collector\fR(8),
+\fIcontroller\fR(8), \fIcollector\fR(8), \fIlea_collector\fR(8),
 \fIopencalea\fR(8), \fItap\fR(8)
 .LP 
-\fIlea_collector.conf\fR(5), \fIopencalea.conf\fR(5)
+\fIdf_collector.conf\fR(5), \fIopencalea.conf\fR(5)
 .LP 
 http://www.opencalea.org/
 .SH "STANDARDS"
@@ -195,13 +187,7 @@ Lawfully Authorized Electronic Surveillance (LAES) for Voice over
 Packet Technologies in Wireline Telecommunications Networks, Version 2.
 .SH "SECURITY"
 .LP 
-\fBlea_collector\fR(8) currently has no authentication to or from its \fBtap\fR(8) clients, no encryption of the data sent, and only supports udp transport.  This leaves it wide open to packet spoofing and eavesdropping if on a public network.  A vpn link between the \fBlea_collector\fR and the OpenCALEA collection network would currently be a big step in the right direction.
-.LP 
-With the implementation of \fBdf_collector\fR(8), there will be a single endpoint between the DF and the CF, and the capabilities of \fBlea_collector\fR(8) will be expanded to the full set needed as a CF.  This brings new possibilities for improvement, as well as new security issues to address.
-.LP 
-\fBlea_collector\fR(8) can, and should, be run as a non\-root \fIuser\fR.
-.LP 
-If you only have one machine performing all OpenCALEA functions, use \fB\-b\fR to bind to the localhost address.
+\fBdf_collector\fR(8) is currently conceptware.  This section will be updated as the implementation unfolds.
 .SH "BUGS"
 .LP 
 Please report all bugs to the OpenCALEA mailing list at:
