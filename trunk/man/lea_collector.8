@@ -30,7 +30,7 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.TH "lea_collector" "8" "svn-20070411" "The OpenCALEA Project" "OpenCALEA"
+.TH "lea_collector" "8" "svn-20070416" "The OpenCALEA Project" "OpenCALEA"
 .SH "NAME"
 .LP 
 lea_collector \- OpenCALEA Law Enforcement Agency (LEA) Collection Function (CF)
@@ -39,7 +39,7 @@ lea_collector \- OpenCALEA Law Enforcement Agency (LEA) Collection Function (CF)
 \fBlea_collector\fR
 \fB\-t\fR \fIcmii\-capture\-file\fR
 [\fB\-f\fR \fIcmc\-capture\-file\fR]
-[\fB\-i\fR \fIinterface\fR]
+[\fB\-b\fR \fIbind\-addr\fR]
 [\fB\-u\fR \fIuser\fR]
 [\fB\-g\fR \fIgroup\fR]
 [\fB\-m\fR \fIcmc\-port\fR]
@@ -74,9 +74,8 @@ Default: none.
 .TP 
 \fB\-b\fR \fIbind\-addr\fR
 Specifies the ip address to bind to.
-\fBNot implemented yet.\fR
 .br 
-Default: \fBBind_Addr\fR from config file or any (0.0.0.0)
+Default: \fBBind_Addr\fR from config file or 0.0.0.0 (any)
 
 .TP 
 \fB\-u\fR \fIuser\fR
@@ -161,13 +160,14 @@ To run \fBlea_collector\fR(8) as \fIuser\fR nobody and \fIgroup\fR nogroup, savi
 \fB\-g\fR nogroup
 \fB\-D\fR stdout
 .LP 
-To run \fBlea_collector\fR(8) saving CmII data to cmii.txt, CmC data to cmc.pcap, with \fIcmii port\fR 1234, \fIcmc port\fR 1235, and logging to a file:
+To run \fBlea_collector\fR(8) saving CmII data to cmii.txt, CmC data to cmc.pcap, with \fIcmii port\fR 1234, \fIcmc port\fR 1235, listening only on localhost (127.0.0.1), and logging to a file:
 .LP 
 \fBlea_collector\fR
 \fB\-t\fR cmii.txt
 \fB\-f\fR cmc.pcap
 \fB\-m\fR 1235
 \fB\-n\fR 1234
+\fB\-b\fR 127.0.0.1
 \fB\-D\fR stdout
 \fB\-l\fR 5
 \fB\-L\fR /tmp/lea_collector.log
@@ -201,6 +201,8 @@ Packet Technologies in Wireline Telecommunications Networks, Version 2.
 With the implementation of \fBdf_collector\fR(8), there will be a single endpoint between the DF and the CF, and the capabilities of \fBlea_collector\fR(8) will be expanded to the full set needed as a CF.  This brings new possibilities for improvement, as well as new security issues to address.
 .LP 
 \fBlea_collector\fR(8) can, and should, be run as a non\-root \fIuser\fR.
+.LP 
+If you only have one machine performing all OpenCALEA functions, use \fB\-b\fR to bind to the localhost address.
 .SH "BUGS"
 .LP 
 Please report all bugs to the OpenCALEA mailing list at:

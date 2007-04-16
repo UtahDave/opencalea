@@ -72,6 +72,7 @@ void usage ( void ) {
 
     printf ( "Usage: lea_collector -t cmii-capture-file " );
     printf ( "[-f cmc-capture-file] " );
+    printf ( "[-b bind-addr] " );
     printf ( "[-u user] [-g group] " );
     printf ( " [-m cmc-port] [-n cmii-port] [-x]" );
     printf ( " [-v [...]] [-D debug-file]" );
@@ -98,6 +99,7 @@ int main ( int argc, char *argv[] ) {
     char IAPSystemID[MAX_IAP_SYSTEM_ID_LENGTH+1];
     char *capture_file = NULL;
     char *cmii_capture_file = NULL;
+    char *bindaddr = NULL;
     struct addrinfo hints, *res, *res0;
     int i=0;
     char *cmc_port = 0;
@@ -118,7 +120,7 @@ int main ( int argc, char *argv[] ) {
     setlog( DEF_LOG_LEVEL, "syslog" );
 
     /* command line options processing */
-    while (( i = getopt ( argc, argv, "t:f:hm:n:xu:g:vD:l:L:" )) != -1 ) {
+    while (( i = getopt ( argc, argv, "t:f:b:hm:n:xu:g:vD:l:L:" )) != -1 ) {
 
         switch ( i ) {
             case 'f':   // pcap capture file 
@@ -128,6 +130,11 @@ int main ( int argc, char *argv[] ) {
                 break;
             case 't':   // cmii capture file
                 if ( ( cmii_capture_file = strdup ( optarg ) ) == NULL )
+                    pdie ( "strdup" );
+                debug_5 ( "got opt %c: %s", i, optarg );
+                break;
+            case 'b':   // address to bind sure
+                if ( ( bindaddr = strdup ( optarg ) ) == NULL )
                     pdie ( "strdup" );
                 debug_5 ( "got opt %c: %s", i, optarg );
                 break;
@@ -189,32 +196,9 @@ int main ( int argc, char *argv[] ) {
         }
     }
 
-    if ( debug_file && strlen ( debug_file ) ) {
-        debug_level_set = ( debug_level_set ) ? debug_level_set : DEF_DEBUG_LEVEL;
-        debug_5 ( "resetting debug level (%d) and destination (%s)",
-            debug_level_set, debug_file );
-        setdebug( debug_level_set, debug_file );
-    } else {
-        debug_5 ( "resetting debug level (%d)", debug_level_set );
-        setdebug( debug_level_set, "syslog" );
-    }
-    if ( log_file && strlen ( log_file ) ) {
-        log_level_set = ( log_level_set ) ? log_level_set : DEF_LOG_LEVEL;
-        debug_5 ( "resetting log level (%d) and destination (%s)",
-            log_level_set, log_file );
-        setlog( log_level_set, log_file );
-    } else {
-        debug_5 ( "resetting log level (%d)", log_level_set );
-        setlog( log_level_set, "syslog" );
-    }
-
     if ( cmii_capture_file == NULL ) {
         usage();
         die ( "cmii capture file not specified (need -f)." );
-    }
-    if ( capture_file == NULL ) {
-        log_2 ( "CmC capture file not specified, CmC collection disabled." );
-        debug_2 ( "CmC capture file not specified, CmC collection disabled." );
     }
 
     /* drop privs if running as root or told to do so */
@@ -245,6 +229,28 @@ int main ( int argc, char *argv[] ) {
             pdie ( "setgid" );
     }
 
+
+    /* do absolutely as much as possible AFTER dropping privs */
+    if ( debug_file && strlen ( debug_file ) ) {
+        debug_level_set = ( debug_level_set ) ? debug_level_set : DEF_DEBUG_LEVEL;
+        debug_5 ( "resetting debug level (%d) and destination (%s)",
+            debug_level_set, debug_file );
+        setdebug( debug_level_set, debug_file );
+    } else {
+        debug_5 ( "resetting debug level (%d)", debug_level_set );
+        setdebug( debug_level_set, "syslog" );
+    }
+    if ( log_file && strlen ( log_file ) ) {
+        log_level_set = ( log_level_set ) ? log_level_set : DEF_LOG_LEVEL;
+        debug_5 ( "resetting log level (%d) and destination (%s)",
+            log_level_set, log_file );
+        setlog( log_level_set, log_file );
+    } else {
+        debug_5 ( "resetting log level (%d)", log_level_set );
+        setlog( log_level_set, "syslog" );
+    }
+
+
     if ( cmii_port == NULL ) {
         if ( ! ( cmii_port = malloc ( 64 ) ) )
             perror ( "malloc" );
@@ -252,32 +258,16 @@ int main ( int argc, char *argv[] ) {
         debug_5 ( "using default cmii port (%s)", cmii_port );
     }
 
-    if ( capture_file != NULL ) {
+    if ( capture_file == NULL ) {
+        log_2 ( "CmC capture file not specified, CmC collection disabled." );
+        debug_2 ( "CmC capture file not specified, CmC collection disabled." );
+    } else { 
         if ( cmc_port == NULL ) {
             if ( ! ( cmc_port = malloc ( 64 ) ) )
                 perror ( "malloc" );
             snprintf ( cmc_port, 64, "%d", CmC_PORT );
             debug_5 ( "using default cmc port (%s)", cmc_port );
         }
-/*
-        debug_5 ( "creating cmc_receiver_socket" );
-        if ( ( cmc_receiver_socket = socket ( PF_INET, SOCK_DGRAM, 0 ) ) == -1 )
-            pdie ( "socket" );
-
-        memset ( (char *)&cmc_receiver_addr, '\0', sizeof(cmc_receiver_addr) );
-
-        cmc_receiver_addr.sin_family = AF_INET;
-        cmc_receiver_addr.sin_port = htons ( cmc_port );
-        cmc_receiver_addr.sin_addr.s_addr = INADDR_ANY;
-
-        if ( bind ( cmc_receiver_socket, 
-                    (struct sockaddr *) &cmc_receiver_addr, 
-                    sizeof ( struct sockaddr)) == -1 ) {
-            perror ( "bind" );
-            exit ( 1 );
-        }
-*/
-
 
         memset ( &hints, 0, sizeof ( hints ) );
         hints.ai_family = PF_INET;
@@ -285,7 +275,7 @@ int main ( int argc, char *argv[] ) {
         hints.ai_flags = AI_PASSIVE;
 
         debug_5 ( "calling getaddrinfo" );
-        i = getaddrinfo ( NULL, cmc_port, &hints, &res0 );
+        i = getaddrinfo ( bindaddr, cmc_port, &hints, &res0 );
         if ( i ) {
             die ( "getaddrinfo: %s", gai_strerror( i ) );
         }
@@ -333,32 +323,13 @@ int main ( int argc, char *argv[] ) {
         freeaddrinfo(res0);
     }
 
-/*
-    cmii_receiver_socket = socket ( PF_INET, SOCK_DGRAM, 0 );
-    if ( cmii_receiver_socket == -1 ) {
-        perror ( "socket" );
-        exit ( 1 );
-    }
-
-    memset ( (char *)&cmii_receiver_addr, '\0', sizeof(cmii_receiver_addr) );
-
-    cmii_receiver_addr.sin_family = AF_INET;
-    cmii_receiver_addr.sin_port = htons ( cmii_port );
-    cmii_receiver_addr.sin_addr.s_addr = INADDR_ANY;
-
-    if ( bind ( cmii_receiver_socket, (struct sockaddr *) &cmii_receiver_addr, 
-           sizeof ( struct sockaddr)) == -1 ) {
-        perror ( "bind" );
-        exit ( 1 );
-    }
-*/
     memset ( &hints, 0, sizeof ( hints ) );
     hints.ai_family = PF_INET;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE;
 
     debug_5 ( "calling getaddrinfo" );
-    i = getaddrinfo ( NULL, cmii_port, &hints, &res0 );
+    i = getaddrinfo ( bindaddr, cmii_port, &hints, &res0 );
     if ( i ) {
         die ( "getaddrinfo: %s", gai_strerror( i ) );
     }
