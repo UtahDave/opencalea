@@ -2,7 +2,7 @@
 # Example Makefile to build test routine
 #
 TARGET  = IAS
-CFLAGS  += -I. -I/usr/local/include/open_calea/T1.IAS/CmII
+CFLAGS  += -I. -I../../T1.IAS/CmII
 LDFLAGS += -lias
 OBJS    = main.o
 OBJS    += access_attempt.o

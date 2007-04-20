@@ -2,11 +2,13 @@
 # Example Makefile to build test routine
 #
 TARGET	 = VoP
-CFLAGS	+= -I. -I/usr/local/include/opencalea/T1.678/VoP
-LDFLAGS += -lVoP
+CFLAGS	+= -I. -I../../T1.678/VoP 
+LDFLAGS += -L../../T1.678/VoP 
 OBJS	 = main.o
 OBJS	+= routines.o
 OBJS	+= directsignalreporting.o
+LIBS	+= -llibVoP
+CC	= gcc
 
 all: $(TARGET)
 

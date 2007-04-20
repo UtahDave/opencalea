@@ -179,9 +179,27 @@ int main( int argc, char *argv[] ) {
     int debug_level_set = 0;
     char *debug_file = NULL;
     char *log_file = NULL;
+    GKeyFile*   tap_conf_file;
+
 
     setdebug( DEF_DEBUG_LEVEL, "syslog" );
     setlog( DEF_LOG_LEVEL, "syslog" );
+
+    /* loading parameters from conf file */
+    tap_conf_file = g_key_file_new ( );
+    if ( !g_key_file_load_from_file ( tap_conf_file, "tap.conf", 
+           G_KEY_FILE_KEEP_COMMENTS, NULL)) {
+        pdie ( "unable to parse tap conf file" );
+    }
+
+    interface = (char*) malloc (sizeof(char) *128);
+    if ((interface = g_key_file_get_string ( tap_conf_file, "PREFERENCES", 
+                                       "interface", NULL)) == NULL) {
+        pdie ( "interface must be specified in config file" );
+    }
+
+    /* we are done loading from conf file */
+    g_key_file_free ( tap_conf_file );
 
     /* command line options processing */
     while (( i = getopt ( argc, argv, "i:cf:d:hm:n:x:y:z:u:g:vD:l:L:" )) != -1 ) {

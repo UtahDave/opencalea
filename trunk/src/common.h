@@ -51,6 +51,7 @@
 #include <arpa/inet.h>
 #include <pwd.h>
 #include <grp.h>
+#include <glib-2.0/glib.h>
 
 #include "log_debug.h"
 

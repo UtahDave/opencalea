@@ -49,7 +49,8 @@ am_collector_OBJECTS = collector-collector.$(OBJEXT) \
 	collector-process_registry.$(OBJEXT) \
 	collector-log_debug.$(OBJEXT)
 collector_OBJECTS = $(am_collector_OBJECTS)
-collector_DEPENDENCIES =
+am__DEPENDENCIES_1 =
+collector_DEPENDENCIES = $(am__DEPENDENCIES_1)
 collector_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(collector_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
@@ -57,21 +58,21 @@ am_controller_OBJECTS = controller-controller.$(OBJEXT) \
 	controller-process_registry.$(OBJEXT) \
 	controller-log_debug.$(OBJEXT)
 controller_OBJECTS = $(am_controller_OBJECTS)
-controller_DEPENDENCIES =
+controller_DEPENDENCIES = $(am__DEPENDENCIES_1)
 controller_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(controller_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_lea_collector_OBJECTS = lea_collector-lea_collector.$(OBJEXT) \
 	lea_collector-log_debug.$(OBJEXT)
 lea_collector_OBJECTS = $(am_lea_collector_OBJECTS)
-lea_collector_DEPENDENCIES =
+lea_collector_DEPENDENCIES = $(am__DEPENDENCIES_1)
 lea_collector_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(lea_collector_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_tap_OBJECTS = tap-tap.$(OBJEXT) tap-calea.$(OBJEXT) \
 	tap-log_debug.$(OBJEXT)
 tap_OBJECTS = $(am_tap_OBJECTS)
-tap_DEPENDENCIES =
+tap_DEPENDENCIES = $(am__DEPENDENCIES_1)
 tap_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(tap_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
@@ -121,6 +122,8 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 F77 = @F77@
 FFLAGS = @FFLAGS@
+GLIB_CFLAGS = @GLIB_CFLAGS@
+GLIB_LIBS = @GLIB_LIBS@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -145,6 +148,7 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PCAP_LIBS = @PCAP_LIBS@
+PKG_CONFIG = @PKG_CONFIG@
 RANLIB = @RANLIB@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -203,17 +207,17 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = -g -O2 -Wall
 tap_SOURCES = tap.c tap.h common.h calea.c calea.h log_debug.c log_debug.h
-tap_CFLAGS = $(AM_CFLAGS)
-tap_LDADD = -lpcap
+tap_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
+tap_LDADD = -lpcap $(GLIB_LIBS) 
 lea_collector_SOURCES = lea_collector.c lea_collector.h common.h log_debug.c log_debug.h
-lea_collector_CFLAGS = $(AM_CFLAGS)
-lea_collector_LDADD = -lpcap
+lea_collector_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
+lea_collector_LDADD = -lpcap $(GLIB_LIBS)
 controller_SOURCES = controller.c common.h process_registry.c process_registry.h log_debug.c log_debug.h
-controller_CFLAGS = $(AM_CFLAGS)
-controller_LDADD = -lpthread
+controller_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
+controller_LDADD = -lpthread $(GLIB_LIBS)
 collector_SOURCES = collector.c common.h process_registry.c process_registry.h log_debug.c log_debug.h
-collector_CFLAGS = $(AM_CFLAGS)
-collector_LDADD = -lpthread
+collector_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
+collector_LDADD = -lpthread $(GLIB_LIBS)
 all: all-am
 
 .SUFFIXES:
