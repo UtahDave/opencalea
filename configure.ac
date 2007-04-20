@@ -15,12 +15,12 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS(stdio.h math.h time.h netdb.h netinet/in.h arpa/inet.h)
 
 # check for glib
-#PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.6, AC_MSG_RESULT([found]), AC_MSG_ERROR([g lib-2.0 >= 2.6 not found]))
-#AC_SUBST(GLIB_CFLAGS)
-#AC_SUBST(GLIB_LIBS)
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.6, AC_MSG_RESULT([found]), AC_MSG_ERROR([glib-2.0 >= 2.6 not found]))
+AC_SUBST(GLIB_CFLAGS)
+AC_SUBST(GLIB_LIBS)
 
 # check for libpcap
-AC_CHECK_LIB(pcap, bpf_validate, PCAP_LIBS="-lpcap", AC_MSG_ERROR([libpcap not f ound]))
+AC_CHECK_LIB(pcap, bpf_validate, PCAP_LIBS="-lpcap", AC_MSG_ERROR([libpcap not found]))
 AC_SUBST(PCAP_LIBS)
 
 # check for math library
