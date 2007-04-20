@@ -180,7 +180,7 @@ int main( int argc, char *argv[] ) {
     char *debug_file = NULL;
     char *log_file = NULL;
     GKeyFile*   tap_conf_file;
-
+    char *conf_temp = NULL;
 
     setdebug( DEF_DEBUG_LEVEL, "syslog" );
     setlog( DEF_LOG_LEVEL, "syslog" );
@@ -192,12 +192,20 @@ int main( int argc, char *argv[] ) {
         pdie ( "unable to parse tap conf file" );
     }
 
-    interface = (char*) malloc (sizeof(char) *128);
-    if ((interface = g_key_file_get_string ( tap_conf_file, "PREFERENCES", 
-                                       "interface", NULL)) == NULL) {
+    if ( (conf_temp = g_key_file_get_string ( tap_conf_file, 
+                    "PREFERENCES", "Interface", NULL)) == NULL) {
         pdie ( "interface must be specified in config file" );
+    } else {
+        interface = strdup ( conf_temp );
     }
 
+    if ( (conf_temp = g_key_file_get_string ( tap_conf_file, 
+                    "PREFERENCES", "IAPSystemID", NULL)) == NULL) {
+        pdie ( "IAP System ID must be specified in config file" );
+    } else {
+        strncpy ( iapID, conf_temp, MAX_IAP_SYSTEM_ID_LENGTH);
+    }
+     
     /* we are done loading from conf file */
     g_key_file_free ( tap_conf_file );
 
