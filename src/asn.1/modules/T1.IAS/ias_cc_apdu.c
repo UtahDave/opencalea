@@ -29,30 +29,26 @@
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-#include "IasProtocol.h"
 #include "IAS-CC-APDU.h"
 #include "CCDeliveryHeader.h"
 #include "PacketDirection.h"
 
-/* This is a custom function which writes the encoded output into some FILE stream. */
-static int write_out(const void *buffer, size_t size, void *app_key) {
-FILE *out_fp = app_key;
-size_t wrote;
-wrote = fwrite(buffer, 1, size, out_fp);
-return (wrote == size) ? 0 : -1;
-}
+#define CALLOC(parm) (parm *)Calloc(sizeof(parm))
+
+void *Calloc(size_t size);
 
 int ias_cc_apdu(FILE *fp) {
 
-  IAS_CC_APDU_t         *IAS_CC_APDU;
-  CCDeliveryHeader_t	*ccDeliveryHeader;
+  IAS_CC_APDU_t           *IAS_CC_APDU;
+  CCDeliveryHeader_t	  *ccDeliveryHeader;
 
-  ContentIdentifier_t	*contentIdentifier;
+  ContentIdentifier_t	  *contentIdentifier;
   CorrelationIdentifier_t *correlationID;
 
-  PacketDirection_t	*packetDirection;
-  INTEGER_t		*sequenceNumber;
-  TimeStamp_t		*timestamp;
+  PacketDirection_t	  packetDirection;
+  TimeStamp_t		  *timestamp;
+
+  long			  sequenceNumber;
 
   int ccdelivery_oid[] = { 1, 2, 840, 113737, 2, 1, 0, 1, 1 };
 
@@ -73,47 +69,11 @@ int ias_cc_apdu(FILE *fp) {
   time ( &rawtime );
   timeStamp = gmtime ( &rawtime );
 
-  IAS_CC_APDU = calloc(1, sizeof(IAS_CC_APDU_t));
-  if(!IAS_CC_APDU) {
-    perror("IAS_CC_APDU calloc() failed");
-    exit(-1);
-  }
-
-  ccDeliveryHeader = calloc(1, sizeof(CCDeliveryHeader_t));
-  if(!ccDeliveryHeader) {
-    perror("ccDeliveryHeader calloc() failed");
-    exit(-1);
-  }
-
-  correlationID = calloc(1, sizeof(CorrelationIdentifier_t));
-  if(!correlationID) {
-    perror("correlationID calloc() failed");
-    exit(-1);
-  }
-
-  contentIdentifier = calloc(1, sizeof(ContentIdentifier_t));
-  if(!contentIdentifier) {
-    perror("contentIdentifier calloc() failed");
-    exit(-1);
-  }
-
-  timestamp = calloc(1, sizeof(TimeStamp_t));
-  if(!timestamp) {
-    perror("timestamp calloc() failed");
-    exit(-1);
-  }
-
-  packetDirection = calloc(1, sizeof(PacketDirection_t));
-  if(!packetDirection) {
-    perror("packetDirection calloc() failed");
-    exit(-1);
-  }
-
-  sequenceNumber = calloc(1, sizeof(INTEGER_t));
-  if(!sequenceNumber) {
-    perror("sequenceNumber calloc() failed");
-    exit(-1);
-  }
+  IAS_CC_APDU       = CALLOC(IAS_CC_APDU_t);
+  ccDeliveryHeader  = CALLOC(CCDeliveryHeader_t);
+  correlationID     = CALLOC(CorrelationIdentifier_t);
+  contentIdentifier = CALLOC(ContentIdentifier_t);
+  timestamp         = CALLOC(TimeStamp_t);
 
   /* ccDeliveryHeader */
 
@@ -126,7 +86,7 @@ int ias_cc_apdu(FILE *fp) {
   /* contentIdentifier */
   ccDeliveryHeader->correlationInfo.contentIdentifier.present = ContentIdentifier_PR_correlationID;
   OCTET_STRING_fromString(correlationID, "CORRELATION ID 123");
-  memcpy(&ccDeliveryHeader->correlationInfo.contentIdentifier.choice.correlationID, correlationID, sizeof(CorrelationIdentifier_t));
+  memcpy(&ccDeliveryHeader->correlationInfo.contentIdentifier.correlationID, correlationID, sizeof(CorrelationIdentifier_t));
 
   /* timestamp */
   asn_time2GT_frac(timestamp, timeStamp,frac_value, frac_digits, force_gmt);
@@ -147,22 +107,7 @@ int ias_cc_apdu(FILE *fp) {
   /* payload */
   OCTET_STRING_fromString(&IAS_CC_APDU->payload, "PAYLOAD DATA");
 
-  /*------------------------------------------*/
-  /* BER encode the data if FILE fp is open   */
-  /*------------------------------------------*/
-
-  if (fp) {
-    ec = der_encode(&asn_DEF_IAS_CC_APDU, IAS_CC_APDU, write_out, fp);
-    if(ec.encoded == -1) {
-      fprintf(stderr, "Could not encode IAS_CC_APDU (at %s)\n", ec.failed_type ? ec.failed_type->name : "unknown");
-      exit(65); /* better, EX_DATAERR */
-    } else {
-      fprintf(stderr, "Wrote IAS_CC_APDU message\n");
-    }
-  }
-
-/* Also print the constructed IAS_CC_APDU XER encoded (XML) */
-xer_fprint(stdout, &asn_DEF_IAS_CC_APDU, IAS_CC_APDU);
+  encode_ias_cc(fp, IAS_CC_APDU);
 
 return 0;
 }

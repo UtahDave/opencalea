@@ -24,13 +24,56 @@
  * SUCH DAMAGE.
  */
 
+#include "IasProtocol.h"
 #include "LAESProtocol.h"
+#include "IAS-CC-APDU.h"
+
+/* This is a custom function which writes the encoded output into some FILE stream. */
+static int write_out(const void *buffer, size_t size, void *app_key) {
+  FILE *out_fp = app_key;
+  size_t wrote;
+  wrote = fwrite(buffer, 1, size, out_fp);
+  return (wrote == size) ? 0 : -1;
+}
+
+int encode_ias_cc(FILE *fp, IAS_CC_APDU_t *IAS_CC_APDU) {
+
+  /*------------------------------------------*/
+  /* BER encode the data if FILE fp is open   */
+  /*------------------------------------------*/
+  asn_enc_rval_t ec;      /* Encoder return value  */
+
+  if (fp) {
+    ec = der_encode(&asn_DEF_IAS_CC_APDU, IAS_CC_APDU, write_out, fp);
+    if(ec.encoded == -1) {
+      fprintf(stderr, "Could not encode IAS_CC_APDU (at %s)\n", ec.failed_type ? ec.failed_type->name : "unknown");
+      exit(65); /* better, EX_DATAERR */
+    } else {
+      fprintf(stderr, "Wrote IAS_CC_APDU message\n");
+    }
+  }
+
+  /* Also print the constructed IAS_CC_APDU XER encoded (XML) */
+  xer_fprint(stdout, &asn_DEF_IAS_CC_APDU, IAS_CC_APDU);
+}
+
 
 /* helper routines */
 
+void *Calloc(size_t size) {
+  char *ptr;
+  ptr = calloc(1, size);
+  if(!ptr) {
+    perror("calloc() failed");
+    exit(-1);
+  }
+  return ptr;
+}
+
+
 int ipaddress(IpAddress_t *IPAddress, char *ipaddress) {
   IPAddress->present = IpAddress_PR_ipV4;
-  OCTET_STRING_fromString(&IPAddress->choice.ipV4, ipaddress);
+  OCTET_STRING_fromString(&IPAddress->ipV4, ipaddress);
 }
 
 int callidentity(CallIdentity_t *CallIdentity, char *main, char *leg) {
