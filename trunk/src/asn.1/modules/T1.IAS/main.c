@@ -40,7 +40,7 @@ if(argc < 2) {
   fp = fopen(filename, "wb");   /* for BER output */
   if(!fp) {
     perror(filename);
-    exit(71); /* better, EX_OSERR */
+    return -1;
   }
 }
 
