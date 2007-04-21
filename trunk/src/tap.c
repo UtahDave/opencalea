@@ -26,6 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <ctype.h>
 #include "common.h"
 #include "calea.h"
 #include "tap.h"
@@ -59,23 +60,92 @@ void print_packet( const u_char *packet, u_short  size ) {
     debug_5 ( msg );
 }
 
-void process_packet( u_char *args, const struct pcap_pkthdr *header,
-	    const u_char *packet ) {
+/*-------------------------------------------------------------------------------------*/
+/* Print hex data                                                                      */
+/*                                                                                     */
+/*   Offset                                                                            */
+/* Dec   Hex     Hex Data                                            ASCII Data        */
+/* 00000 (00000) 4E 4F 54 49 46 59 20 73  69 70 3A 6F 70 65 6E 73    NOTIFY s ip:opens */
+/*                                                                                     */
+/*-------------------------------------------------------------------------------------*/
+void print_hex(const u_char *payload, int payload_size) {
+
+  size_t i, j, k, index = 0;
+  char line[80];
+
+  for (index=0; index < payload_size; index+=16) {
+    bzero(line, 80);
+
+    /* Print the base address. */
+    sprintf(line, "%05u (%05lX)  ", (unsigned int) index, (long unsigned)index);
+
+    /* Print full row */
+    if ( (k=payload_size-index) > 15 )  {
+      /* Print full row */
+      for ( i = 0; i < 16; i++ ) {
+        if (i == 8) sprintf(line, "%s ", line);
+        sprintf(line, "%s%02X ", line, payload[index+i]);
+      }
+      sprintf(line, "%s  ", line);
+      for ( j = 0; j < 16; j++ ) {
+        if (j == 8) sprintf(line, "%s ", line);
+        sprintf(line, "%s%c", line, isprint(payload[index+j]) ? payload[index+j] : '.');
+      }
+      debug_5(line);
+    } else {
+    /* Print partial row */
+      for ( i = 0; i < 16; i++ ) {
+        if (i < k) {
+          if (i == 8) sprintf(line, "%s ", line);
+          sprintf(line, "%s%02X ", line, payload[index+i]);
+        } else {
+          sprintf(line, "%s   ", line);
+        }
+      }
+      sprintf(line, "%s  ", line);
+      for ( j = 0; j < 16; j++ ) {
+        if (j < k) {
+          if (j == 8) sprintf(line, "%s ", line);
+          sprintf(line, "%s%c", line, isprint(payload[index+j]) ? payload[index+j] : '.');
+        } else {
+          sprintf(line, "%s ", line);
+        }
+      }
+      debug_5(line);
+    }
+  }
+
+}
+
+
+void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_char *packet ) {
+
+    struct ether_header *ethernet;
     struct ip *ip;
     struct udphdr *udp;
     struct tcphdr *tcp;
     CmC *cmcpkt;
     CmII *cmiipkt;
+    CmIIh cmiih;
     int total_pkt_length;
+    int ip_size;
+    int tcp_size;
+    int udp_size;
+    int payload_size;
+    const u_char *payload;      /* Packet Payload */
+    HEADER *dfheader;
     char calea_time[TS_LENGTH];
+
+    dfheader = (HEADER *)args;
+    debug_5("ContentID: %s", dfheader->contentId);
+    debug_5("CaseID: %s", dfheader->caseId);
+    debug_5("iAPSystemId: %s", dfheader->iAPSystemId);
 
 #ifdef DEBUG_PKTS
     char msg[ MAX_LOG_DEBUG_MSG_LEN ];
 
     memset ( msg, '\0', MAX_LOG_DEBUG_MSG_LEN );
 #endif
-
-    ip = ( struct ip* )( packet + ETHER_HDR_LEN );
 
     get_calea_time ( header->ts.tv_sec, 
                      header->ts.tv_usec, &calea_time[0] );
@@ -100,27 +170,79 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header,
     }
     /* next we send the Packet Data Header Report msg */
 
-    CmIIh cmiih;
-    HEADER payload;
-
     memcpy( cmiih.ts, calea_time, TS_LENGTH );
     memcpy( cmiih.contentID, contentID, MAX_CONTENT_ID_LENGTH );
     memcpy( cmiih.caseID, caseID, MAX_CASE_ID_LENGTH );
     memcpy( cmiih.IAPSystemID, iapID, MAX_IAP_SYSTEM_ID_LENGTH );
+
+    /* Ethernet Packet */
+    ethernet = (struct ether_header *)(packet);
+
+    /* IP Header Offset */
+    ip = ( struct ip* )( (char *)ethernet + ETHER_HDR_LEN );
+    ip_size = ip->ip_hl * 4;
+    if (ip_size < 20) {
+      debug_5("Invalid IP header length: %u bytes", ip_size);
+      return;
+    }
  
-    payload.srcIP = htonl(ip->ip_src.s_addr); 
-    payload.dstIP = htonl(ip->ip_dst.s_addr); 
+    dfheader->srcIP = htonl(ip->ip_src.s_addr); 
+    dfheader->dstIP = htonl(ip->ip_dst.s_addr); 
+
     if ( ip->ip_p == IPPROTO_UDP ) {
-        udp = ( struct udphdr* ) ( (u_char *)ip + (ip->ip_hl *4) );
-        payload.srcPort = udp->uh_sport; 
-        payload.dstPort = udp->uh_dport; 
+        /* UDP Header */
+        udp = ( struct udphdr* ) ( (u_char *)ip + ip_size );
+
+        udp_size = sizeof(struct udphdr);
+        if (ntohs(udp->uh_ulen) <= 12) {
+          debug_5("Invalid UDP header length: %u bytes", udp_size);
+          return;
+        }
+
+        /* UDP Payload */
+        payload = (u_char *)((u_char *)udp + udp_size);
+
+        /* UDP Payload size */
+        payload_size = ntohs(udp->uh_ulen) - udp_size;
+
+        if (payload_size > 0) {
+          debug_5("Payload (%d bytes):", payload_size);
+          print_hex(payload, payload_size);
+        }
+
+        //format_ias_payload(dfheader, payload, payload_size, 0);
+        //format_vop_payload(dfheader, payload, payload_size, 0);
+
+        dfheader->srcPort = udp->uh_sport;
+        dfheader->dstPort = udp->uh_dport;
+
     } else if ( ip->ip_p == IPPROTO_TCP ) {
-        tcp = ( struct tcphdr* ) ( (u_char *)ip + (ip->ip_hl *4) );
-        payload.srcPort = tcp->th_sport; 
-        payload.dstPort = tcp->th_dport; 
+
+        /* TCP Header */
+        tcp = ( struct tcphdr* ) ( (u_char *)ip + ip_size);
+
+        tcp_size = tcp->th_off * 4;
+        if (tcp_size < 20) {
+          debug_5("Invalid TCP header length: %u bytes", tcp_size);
+          return;
+        }
+
+        /* TCP Payload */
+        payload = (u_char *)((u_char *)tcp + tcp_size);
+
+        /* TCP Payload size */
+        payload_size = ntohs(ip->ip_len) - (ip_size + tcp_size);
+
+        //format_ias_payload(dfheader, payload, payload_size, 1);
+        //format_vop_payload(dfheader, payload, payload_size, 1);
+
+        dfheader->srcPort = tcp->th_sport;
+        dfheader->dstPort = tcp->th_dport;
+
     } else {
-        payload.srcPort = 0; 
-        payload.dstPort = 0; 
+        debug_5("Warning: neither UDP or TCP packet detected");
+        dfheader->srcPort = 0;
+        dfheader->dstPort = 0;
     }
 
 #ifdef DEBUG_PKTS
@@ -182,8 +304,17 @@ int main( int argc, char *argv[] ) {
     GKeyFile*   tap_conf_file;
     char *conf_temp = NULL;
 
-    setdebug( DEF_DEBUG_LEVEL, "syslog" );
+    HEADER *dfheader;
+
+    FILE *ber_fp = NULL;
+
+    setdebug( 5, "debug.log" );
+    //setdebug( DEF_DEBUG_LEVEL, "syslog" );
     setlog( DEF_LOG_LEVEL, "syslog" );
+
+    if ( !(ber_fp = fopen("temp.ber", "wb")) ) {
+      return -1;
+    }
 
     /* loading parameters from conf file */
     tap_conf_file = g_key_file_new ( );
@@ -540,8 +671,19 @@ int main( int argc, char *argv[] ) {
 
     freeaddrinfo(res0);
 
+    /* allocate space for the df header */
+    dfheader = calloc(1, sizeof(HEADER));
+    if (!dfheader) {
+      pdie("Allocation of dfheader failed");
+    }
+
+    dfheader->contentId = contentID;
+    dfheader->caseId = caseID;
+    dfheader->iAPSystemId = iapID;
+    dfheader->ber_fp = ber_fp;
+
     debug_4 ( "begining pcap_loop" );
-    pcap_loop( handle, -1, process_packet, NULL );
+    pcap_loop( handle, -1, process_packet, (u_char *)dfheader );
 
     debug_4 ( "pcap_loop done, calling pcap_close" );
     pcap_close( handle );

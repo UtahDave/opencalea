@@ -54,6 +54,15 @@ typedef struct {
     uint32_t dstIP;
     uint16_t srcPort;
     uint16_t dstPort;
+
+    /* temporarily added nb */
+    char *contentId;
+    char *caseId;
+    char *iAPSystemId;
+    char *start_time;
+    FILE *ber_fp;
+    char *payload;
+
 } header_t;
 #define HEADER header_t
 
