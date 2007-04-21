@@ -7,7 +7,7 @@ LDFLAGS += -L../../T1.678/VoP
 OBJS	 = main.o
 OBJS	+= routines.o
 OBJS	+= directsignalreporting.o
-LIBS	+= -llibVoP
+LIBS	+= -lVoP
 CC	= gcc
 
 all: $(TARGET)
