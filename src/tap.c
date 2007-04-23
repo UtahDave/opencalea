@@ -69,7 +69,7 @@ void print_packet( const u_char *packet, u_short  size ) {
 /* 00000 (00000) 4E 4F 54 49 46 59 20 73  69 70 3A 6F 70 65 6E 73    NOTIFY s ip:opens */
 /*                                                                                     */
 /*-------------------------------------------------------------------------------------*/
-void print_hex(const char *payload, size_t payload_size) {
+void print_hex(const u_char *payload, size_t payload_size) {
 
   size_t i, j, k, index = 0;
   char line[80];
@@ -134,6 +134,7 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
     int tcp_size;
     int udp_size;
     int payload_size;
+    int ip_size_total;
     const char *payload;      /* Packet Payload */
     HEADER *dfheader;
     char calea_time[TS_LENGTH];
@@ -165,6 +166,7 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
 
     /* IP Header Offset */
     ip = ( struct ip* )( (char *)ethernet + ETHER_HDR_LEN );
+    ip_size_total = (int)ntohs(ip->ip_len);
     ip_size = ip->ip_hl * 4;
     if (ip_size < 20) {
       debug_5("Invalid IP header length: %u bytes", ip_size);
@@ -190,10 +192,10 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
         /* UDP Payload size */
         payload_size = ntohs(udp->uh_ulen) - udp_size;
 
-        if (payload_size > 0) {
-          debug_5("Payload (%d bytes):", payload_size);
-          print_hex(payload, payload_size);
-        }
+        //if (payload_size > 0) {
+        //  debug_5("Payload (%d bytes):", payload_size);
+        //  print_hex(payload, payload_size);
+        //}
 
         //format_vop_payload(dfheader);
 
@@ -231,9 +233,12 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
 
     if ( content_option == 1 ) {
 
+      debug_5("IP (%d bytes):", ip_size_total);
+      print_hex((const u_char *)ip, (size_t)ip_size_total);
+
       dfheader->sequenceNumber++;
-      dfheader->payload = payload;
-      dfheader->payload_size = payload_size;
+      dfheader->payload = (const char *)ip;
+      dfheader->payload_size = (size_t)ip_size_total;
       /*------------------------------------------------------------------------*/
       /* WARNING: ias_cc_apdu will allocate space for the BER encoded message.  */
       /*          This space MUST be freed when it is no longer needed or a     */
@@ -327,8 +332,8 @@ int main( int argc, char *argv[] ) {
 
     HEADER *dfheader;
 
-    //setdebug( 5, "debug.log" );
-    setdebug( DEF_DEBUG_LEVEL, "syslog" );
+    setdebug( 5, "debug.log" );
+    //setdebug( DEF_DEBUG_LEVEL, "syslog" );
     setlog( DEF_LOG_LEVEL, "syslog" );
 
     /* loading parameters from conf file */
