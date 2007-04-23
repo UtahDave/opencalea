@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Merit Network, Inc.
+ * Copyright (c) 2007, Jesse Norell <jesse@kci.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,9 @@ int log_level = DEF_LOG_LEVEL;
 int debug_to_file = 0;
 int log_to_file = 0;
 
+int debug_with_newlines = 0;
+int log_with_newlines = 0;
+
 /* we want a high performance "do nothing" */
 static void my_nulllog ( char *msg, ... ) { }
 
@@ -73,7 +76,10 @@ void my_debug ( char *format, ... ) {
     vsnprintf ( msg, MAX_DEBUG_MSG_LEN, format, ap );
     va_end( ap );
 
-    append = ( msg [ strlen ( msg ) ] != '\n' ) ? "\n" : "\0";
+    if ( debug_with_newlines )
+        append = ( msg [ strlen ( msg ) ] != '\n' ) ? "\n" : "\0";
+    else
+        append = "\0";
 
     if ( debug_to_file ) {
         if ( ( tim = time ( NULL ) ) == -1 ) {
@@ -104,7 +110,10 @@ void my_log ( char *format, ... ) {
     vsnprintf ( msg, MAX_LOG_MSG_LEN, format, ap );
     va_end( ap );
 
-    append = ( msg [ strlen ( msg ) ] != '\n' ) ? "\n" : "\0";
+    if ( log_with_newlines )
+        append = ( msg [ strlen ( msg ) ] != '\n' ) ? "\n" : "\0";
+    else
+        append = "\0";
 
     if ( log_to_file ) {
         if ( ( tim = time ( NULL ) ) == -1 ) {
@@ -149,8 +158,9 @@ void my_log ( char *format, ... ) {
  * level: set debug level
  * debug_to: use 'syslog', 'stdout', 'stderr'
  *           or a filename
+ * with_newlines: guarantee terminating newlines to file output,
  */
-void setdebug ( int level, char *debug_to ) {
+void setdebug ( int level, char *debug_to, int with_newlines ) {
     
     if ( ( debug_fd && debug_to_file ) 
         && ( debug_fp != stdout )
@@ -209,14 +219,17 @@ void setdebug ( int level, char *debug_to ) {
         case 1:
             debug_1 = &my_debug;
     }
+
+    debug_with_newlines = ( with_newlines ) ? 1 : 0;
 }
 
 /*
  * level: set log level
  * log_to: use 'syslog', 'stdout', 'stderr'
- *         or a filename
+ *           or a filename
+ * with_newlines: guarantee terminating newlines to file output
  */
-void setlog ( int level, char *log_to ) {
+void setlog ( int level, char *log_to, int with_newlines ) {
 
     if ( ( log_fd && log_to_file ) 
         && ( log_fp != stdout )
@@ -275,27 +288,29 @@ void setlog ( int level, char *log_to ) {
         case 1:
             log_1 = &my_log;
     }
+
+    log_with_newlines = ( with_newlines ) ? 1 : 0;
 }
 
 void error ( char *format, ... ) {
     va_list ap;
     char msg[MAX_LOG_DEBUG_MSG_LEN];
     char *append = NULL;
+    extern FILE *debug_fp;
+    extern FILE *log_fp;
 
     va_start( ap, format );
     vsnprintf ( msg, MAX_DEBUG_MSG_LEN, format, ap );
     va_end( ap );
 
     ERROR_DEBUG_FUNC ( msg );
-    ERROR_LOGG_FUNC ( msg );
+    ERROR_LOG_FUNC ( msg );
 
     append = ( msg [ strlen ( msg ) ] != '\n' ) ? "\n" : "\0";
 
-    extern FILE *debug_fp;
-    extern FILE *log_fp;
     if ( ( debug_fp != stdout ) && ( debug_fp != stderr ) 
          && ( log_fp != stdout ) && ( log_fp != stderr ) ) {
-        fprintf ( stderr, "%s%s\n", msg, append );
+        fprintf ( stderr, "%s%s", msg, append );
     }
 }
 
@@ -304,6 +319,8 @@ void die ( char *format, ... ) {
     va_list ap;
     char *msg = NULL;
     char *append = NULL;
+    extern FILE *debug_fp;
+    extern FILE *log_fp;
 
     if ( ! ( msg = malloc ( MAX_LOG_DEBUG_MSG_LEN ) ) ) {
         perror ( "malloc" );
@@ -315,15 +332,13 @@ void die ( char *format, ... ) {
     va_end( ap );
 
     ERROR_DEBUG_FUNC ( msg );
-    ERROR_LOGG_FUNC ( msg );
+    ERROR_LOG_FUNC ( msg );
 
     append = ( msg [ strlen ( msg ) ] != '\n' ) ? "\n" : "\0";
 
-    extern FILE *debug_fp;
-    extern FILE *log_fp;
     if ( ( debug_fp != stdout ) && ( debug_fp != stderr ) 
          && ( log_fp != stdout ) && ( log_fp != stderr ) ) {
-        fprintf ( stderr, "%s%s\n", msg, append );
+        fprintf ( stderr, "%s%s", msg, append );
     }
 
     exit( -1 );

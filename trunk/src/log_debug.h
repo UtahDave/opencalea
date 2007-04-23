@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Merit Network, Inc.
+ * Copyright (c) 2007, Jesse Norell <jesse@kci.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,13 +33,13 @@
 #define MAX_DEBUG_MSG_LEN 1024
 #define MAX_LOG_DEBUG_MSG_LEN 1024    // Max of the previous 2
 #define ERROR_DEBUG_FUNC debug_1
-#define ERROR_LOGG_FUNC log_2
+#define ERROR_LOG_FUNC log_2
 
 extern FILE *debug_file;
 extern FILE *log_file;
 
-void setdebug ( int level, char * );
-void setlog ( int level, char * );
+void setdebug ( int, char *, int );
+void setlog ( int, char *, int  );
 
 extern void (*debug_1)( char *, ... );
 extern void (*debug_2)( char *, ... );

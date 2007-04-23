@@ -57,7 +57,7 @@
 #include "log_debug.h"
 
 #define DEF_SYSLOG_FACILITY LOG_USER
-#define DEF_DEBUG_LEVEL 0
+#define DEF_DEBUG_LEVEL 5
 #define DEF_LOG_LEVEL 1
 
 /* need to move these to config file */
