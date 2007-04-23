@@ -60,9 +60,14 @@ typedef struct {
     char *caseId;
     char *iAPSystemId;
     char *start_time;
-    FILE *ber_fp;
-    char *payload;
-
+    const char *payload;
+    size_t payload_size;
+    char *correlationID;
+    long sequenceNumber;
+    time_t sec;
+    time_t usec;
+    char *encoded;
+    size_t encoded_size;
 } header_t;
 #define HEADER header_t
 

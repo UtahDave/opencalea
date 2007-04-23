@@ -1,9 +1,10 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
-AM_CFLAGS = -g -O2 -Wall
+AM_CFLAGS = -g -O2 -Wall -Iasn.1/T1.IAS/CmCC -Iasn.1/T1.IAS/CmII -Iasn.1/T1.678/VoP
 bin_PROGRAMS = tap lea_collector controller collector
-tap_SOURCES = tap.c tap.h common.h calea.c calea.h log_debug.c log_debug.h
+
+tap_SOURCES = tap.c tap.h common.h calea.c calea.h log_debug.c log_debug.h ias_cc_apdu.c
 tap_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
-tap_LDADD = -lpcap $(GLIB_LIBS) 
+tap_LDADD = -lpcap -Lasn.1/T1.IAS/CmCC -lCmCC $(GLIB_LIBS) 
 
 lea_collector_SOURCES = lea_collector.c lea_collector.h common.h log_debug.c log_debug.h
 lea_collector_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)

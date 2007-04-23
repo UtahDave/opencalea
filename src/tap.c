@@ -26,13 +26,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ctype.h>
 #include "common.h"
 #include "calea.h"
 #include "tap.h"
 
 #include <pcap.h> 
 #include <net/ethernet.h>
+
+char *ias_cc_apdu(HEADER *dfheader);
 
 char *prog_name = "tap";
 int syslog_facility = DEF_SYSLOG_FACILITY;
@@ -68,7 +69,7 @@ void print_packet( const u_char *packet, u_short  size ) {
 /* 00000 (00000) 4E 4F 54 49 46 59 20 73  69 70 3A 6F 70 65 6E 73    NOTIFY s ip:opens */
 /*                                                                                     */
 /*-------------------------------------------------------------------------------------*/
-void print_hex(const u_char *payload, int payload_size) {
+void print_hex(const char *payload, size_t payload_size) {
 
   size_t i, j, k, index = 0;
   char line[80];
@@ -132,7 +133,7 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
     int tcp_size;
     int udp_size;
     int payload_size;
-    const u_char *payload;      /* Packet Payload */
+    const char *payload;      /* Packet Payload */
     HEADER *dfheader;
     char calea_time[TS_LENGTH];
 
@@ -149,6 +150,9 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
 
     get_calea_time ( header->ts.tv_sec, 
                      header->ts.tv_usec, &calea_time[0] );
+
+    dfheader->sec = header->ts.tv_sec;
+    dfheader->usec = header->ts.tv_usec/100;
 
     if ( content_option == 1 ) {
         /* only send Communications Content CmC msg if requested*/
@@ -200,7 +204,7 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
         }
 
         /* UDP Payload */
-        payload = (u_char *)((u_char *)udp + udp_size);
+        payload = (char *)((u_char *)udp + udp_size);
 
         /* UDP Payload size */
         payload_size = ntohs(udp->uh_ulen) - udp_size;
@@ -210,8 +214,25 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
           print_hex(payload, payload_size);
         }
 
-        //format_ias_payload(dfheader, payload, payload_size, 0);
-        //format_vop_payload(dfheader, payload, payload_size, 0);
+        dfheader->sequenceNumber++;
+        dfheader->payload = payload;
+        dfheader->payload_size = payload_size;
+        /*-----------------------------------------------------------------------*/
+        /* WARNING: ias_cc_apdu will allocate space for the BER encoded message. */
+        /*          this space MUST be freed when it is no longer needed or a    */
+        /*          memory leak will occur.                                      */
+        /*          the address of the allocated memory is dfheader->encoded     */
+        /*          the size of the allocated memory is dfheader->encoded_size   */
+        /*          if ias_cc_apdu does not return 0, no memory has been done.   */
+        /*-----------------------------------------------------------------------*/
+        if ( ias_cc_apdu(dfheader) == 0) {
+          debug_5("Encoded size: %d", (int)dfheader->encoded_size);
+          debug_5("Encoded addr: %p", dfheader->encoded);
+        } else {
+          return;  
+        };
+
+        //format_vop_payload(dfheader);
 
         dfheader->srcPort = udp->uh_sport;
         dfheader->dstPort = udp->uh_dport;
@@ -228,7 +249,7 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
         }
 
         /* TCP Payload */
-        payload = (u_char *)((u_char *)tcp + tcp_size);
+        payload = (char *)((u_char *)tcp + tcp_size);
 
         /* TCP Payload size */
         payload_size = ntohs(ip->ip_len) - (ip_size + tcp_size);
@@ -306,15 +327,9 @@ int main( int argc, char *argv[] ) {
 
     HEADER *dfheader;
 
-    FILE *ber_fp = NULL;
-
     setdebug( 5, "debug.log" );
     //setdebug( DEF_DEBUG_LEVEL, "syslog" );
     setlog( DEF_LOG_LEVEL, "syslog" );
-
-    if ( !(ber_fp = fopen("temp.ber", "wb")) ) {
-      return -1;
-    }
 
     /* loading parameters from conf file */
     tap_conf_file = g_key_file_new ( );
@@ -677,10 +692,11 @@ int main( int argc, char *argv[] ) {
       pdie("Allocation of dfheader failed");
     }
 
+    dfheader->correlationID = contentID;
     dfheader->contentId = contentID;
     dfheader->caseId = caseID;
     dfheader->iAPSystemId = iapID;
-    dfheader->ber_fp = ber_fp;
+    dfheader->sequenceNumber = 0;
 
     debug_4 ( "begining pcap_loop" );
     pcap_loop( handle, -1, process_packet, (u_char *)dfheader );
