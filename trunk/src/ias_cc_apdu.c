@@ -57,7 +57,7 @@ int encode_ias_cc(HEADER *dfheader, IAS_CC_APDU_t *IAS_CC_APDU) {
   char *buffer;
   
   /* Print the constructed IAS_CC_APDU XER encoded (XML) */
-  xer_fprint(stdout, &asn_DEF_IAS_CC_APDU, IAS_CC_APDU);
+  // xer_fprint(stdout, &asn_DEF_IAS_CC_APDU, IAS_CC_APDU);
 
   /* first determine the size of the encoded data */
   ec = der_encode(&asn_DEF_IAS_CC_APDU, IAS_CC_APDU, 0, 0);
@@ -68,6 +68,9 @@ int encode_ias_cc(HEADER *dfheader, IAS_CC_APDU_t *IAS_CC_APDU) {
     /* allocate space to hold the encoded data */
     buffer = (char *)calloc(1, ec.encoded);
     if (!buffer) {
+      debug_5("Could not allocate %d bytes for buffer to encode BER", (int)ec.encoded);
+      return -1;
+    } else {
       bzero(buffer, ec.encoded);
       /* encode the data */
       ec = der_encode_to_buffer(&asn_DEF_IAS_CC_APDU, IAS_CC_APDU, buffer, ec.encoded);
@@ -81,9 +84,6 @@ int encode_ias_cc(HEADER *dfheader, IAS_CC_APDU_t *IAS_CC_APDU) {
         dfheader->encoded_size = ec.encoded;
         return 0;
       }
-    } else {
-      debug_5("Could not allocate %d bytes for buffer to encode BER", (int)ec.encoded);
-      return -1;
     }
   }
 

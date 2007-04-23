@@ -125,9 +125,10 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
     struct ip *ip;
     struct udphdr *udp;
     struct tcphdr *tcp;
+    CmCh cmch;
     CmC *cmcpkt;
-    CmII *cmiipkt;
     CmIIh cmiih;
+    CmII *cmiipkt;
     int total_pkt_length;
     int ip_size;
     int tcp_size;
@@ -144,35 +145,15 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
 
 #ifdef DEBUG_PKTS
     char msg[ MAX_LOG_DEBUG_MSG_LEN ];
-
     memset ( msg, '\0', MAX_LOG_DEBUG_MSG_LEN );
 #endif
 
-    get_calea_time ( header->ts.tv_sec, 
-                     header->ts.tv_usec, &calea_time[0] );
+    get_calea_time ( header->ts.tv_sec, header->ts.tv_usec, &calea_time[0] ); 
 
     dfheader->sec = header->ts.tv_sec;
     dfheader->usec = header->ts.tv_usec/100;
 
-    if ( content_option == 1 ) {
-        /* only send Communications Content CmC msg if requested*/
-        CmCh cmch;
-        memcpy( cmch.contentID, contentID, MAX_CONTENT_ID_LENGTH );
-        memcpy( cmch.ts, calea_time, TS_LENGTH );
-
-        total_pkt_length = header->len + sizeof( CmCh );
-#ifdef DEBUG_PKTS
-        debug_5 ( "building CmC packet" );
-#endif
-        cmcpkt = CmCPacketBuild ( &cmch, (char*) packet, header->len );
-#ifdef DEBUG_PKTS
-        debug_5 ( "sending CmC packet" );
-#endif
-        CmCPacketSend ( cmcpkt, total_pkt_length, &send_cmc_socket, 
-                     &send_cmc_addr );
-        CmCPacketFree ( cmcpkt ); 
-    }
-    /* next we send the Packet Data Header Report msg */
+    /* Send the Packet Data Header Report msg */
 
     memcpy( cmiih.ts, calea_time, TS_LENGTH );
     memcpy( cmiih.contentID, contentID, MAX_CONTENT_ID_LENGTH );
@@ -214,24 +195,6 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
           print_hex(payload, payload_size);
         }
 
-        dfheader->sequenceNumber++;
-        dfheader->payload = payload;
-        dfheader->payload_size = payload_size;
-        /*-----------------------------------------------------------------------*/
-        /* WARNING: ias_cc_apdu will allocate space for the BER encoded message. */
-        /*          this space MUST be freed when it is no longer needed or a    */
-        /*          memory leak will occur.                                      */
-        /*          the address of the allocated memory is dfheader->encoded     */
-        /*          the size of the allocated memory is dfheader->encoded_size   */
-        /*          if ias_cc_apdu does not return 0, no memory has been done.   */
-        /*-----------------------------------------------------------------------*/
-        if ( ias_cc_apdu(dfheader) == 0) {
-          debug_5("Encoded size: %d", (int)dfheader->encoded_size);
-          debug_5("Encoded addr: %p", dfheader->encoded);
-        } else {
-          return;  
-        };
-
         //format_vop_payload(dfheader);
 
         dfheader->srcPort = udp->uh_sport;
@@ -265,6 +228,43 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
         dfheader->srcPort = 0;
         dfheader->dstPort = 0;
     }
+
+    if ( content_option == 1 ) {
+
+      dfheader->sequenceNumber++;
+      dfheader->payload = payload;
+      dfheader->payload_size = payload_size;
+      /*------------------------------------------------------------------------*/
+      /* WARNING: ias_cc_apdu will allocate space for the BER encoded message.  */
+      /*          This space MUST be freed when it is no longer needed or a     */
+      /*          memory leak will occur.                                       */
+      /*                                                                        */
+      /*          The address of the allocated memory is dfheader->encoded.     */
+      /*          The size of the allocated memory is dfheader->encoded_size.   */
+      /*          If ias_cc_apdu does not return 0, no deallocation is needed.  */
+      /*------------------------------------------------------------------------*/
+      if ( ias_cc_apdu(dfheader) == 0) {
+        debug_5("Encoded size: %d", (int)dfheader->encoded_size);
+        debug_5("Encoded addr: %p", dfheader->encoded);
+      } else {
+        return;
+      }
+
+      /* only send Communications Content CmC msg if requested*/
+      memcpy( cmch.contentID, contentID, MAX_CONTENT_ID_LENGTH );
+      memcpy( cmch.ts, calea_time, TS_LENGTH );
+
+      total_pkt_length = header->len + sizeof( CmCh );
+      debug_5 ( "building CmC packet" );
+      cmcpkt = CmCPacketBuild ( &cmch, dfheader->encoded, dfheader->encoded_size );
+      debug_5 ( "sending CmC packet" );
+      CmCPacketSend ( cmcpkt, total_pkt_length, &send_cmc_socket, &send_cmc_addr );
+      CmCPacketFree ( cmcpkt );
+
+      free(dfheader->encoded);
+
+    }
+
 
 #ifdef DEBUG_PKTS
     debug_5 ( "building CmII packet" );
@@ -327,8 +327,8 @@ int main( int argc, char *argv[] ) {
 
     HEADER *dfheader;
 
-    setdebug( 5, "debug.log" );
-    //setdebug( DEF_DEBUG_LEVEL, "syslog" );
+    //setdebug( 5, "debug.log" );
+    setdebug( DEF_DEBUG_LEVEL, "syslog" );
     setlog( DEF_LOG_LEVEL, "syslog" );
 
     /* loading parameters from conf file */
