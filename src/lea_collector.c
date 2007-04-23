@@ -116,8 +116,8 @@ int main ( int argc, char *argv[] ) {
     char *debug_file = NULL;
     char *log_file = NULL;
 
-    setdebug( DEF_DEBUG_LEVEL, "syslog" );
-    setlog( DEF_LOG_LEVEL, "syslog" );
+    setdebug( DEF_DEBUG_LEVEL, "syslog", 1 );
+    setlog( DEF_LOG_LEVEL, "syslog", 1 );
 
     /* command line options processing */
     while (( i = getopt ( argc, argv, "t:f:b:hm:n:xu:g:vD:l:L:" )) != -1 ) {
@@ -235,19 +235,19 @@ int main ( int argc, char *argv[] ) {
         debug_level_set = ( debug_level_set ) ? debug_level_set : DEF_DEBUG_LEVEL;
         debug_5 ( "resetting debug level (%d) and destination (%s)",
             debug_level_set, debug_file );
-        setdebug( debug_level_set, debug_file );
+        setdebug( debug_level_set, debug_file, 1 );
     } else {
         debug_5 ( "resetting debug level (%d)", debug_level_set );
-        setdebug( debug_level_set, "syslog" );
+        setdebug( debug_level_set, "syslog", 1 );
     }
     if ( log_file && strlen ( log_file ) ) {
         log_level_set = ( log_level_set ) ? log_level_set : DEF_LOG_LEVEL;
         debug_5 ( "resetting log level (%d) and destination (%s)",
             log_level_set, log_file );
-        setlog( log_level_set, log_file );
+        setlog( log_level_set, log_file, 1 );
     } else {
         debug_5 ( "resetting log level (%d)", log_level_set );
-        setlog( log_level_set, "syslog" );
+        setlog( log_level_set, "syslog", 1 );
     }
 
 
