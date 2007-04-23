@@ -57,7 +57,7 @@ int encode_ias_cc(HEADER *dfheader, IAS_CC_APDU_t *IAS_CC_APDU) {
   char *buffer;
   
   /* Print the constructed IAS_CC_APDU XER encoded (XML) */
-  // xer_fprint(stdout, &asn_DEF_IAS_CC_APDU, IAS_CC_APDU);
+  xer_fprint(stdout, &asn_DEF_IAS_CC_APDU, IAS_CC_APDU);
 
   /* first determine the size of the encoded data */
   ec = der_encode(&asn_DEF_IAS_CC_APDU, IAS_CC_APDU, 0, 0);
@@ -67,7 +67,7 @@ int encode_ias_cc(HEADER *dfheader, IAS_CC_APDU_t *IAS_CC_APDU) {
   } else {
     /* allocate space to hold the encoded data */
     buffer = (char *)calloc(1, ec.encoded);
-    if (buffer != NULL) {
+    if (!buffer) {
       bzero(buffer, ec.encoded);
       /* encode the data */
       ec = der_encode_to_buffer(&asn_DEF_IAS_CC_APDU, IAS_CC_APDU, buffer, ec.encoded);
@@ -148,11 +148,20 @@ int ias_cc_apdu(HEADER *dfheader) {
 
   rc = encode_ias_cc(dfheader, IAS_CC_APDU);
 
-  free(IAS_CC_APDU);
+  /* Free Memory Allocations */
+
+  OCTET_STRING_free(&asn_DEF_OCTET_STRING, ccDeliveryHeader->correlationInfo.caseId, 0);
+  OCTET_STRING_free(&asn_DEF_OCTET_STRING, ccDeliveryHeader->correlationInfo.iapId, 0);
   free(ccDeliveryHeader);
-  free(correlationID);
-  free(contentIdentifier);
+
+  CorrelationIdentifier_free(&asn_DEF_CorrelationIdentifier, correlationID, 0);
+  //free(correlationID);
+
   free(timeStamp);
+
+  free(contentIdentifier);
+
+  free(IAS_CC_APDU);
 
   return rc;
 
