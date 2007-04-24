@@ -36,18 +36,6 @@
 #include "common.h"
 #include "calea.h"
 
-#define CALLOC(parm) (parm *)Calloc(sizeof(parm))
-
-void *Calloc(size_t size) {
-  char *ptr;
-  ptr = calloc(1, size);
-  if(!ptr) {
-    perror("calloc() failed");
-    exit(-1);
-  }
-  return ptr;
-}
-
 int encode_ias_cc(HEADER *dfheader, IAS_CC_APDU_t *IAS_CC_APDU) {
 
   /*----------------------*/

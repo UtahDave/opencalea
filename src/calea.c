@@ -109,7 +109,7 @@ CmC* CmCPacketBuild ( CmCh *header, char *buf, int len ) {
 
     CmC *cmc_pkt;
 
-    cmc_pkt = (CmC*) malloc ( sizeof( CmC ) );
+    //cmc_pkt = (CmC*) malloc ( sizeof( CmC ) );
     if (! ( cmc_pkt = (CmC*) malloc ( sizeof( CmC ) ) ) ) {
         perror("malloc");
         exit ( -1 );
@@ -135,8 +135,8 @@ CmII* CmIIPacketBuild ( CmIIh *header, char *buf, int len ) {
         exit ( -1 );
     }
    
-    memcpy ( &(cmii_pkt->cmiih), header, sizeof( CmII ) ); 
-    memcpy ( &(cmii_pkt->pkt_header), buf, len );
+    memcpy ( &(cmii_pkt->cmiih), header, sizeof( CmIIh ) ); 
+    memcpy ( &(cmii_pkt->pkt), buf, len );
 
     return cmii_pkt;
 }
@@ -144,5 +144,17 @@ CmII* CmIIPacketBuild ( CmIIh *header, char *buf, int len ) {
 void CmIIPacketFree ( CmII *cmii_pkt ) {
 
     free ( cmii_pkt );
+}
+
+/* Helper Routines */
+
+void *Calloc(size_t size) {
+  char *ptr;
+  ptr = calloc(1, size);
+  if(!ptr) {
+    perror("calloc() failed");
+    exit(-1);
+  }
+  return ptr;
 }
 

@@ -34,6 +34,7 @@
 #include <net/ethernet.h>
 
 char *ias_cc_apdu(HEADER *dfheader);
+char *packet_data_header_report(HEADER *dfheader);
 
 char *prog_name = "tap";
 int syslog_facility = DEF_SYSLOG_FACILITY;
@@ -78,7 +79,7 @@ void print_hex(const u_char *payload, size_t payload_size) {
     bzero(line, 80);
 
     /* Print the base address. */
-    sprintf(line, "%05u (%05lX)  ", (unsigned int) index, (long unsigned)index);
+    sprintf(line, "%05Zu (%05lX)  ", index, (long unsigned)index);
 
     /* Print full row */
     if ( (k=payload_size-index) > 15 )  {
@@ -96,8 +97,8 @@ void print_hex(const u_char *payload, size_t payload_size) {
     } else {
     /* Print partial row */
       for ( i = 0; i < 16; i++ ) {
+        if (i == 8) sprintf(line, "%s ", line);
         if (i < k) {
-          if (i == 8) sprintf(line, "%s ", line);
           sprintf(line, "%s%02X ", line, payload[index+i]);
         } else {
           sprintf(line, "%s   ", line);
@@ -105,8 +106,8 @@ void print_hex(const u_char *payload, size_t payload_size) {
       }
       sprintf(line, "%s  ", line);
       for ( j = 0; j < 16; j++ ) {
+        if (j == 8) sprintf(line, "%s ", line);
         if (j < k) {
-          if (j == 8) sprintf(line, "%s ", line);
           sprintf(line, "%s%c", line, isprint(payload[index+j]) ? payload[index+j] : '.');
         } else {
           sprintf(line, "%s ", line);
@@ -175,6 +176,8 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
  
     dfheader->srcIP = htonl(ip->ip_src.s_addr); 
     dfheader->dstIP = htonl(ip->ip_dst.s_addr); 
+    inet_ntop(AF_INET, &ip->ip_src.s_addr, dfheader->src_ip, sizeof(dfheader->src_ip));
+    inet_ntop(AF_INET, &ip->ip_dst.s_addr, dfheader->dst_ip, sizeof(dfheader->dst_ip));
 
     if ( ip->ip_p == IPPROTO_UDP ) {
         /* UDP Header */
@@ -231,6 +234,9 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
         dfheader->dstPort = 0;
     }
 
+    /*------------------------------------------------------------------------*/
+    /* only send Communications Content CmC msg if requested                  */
+    /*------------------------------------------------------------------------*/
     if ( content_option == 1 ) {
 
       debug_5("IP (%d bytes):", ip_size_total);
@@ -249,20 +255,19 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
       /*          If ias_cc_apdu does not return 0, no deallocation is needed.  */
       /*------------------------------------------------------------------------*/
       if ( ias_cc_apdu(dfheader) == 0) {
-        debug_5("Encoded size: %d", (int)dfheader->encoded_size);
+        debug_5("Encoded size: %Zd", dfheader->encoded_size);
         debug_5("Encoded addr: %p", dfheader->encoded);
       } else {
         return;
       }
 
-      /* only send Communications Content CmC msg if requested*/
       memcpy( cmch.contentID, contentID, MAX_CONTENT_ID_LENGTH );
       memcpy( cmch.ts, calea_time, TS_LENGTH );
 
       total_pkt_length = header->len + sizeof( CmCh );
-      debug_5 ( "building CmC packet" );
+      debug_5 ( "building CmC packet size: %d", total_pkt_length );
       cmcpkt = CmCPacketBuild ( &cmch, dfheader->encoded, dfheader->encoded_size );
-      debug_5 ( "sending CmC packet" );
+      debug_5 ( "sending CmC packet size: %d", total_pkt_length );
       CmCPacketSend ( cmcpkt, total_pkt_length, &send_cmc_socket, &send_cmc_addr );
       CmCPacketFree ( cmcpkt );
 
@@ -270,18 +275,23 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
 
     }
 
+    if (packet_data_header_report(dfheader) == 0) {
+      debug_5("Packet_Data_Header_Report encoded size: %Zd", dfheader->encoded_size);
+      debug_5("Packet_Data_Header_Report encoded addr: %p", dfheader->encoded);
+      print_hex((const u_char *)dfheader->encoded, (size_t)dfheader->encoded_size);
+    } else {
+      return;
+    }
 
-#ifdef DEBUG_PKTS
-    debug_5 ( "building CmII packet" );
-#endif
-    cmiipkt = CmIIPacketBuild ( &cmiih, (char*) &payload, sizeof( HEADER ) ); 
-    total_pkt_length = sizeof( CmIIh ) + sizeof ( HEADER );
-#ifdef DEBUG_PKTS
-    debug_5 ( "sending CmII packet" );
-#endif
-    CmIIPacketSend ( cmiipkt, total_pkt_length, &send_cmii_socket, 
-                     &send_cmii_addr );
+    total_pkt_length = header->len + sizeof( CmIIh );
+    debug_5 ( "building CmII packet size: %d", total_pkt_length );
+    cmiipkt = CmIIPacketBuild ( &cmiih, dfheader->encoded, dfheader->encoded_size); 
+    debug_5 ( "sending CmII packet size: %d", total_pkt_length );
+    CmIIPacketSend ( cmiipkt, total_pkt_length, &send_cmii_socket, &send_cmii_addr ); 
     CmIIPacketFree ( cmiipkt ); 
+
+    free(dfheader->encoded);
+
 }
 
 
