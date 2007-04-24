@@ -35,6 +35,7 @@
 
 char *ias_cc_apdu(HEADER *dfheader);
 char *packet_data_header_report(HEADER *dfheader);
+void print_hex(const u_char *payload, size_t payload_size);
 
 char *prog_name = "tap";
 int syslog_facility = DEF_SYSLOG_FACILITY;
@@ -42,83 +43,6 @@ int syslog_facility = DEF_SYSLOG_FACILITY;
 char contentID[MAX_CONTENT_ID_LENGTH];
 char caseID[MAX_CASE_ID_LENGTH];
 char iapID[MAX_IAP_SYSTEM_ID_LENGTH];
-
-void print_packet( const u_char *packet, u_short  size ) {
-    int i = 0;
-    char msg[ MAX_LOG_DEBUG_MSG_LEN ];
-    char hexbyte[4];
-
-    debug_5 ( "Packet: size: %d", size );
-
-    msg[0] = '\0';
-    for( i=0; i < size; i++ ) {
-        sprintf ( hexbyte, "%02x ", packet[i] );
-        strncat ( msg, hexbyte, 3 );
-        if ( ( strlen ( msg ) + 3 > MAX_LOG_DEBUG_MSG_LEN ) ) {
-            debug_5 ( msg );
-            msg[0] = '\0';
-        }
-    }
-    debug_5 ( msg );
-}
-
-/*-------------------------------------------------------------------------------------*/
-/* Print hex data                                                                      */
-/*                                                                                     */
-/*   Offset                                                                            */
-/* Dec   Hex     Hex Data                                            ASCII Data        */
-/* 00000 (00000) 4E 4F 54 49 46 59 20 73  69 70 3A 6F 70 65 6E 73    NOTIFY s ip:opens */
-/*                                                                                     */
-/*-------------------------------------------------------------------------------------*/
-void print_hex(const u_char *payload, size_t payload_size) {
-
-  size_t i, j, k, index = 0;
-  char line[80];
-
-  for (index=0; index < payload_size; index+=16) {
-    bzero(line, 80);
-
-    /* Print the base address. */
-    sprintf(line, "%05Zu (%05lX)  ", index, (long unsigned)index);
-
-    /* Print full row */
-    if ( (k=payload_size-index) > 15 )  {
-      /* Print full row */
-      for ( i = 0; i < 16; i++ ) {
-        if (i == 8) sprintf(line, "%s ", line);
-        sprintf(line, "%s%02X ", line, payload[index+i]);
-      }
-      sprintf(line, "%s  ", line);
-      for ( j = 0; j < 16; j++ ) {
-        if (j == 8) sprintf(line, "%s ", line);
-        sprintf(line, "%s%c", line, isprint(payload[index+j]) ? payload[index+j] : '.');
-      }
-      debug_5(line);
-    } else {
-    /* Print partial row */
-      for ( i = 0; i < 16; i++ ) {
-        if (i == 8) sprintf(line, "%s ", line);
-        if (i < k) {
-          sprintf(line, "%s%02X ", line, payload[index+i]);
-        } else {
-          sprintf(line, "%s   ", line);
-        }
-      }
-      sprintf(line, "%s  ", line);
-      for ( j = 0; j < 16; j++ ) {
-        if (j == 8) sprintf(line, "%s ", line);
-        if (j < k) {
-          sprintf(line, "%s%c", line, isprint(payload[index+j]) ? payload[index+j] : '.');
-        } else {
-          sprintf(line, "%s ", line);
-        }
-      }
-      debug_5(line);
-    }
-  }
-
-}
-
 
 void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_char *packet ) {
 
@@ -176,6 +100,7 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
  
     dfheader->srcIP = htonl(ip->ip_src.s_addr); 
     dfheader->dstIP = htonl(ip->ip_dst.s_addr); 
+
     inet_ntop(AF_INET, &ip->ip_src.s_addr, dfheader->src_ip, sizeof(dfheader->src_ip));
     inet_ntop(AF_INET, &ip->ip_dst.s_addr, dfheader->dst_ip, sizeof(dfheader->dst_ip));
 
@@ -202,8 +127,8 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
 
         //format_vop_payload(dfheader);
 
-        dfheader->srcPort = udp->uh_sport;
-        dfheader->dstPort = udp->uh_dport;
+        dfheader->srcPort = ntohs(udp->uh_sport);
+        dfheader->dstPort = ntohs(udp->uh_dport);
 
     } else if ( ip->ip_p == IPPROTO_TCP ) {
 
@@ -225,8 +150,8 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
         //format_ias_payload(dfheader, payload, payload_size, 1);
         //format_vop_payload(dfheader, payload, payload_size, 1);
 
-        dfheader->srcPort = tcp->th_sport;
-        dfheader->dstPort = tcp->th_dport;
+        dfheader->srcPort = ntohs(tcp->th_sport);
+        dfheader->dstPort = ntohs(tcp->th_dport);
 
     } else {
         debug_5("Warning: neither UDP or TCP packet detected");

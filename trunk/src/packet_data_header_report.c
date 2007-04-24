@@ -90,6 +90,9 @@ int packet_data_header_report(HEADER *dfheader) {
   IPAddress_t             *sourceIPaddress;
   IPAddress_t             *destinationIPaddress;
 
+  char src_port[8];
+  char dst_port[8];
+
   int frac_digits = 4;
   int force_gmt = 1;
   int rc = 0;
@@ -181,10 +184,16 @@ int packet_data_header_report(HEADER *dfheader) {
   memcpy(&Packet_Data_Header_Report->headerSet.destinationIPaddress, destinationIPaddress, sizeof(IPAddress_t));
 
   /* *sourcePortNumber */
-  Packet_Data_Header_Report->headerSet.sourcePortNumber  = OCTET_STRING_new_fromBuf(&asn_DEF_OCTET_STRING, "3333", 4);
+  sprintf(src_port, "%d", dfheader->srcPort);
+  Packet_Data_Header_Report->headerSet.sourcePortNumber  = OCTET_STRING_new_fromBuf(&asn_DEF_OCTET_STRING, src_port, strlen(src_port));
+  
 
   /* *destinationPortNumber */
-  Packet_Data_Header_Report->headerSet.destinationPortNumber  = OCTET_STRING_new_fromBuf(&asn_DEF_OCTET_STRING, "4444", 4);
+  sprintf(dst_port, "%d", dfheader->dstPort);
+  Packet_Data_Header_Report->headerSet.destinationPortNumber  = OCTET_STRING_new_fromBuf(&asn_DEF_OCTET_STRING, dst_port, strlen(dst_port));
+
+  /* DEBUGGING */  
+  debug_5("Port: %s/%s", src_port, dst_port,1);
 
   rc = encode_ias_protocol(dfheader, IasProtocol);
 
