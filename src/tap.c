@@ -208,8 +208,8 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
       return;
     }
 
-    total_pkt_length = header->len + sizeof( CmIIh );
-    debug_5 ( "building CmII packet size: %d", total_pkt_length );
+    total_pkt_length = sizeof( CmIIh );
+    debug_5 ( "building CmII packet size: %d", total_pkt_length);
     cmiipkt = CmIIPacketBuild ( &cmiih, dfheader->encoded, dfheader->encoded_size); 
     debug_5 ( "sending CmII packet size: %d", total_pkt_length );
     CmIIPacketSend ( cmiipkt, total_pkt_length, &send_cmii_socket, &send_cmii_addr ); 
