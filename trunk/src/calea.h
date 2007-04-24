@@ -34,6 +34,9 @@
 #define MAX_IAP_SYSTEM_ID_LENGTH 128
 #define TS_LENGTH 23  // time in ascii "YYYY-MM-DDThh:mm:ss.sss"
 
+#define CALLOC(parm) (parm *)Calloc(sizeof(parm))
+void *Calloc(size_t size);
+
 typedef struct {
     char contentID[MAX_CONTENT_ID_LENGTH];
     char ts[TS_LENGTH];
@@ -68,6 +71,8 @@ typedef struct {
     time_t usec;
     char *encoded;
     size_t encoded_size;
+    char src_ip[INET_ADDRSTRLEN];
+    char dst_ip[INET_ADDRSTRLEN];
 } header_t;
 #define HEADER header_t
 
@@ -83,6 +88,7 @@ typedef struct {
 typedef struct {
     CmIIh cmiih;
     HEADER pkt_header;
+    u_char pkt[9000];
 } cmii_pkt_t;
 #define CmII cmii_pkt_t
 
