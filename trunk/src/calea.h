@@ -32,6 +32,8 @@
 #define MAX_CONTENT_ID_LENGTH 128
 #define MAX_CASE_ID_LENGTH 128
 #define MAX_IAP_SYSTEM_ID_LENGTH 128
+#define MAX_SUBJECT_ID_LENGTH 128
+#define MAX_SESSION_ID_LENGTH 128
 #define TS_LENGTH 23  // time in ascii "YYYY-MM-DDThh:mm:ss.sss"
 
 #define CALLOC(parm) (parm *)Calloc(sizeof(parm))
