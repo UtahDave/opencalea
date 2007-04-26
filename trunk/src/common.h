@@ -55,15 +55,43 @@
 #include <glib.h>
 
 #include "log_debug.h"
+#include "util.h"
 
+/* Compile Time Defaults */
+
+#ifndef DEF_OPENCALEA_CONF
+#define DEF_OPENCALEA_CONF "/etc/opencalea/opencalea.conf"
+#endif
+
+#ifndef DEF_SYSLOG_FACILITY
 #define DEF_SYSLOG_FACILITY LOG_USER
-#define DEF_DEBUG_LEVEL 5
-#define DEF_LOG_LEVEL 1
+#endif
 
-/* need to move these to config file */
-#define CmC_PORT 6666
-#define CmII_PORT 6667
-#define Collector_PORT 5555
+#ifndef DEF_DEBUG_LEVEL
+#define DEF_DEBUG_LEVEL 5
+#endif
+
+#ifndef DEF_LOG_LEVEL
+#define DEF_LOG_LEVEL 1
+#endif
+
+
+#ifndef Controller_PORT
+#define Controller_PORT 41800
+#endif
+
+#ifndef Collector_PORT
+#define Collector_PORT 41805	/* deprecated - collector will be gone soon */
+#endif
+
+#ifndef CmII_PORT
+#define CmII_PORT 41810
+#endif
+
+#ifndef CmC_PORT
+#define CmC_PORT 41815
+#endif
+
 
 #define DEF_USER "calea"
 #define DEF_GROUP "calea"
