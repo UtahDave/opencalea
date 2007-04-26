@@ -84,6 +84,7 @@ typedef struct {
 /* Type of Agent */
 enum e_agenttype {
     AGENTTYPE_NONE,             /* 0 = uninitialized or not present */
+    AGENTTYPE_CONTROLLER,       /* OpenCALEA Controller Daemon */
     AGENTTYPE_CONTROL,          /* OpenCALEA Control Agent */
     AGENTTYPE_DF,               /* Delivery Function Agent */
     AGENTTYPE_LOG,              /* Surveillance Log Agent */
@@ -160,7 +161,8 @@ enum e_ctrlcmd {
     CTRLCMD_ROUTE_STAT,         /* Get Routes from DF */
     CTRLCMD_REGISTRATION,       /* Register an Agent (including DF) */
     CTRLCMD_SETDF,              /* Change DF Destination */
-    CTRLCMD_SETLOG              /* Change Surveillance Log Destination */
+    CTRLCMD_SETLOG,             /* Change Surveillance Log Destination */
+    CTRLCMD_REPLY               /* Reply to command */
 };
 #define CtrlCmd enum e_ctrlcmd
 
@@ -192,7 +194,7 @@ typedef struct {
                                 /* See Intercept.SubjectID for unformatted Subject ID */
     u_char id[MAX_FORMATTED_ID_LENGTH];         /* Formatted ID (pcap filter, modified username, etc.) */
     u_char protocol[4];         /* "tcp" ("tcp4") or "udp" ("udp4") */
-    u_char host[15];            /* IPv4 Addr: "xxx.xxx.xxx.xxx" (will change for ipv6) */
+    u_char host[INET_ADDRSTRLEN];  /* IPv4 Addr (will change for ipv6) */
     int port;                   /* tcp/udp port */
 } subject_t;
 #define Subject subject_t
@@ -201,12 +203,21 @@ typedef struct {
 /* Generic Message Destination */
 typedef struct {
     u_char protocol[4];         /* "unix", "tcp" ("tcp4") or "udp" ("udp4") */
-    u_char host[15];            /* IPv4 Addr: "xxx.xxx.xxx.xxx" (will change for ipv6) */
+    u_char host[INET_ADDRSTRLEN];  /* IPv4 Addr (will change for ipv6) */
     int port;                   /* tcp/udp port */
     u_char sock[128];           /* unix domain socket */
     MsgFmt format;
 } msgdest_t;
 #define MsgDest msgdest_t
+
+
+/* Control Message Reply */
+enum enum e_cmdreply {
+    CMDREPLY_NONE,              /* 0 = uninitialized or not present */
+    CMDREPLY_OK,                /* Command Succeeded */
+    CMDREPLY_FAIL		/* Command Failed */
+};
+#define CmdReply enum e_cmdreply
 
 
 /* an OpenCALEA control message header */
@@ -223,6 +234,7 @@ typedef struct {
     } target;
     MsgDest dfhost;
     MsgDest loghost;
+    CmdReply reply;
 } ctrlh_t;
 #define Ctrlh ctrlh_t
 
