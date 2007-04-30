@@ -32,8 +32,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = tap$(EXEEXT) lea_collector$(EXEEXT) controller$(EXEEXT) \
-	collector$(EXEEXT)
+bin_PROGRAMS = tap$(EXEEXT) df_collector$(EXEEXT) \
+	lea_collector$(EXEEXT) controller$(EXEEXT) collector$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -62,6 +62,13 @@ controller_DEPENDENCIES = $(am__DEPENDENCIES_1)
 controller_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(controller_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+am_df_collector_OBJECTS = df_collector-df_collector.$(OBJEXT) \
+	df_collector-log_debug.$(OBJEXT) df_collector-util.$(OBJEXT)
+df_collector_OBJECTS = $(am_df_collector_OBJECTS)
+df_collector_DEPENDENCIES = $(am__DEPENDENCIES_1)
+df_collector_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(df_collector_CFLAGS) \
+	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_lea_collector_OBJECTS = lea_collector-lea_collector.$(OBJEXT) \
 	lea_collector-log_debug.$(OBJEXT) lea_collector-util.$(OBJEXT)
 lea_collector_OBJECTS = $(am_lea_collector_OBJECTS)
@@ -70,8 +77,9 @@ lea_collector_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(lea_collector_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_tap_OBJECTS = tap-tap.$(OBJEXT) tap-calea.$(OBJEXT) \
-	tap-log_debug.$(OBJEXT) tap-ias_cc_apdu.$(OBJEXT) \
-	tap-packet_data_header_report.$(OBJEXT) tap-util.$(OBJEXT)
+	tap-log_debug.$(OBJEXT) tap-cc_apdu.$(OBJEXT) \
+	tap-packet_data_header_report.$(OBJEXT) \
+	tap-directsignalreporting.$(OBJEXT) tap-util.$(OBJEXT)
 tap_OBJECTS = $(am_tap_OBJECTS)
 tap_DEPENDENCIES = $(am__DEPENDENCIES_1)
 tap_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -90,9 +98,11 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(collector_SOURCES) $(controller_SOURCES) \
-	$(lea_collector_SOURCES) $(tap_SOURCES)
+	$(df_collector_SOURCES) $(lea_collector_SOURCES) \
+	$(tap_SOURCES)
 DIST_SOURCES = $(collector_SOURCES) $(controller_SOURCES) \
-	$(lea_collector_SOURCES) $(tap_SOURCES)
+	$(df_collector_SOURCES) $(lea_collector_SOURCES) \
+	$(tap_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -206,10 +216,13 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CFLAGS = -g -O2 -Wall -Iasn.1/T1.IAS/CmCC -Iasn.1/T1.IAS/CmII -Iasn.1/T1.678/VoP
-tap_SOURCES = tap.c tap.h common.h calea.c calea.h log_debug.c log_debug.h ias_cc_apdu.c packet_data_header_report.c util.h util.c
+AM_CFLAGS = -g -O2 -Wall -Iasn.1/T1.678/CCDeliveryHeader -Iasn.1/T1.IAS/CmII -Iasn.1/T1.678/VoP
+tap_SOURCES = tap.c tap.h common.h calea.c calea.h log_debug.c log_debug.h cc_apdu.c packet_data_header_report.c directsignalreporting.c util.h util.c
 tap_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
-tap_LDADD = -lpcap -Lasn.1/T1.IAS/CmCC -lCmCC -Lasn.1/T1.IAS/CmII -lCmII $(GLIB_LIBS) 
+tap_LDADD = -lpcap -Lasn.1/T1.678/CCDeliveryHeader -lCCDeliveryHeader -Lasn.1/T1.IAS/CmII -lCmII -Lasn.1/T1.678/VoP -lVoP $(GLIB_LIBS) 
+df_collector_SOURCES = df_collector.c common.h log_debug.c log_debug.h util.h util.c
+df_collector_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
+df_collector_LDADD = -lpcap -lpthread $(GLIB_LIBS)
 lea_collector_SOURCES = lea_collector.c lea_collector.h common.h log_debug.c log_debug.h util.h util.c
 lea_collector_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 lea_collector_LDADD = -lpcap $(GLIB_LIBS)
@@ -286,6 +299,9 @@ collector$(EXEEXT): $(collector_OBJECTS) $(collector_DEPENDENCIES)
 controller$(EXEEXT): $(controller_OBJECTS) $(controller_DEPENDENCIES) 
 	@rm -f controller$(EXEEXT)
 	$(controller_LINK) $(controller_OBJECTS) $(controller_LDADD) $(LIBS)
+df_collector$(EXEEXT): $(df_collector_OBJECTS) $(df_collector_DEPENDENCIES) 
+	@rm -f df_collector$(EXEEXT)
+	$(df_collector_LINK) $(df_collector_OBJECTS) $(df_collector_LDADD) $(LIBS)
 lea_collector$(EXEEXT): $(lea_collector_OBJECTS) $(lea_collector_DEPENDENCIES) 
 	@rm -f lea_collector$(EXEEXT)
 	$(lea_collector_LINK) $(lea_collector_OBJECTS) $(lea_collector_LDADD) $(LIBS)
@@ -307,11 +323,15 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/controller-log_debug.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/controller-process_registry.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/controller-util.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/df_collector-df_collector.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/df_collector-log_debug.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/df_collector-util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lea_collector-lea_collector.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lea_collector-log_debug.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lea_collector-util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tap-calea.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tap-ias_cc_apdu.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tap-cc_apdu.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tap-directsignalreporting.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tap-log_debug.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tap-packet_data_header_report.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tap-tap.Po@am__quote@
@@ -450,6 +470,48 @@ controller-util.obj: util.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(controller_CFLAGS) $(CFLAGS) -c -o controller-util.obj `if test -f 'util.c'; then $(CYGPATH_W) 'util.c'; else $(CYGPATH_W) '$(srcdir)/util.c'; fi`
 
+df_collector-df_collector.o: df_collector.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -MT df_collector-df_collector.o -MD -MP -MF $(DEPDIR)/df_collector-df_collector.Tpo -c -o df_collector-df_collector.o `test -f 'df_collector.c' || echo '$(srcdir)/'`df_collector.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/df_collector-df_collector.Tpo $(DEPDIR)/df_collector-df_collector.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='df_collector.c' object='df_collector-df_collector.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -c -o df_collector-df_collector.o `test -f 'df_collector.c' || echo '$(srcdir)/'`df_collector.c
+
+df_collector-df_collector.obj: df_collector.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -MT df_collector-df_collector.obj -MD -MP -MF $(DEPDIR)/df_collector-df_collector.Tpo -c -o df_collector-df_collector.obj `if test -f 'df_collector.c'; then $(CYGPATH_W) 'df_collector.c'; else $(CYGPATH_W) '$(srcdir)/df_collector.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/df_collector-df_collector.Tpo $(DEPDIR)/df_collector-df_collector.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='df_collector.c' object='df_collector-df_collector.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -c -o df_collector-df_collector.obj `if test -f 'df_collector.c'; then $(CYGPATH_W) 'df_collector.c'; else $(CYGPATH_W) '$(srcdir)/df_collector.c'; fi`
+
+df_collector-log_debug.o: log_debug.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -MT df_collector-log_debug.o -MD -MP -MF $(DEPDIR)/df_collector-log_debug.Tpo -c -o df_collector-log_debug.o `test -f 'log_debug.c' || echo '$(srcdir)/'`log_debug.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/df_collector-log_debug.Tpo $(DEPDIR)/df_collector-log_debug.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='log_debug.c' object='df_collector-log_debug.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -c -o df_collector-log_debug.o `test -f 'log_debug.c' || echo '$(srcdir)/'`log_debug.c
+
+df_collector-log_debug.obj: log_debug.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -MT df_collector-log_debug.obj -MD -MP -MF $(DEPDIR)/df_collector-log_debug.Tpo -c -o df_collector-log_debug.obj `if test -f 'log_debug.c'; then $(CYGPATH_W) 'log_debug.c'; else $(CYGPATH_W) '$(srcdir)/log_debug.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/df_collector-log_debug.Tpo $(DEPDIR)/df_collector-log_debug.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='log_debug.c' object='df_collector-log_debug.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -c -o df_collector-log_debug.obj `if test -f 'log_debug.c'; then $(CYGPATH_W) 'log_debug.c'; else $(CYGPATH_W) '$(srcdir)/log_debug.c'; fi`
+
+df_collector-util.o: util.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -MT df_collector-util.o -MD -MP -MF $(DEPDIR)/df_collector-util.Tpo -c -o df_collector-util.o `test -f 'util.c' || echo '$(srcdir)/'`util.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/df_collector-util.Tpo $(DEPDIR)/df_collector-util.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='util.c' object='df_collector-util.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -c -o df_collector-util.o `test -f 'util.c' || echo '$(srcdir)/'`util.c
+
+df_collector-util.obj: util.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -MT df_collector-util.obj -MD -MP -MF $(DEPDIR)/df_collector-util.Tpo -c -o df_collector-util.obj `if test -f 'util.c'; then $(CYGPATH_W) 'util.c'; else $(CYGPATH_W) '$(srcdir)/util.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/df_collector-util.Tpo $(DEPDIR)/df_collector-util.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='util.c' object='df_collector-util.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -c -o df_collector-util.obj `if test -f 'util.c'; then $(CYGPATH_W) 'util.c'; else $(CYGPATH_W) '$(srcdir)/util.c'; fi`
+
 lea_collector-lea_collector.o: lea_collector.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collector_CFLAGS) $(CFLAGS) -MT lea_collector-lea_collector.o -MD -MP -MF $(DEPDIR)/lea_collector-lea_collector.Tpo -c -o lea_collector-lea_collector.o `test -f 'lea_collector.c' || echo '$(srcdir)/'`lea_collector.c
 @am__fastdepCC_TRUE@	mv -f $(DEPDIR)/lea_collector-lea_collector.Tpo $(DEPDIR)/lea_collector-lea_collector.Po
@@ -534,19 +596,19 @@ tap-log_debug.obj: log_debug.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -c -o tap-log_debug.obj `if test -f 'log_debug.c'; then $(CYGPATH_W) 'log_debug.c'; else $(CYGPATH_W) '$(srcdir)/log_debug.c'; fi`
 
-tap-ias_cc_apdu.o: ias_cc_apdu.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -MT tap-ias_cc_apdu.o -MD -MP -MF $(DEPDIR)/tap-ias_cc_apdu.Tpo -c -o tap-ias_cc_apdu.o `test -f 'ias_cc_apdu.c' || echo '$(srcdir)/'`ias_cc_apdu.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/tap-ias_cc_apdu.Tpo $(DEPDIR)/tap-ias_cc_apdu.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ias_cc_apdu.c' object='tap-ias_cc_apdu.o' libtool=no @AMDEPBACKSLASH@
+tap-cc_apdu.o: cc_apdu.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -MT tap-cc_apdu.o -MD -MP -MF $(DEPDIR)/tap-cc_apdu.Tpo -c -o tap-cc_apdu.o `test -f 'cc_apdu.c' || echo '$(srcdir)/'`cc_apdu.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/tap-cc_apdu.Tpo $(DEPDIR)/tap-cc_apdu.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='cc_apdu.c' object='tap-cc_apdu.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -c -o tap-ias_cc_apdu.o `test -f 'ias_cc_apdu.c' || echo '$(srcdir)/'`ias_cc_apdu.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -c -o tap-cc_apdu.o `test -f 'cc_apdu.c' || echo '$(srcdir)/'`cc_apdu.c
 
-tap-ias_cc_apdu.obj: ias_cc_apdu.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -MT tap-ias_cc_apdu.obj -MD -MP -MF $(DEPDIR)/tap-ias_cc_apdu.Tpo -c -o tap-ias_cc_apdu.obj `if test -f 'ias_cc_apdu.c'; then $(CYGPATH_W) 'ias_cc_apdu.c'; else $(CYGPATH_W) '$(srcdir)/ias_cc_apdu.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/tap-ias_cc_apdu.Tpo $(DEPDIR)/tap-ias_cc_apdu.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='ias_cc_apdu.c' object='tap-ias_cc_apdu.obj' libtool=no @AMDEPBACKSLASH@
+tap-cc_apdu.obj: cc_apdu.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -MT tap-cc_apdu.obj -MD -MP -MF $(DEPDIR)/tap-cc_apdu.Tpo -c -o tap-cc_apdu.obj `if test -f 'cc_apdu.c'; then $(CYGPATH_W) 'cc_apdu.c'; else $(CYGPATH_W) '$(srcdir)/cc_apdu.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/tap-cc_apdu.Tpo $(DEPDIR)/tap-cc_apdu.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='cc_apdu.c' object='tap-cc_apdu.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -c -o tap-ias_cc_apdu.obj `if test -f 'ias_cc_apdu.c'; then $(CYGPATH_W) 'ias_cc_apdu.c'; else $(CYGPATH_W) '$(srcdir)/ias_cc_apdu.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -c -o tap-cc_apdu.obj `if test -f 'cc_apdu.c'; then $(CYGPATH_W) 'cc_apdu.c'; else $(CYGPATH_W) '$(srcdir)/cc_apdu.c'; fi`
 
 tap-packet_data_header_report.o: packet_data_header_report.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -MT tap-packet_data_header_report.o -MD -MP -MF $(DEPDIR)/tap-packet_data_header_report.Tpo -c -o tap-packet_data_header_report.o `test -f 'packet_data_header_report.c' || echo '$(srcdir)/'`packet_data_header_report.c
@@ -561,6 +623,20 @@ tap-packet_data_header_report.obj: packet_data_header_report.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='packet_data_header_report.c' object='tap-packet_data_header_report.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -c -o tap-packet_data_header_report.obj `if test -f 'packet_data_header_report.c'; then $(CYGPATH_W) 'packet_data_header_report.c'; else $(CYGPATH_W) '$(srcdir)/packet_data_header_report.c'; fi`
+
+tap-directsignalreporting.o: directsignalreporting.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -MT tap-directsignalreporting.o -MD -MP -MF $(DEPDIR)/tap-directsignalreporting.Tpo -c -o tap-directsignalreporting.o `test -f 'directsignalreporting.c' || echo '$(srcdir)/'`directsignalreporting.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/tap-directsignalreporting.Tpo $(DEPDIR)/tap-directsignalreporting.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='directsignalreporting.c' object='tap-directsignalreporting.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -c -o tap-directsignalreporting.o `test -f 'directsignalreporting.c' || echo '$(srcdir)/'`directsignalreporting.c
+
+tap-directsignalreporting.obj: directsignalreporting.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -MT tap-directsignalreporting.obj -MD -MP -MF $(DEPDIR)/tap-directsignalreporting.Tpo -c -o tap-directsignalreporting.obj `if test -f 'directsignalreporting.c'; then $(CYGPATH_W) 'directsignalreporting.c'; else $(CYGPATH_W) '$(srcdir)/directsignalreporting.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/tap-directsignalreporting.Tpo $(DEPDIR)/tap-directsignalreporting.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='directsignalreporting.c' object='tap-directsignalreporting.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -c -o tap-directsignalreporting.obj `if test -f 'directsignalreporting.c'; then $(CYGPATH_W) 'directsignalreporting.c'; else $(CYGPATH_W) '$(srcdir)/directsignalreporting.c'; fi`
 
 tap-util.o: util.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(tap_CFLAGS) $(CFLAGS) -MT tap-util.o -MD -MP -MF $(DEPDIR)/tap-util.Tpo -c -o tap-util.o `test -f 'util.c' || echo '$(srcdir)/'`util.c
