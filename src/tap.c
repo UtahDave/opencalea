@@ -33,8 +33,9 @@
 #include <pcap.h> 
 #include <net/ethernet.h>
 
-char *ias_cc_apdu(HEADER *dfheader);
+char *cc_apdu(HEADER *dfheader);
 char *packet_data_header_report(HEADER *dfheader);
+char *directsignalreporting(HEADER *dfheader);
 
 
 /*
@@ -195,15 +196,15 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
       dfheader->payload = (const char *)ip;
       dfheader->payload_size = (size_t)ip_size_total;
       /*------------------------------------------------------------------------*/
-      /* WARNING: ias_cc_apdu will allocate space for the BER encoded message.  */
+      /* WARNING: cc_apdu will allocate space for the BER encoded message.  */
       /*          This space MUST be freed when it is no longer needed or a     */
       /*          memory leak will occur.                                       */
       /*                                                                        */
       /*          The address of the allocated memory is dfheader->encoded.     */
       /*          The size of the allocated memory is dfheader->encoded_size.   */
-      /*          If ias_cc_apdu does not return 0, no deallocation is needed.  */
+      /*          If cc_apdu does not return 0, no deallocation is needed.  */
       /*------------------------------------------------------------------------*/
-      if ( ias_cc_apdu(dfheader) == 0) {
+      if ( cc_apdu(dfheader) == 0) {
         debug_5("Encoded size: %Zd", dfheader->encoded_size);
         debug_5("Encoded addr: %p", dfheader->encoded);
       } else {
@@ -233,16 +234,31 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
     }
 
     total_pkt_length = sizeof( CmIIh );
-    debug_5 ( "building CmII packet size: %d", total_pkt_length);
+    debug_5 ( "building T1.IAS CmII packet size: %d", total_pkt_length);
     cmiipkt = CmIIPacketBuild ( &cmiih, dfheader->encoded, dfheader->encoded_size); 
-    debug_5 ( "sending CmII packet size: %d", total_pkt_length );
+    debug_5 ( "sending T1.IAS CmII packet size: %d", total_pkt_length );
     CmIIPacketSend ( cmiipkt, total_pkt_length, &send_cmii_socket, &send_cmii_addr ); 
     CmIIPacketFree ( cmiipkt ); 
 
     free(dfheader->encoded);
 
-}
+    if (directsignalreporting(dfheader) == 0) {
+      debug_5("Direct Signal Reporting encoded size: %Zd", dfheader->encoded_size);
+      debug_5("Direct Signal Reporting encoded addr: %p", dfheader->encoded);
+      print_hex((const u_char *)dfheader->encoded, (size_t)dfheader->encoded_size);
+    } else {
+      return;
+    }
 
+    total_pkt_length = sizeof( CmIIh );
+    debug_5 ( "building T1.678 CmII packet size: %d", total_pkt_length);
+    cmiipkt = CmIIPacketBuild ( &cmiih, dfheader->encoded, dfheader->encoded_size); 
+    debug_5 ( "sending T1.678 CmII packet size: %d", total_pkt_length );
+    CmIIPacketSend ( cmiipkt, total_pkt_length, &send_cmii_socket, &send_cmii_addr ); 
+    CmIIPacketFree ( cmiipkt ); 
+
+    free(dfheader->encoded);
+}
 
 void usage ( void ) {
     printf ( "Usage: tap -x content-id -y case-id" );
