@@ -60,23 +60,21 @@ enum e_msgfmt {
 #define MsgFmt enum e_msgtype
 
 /* all OpenCALEA messages have this header */
-typedef struct {
+typedef struct msgh_t {
     MsgType msgtype;
     MsgFmt format;
     int msglen;                 /* Length of msgbody, not including the Msgh */
-} msgh_t; 
-#define Msgh msgh_t
+} Msgh; 
 
 // Note: msgbody here and data below are pointers;
 // you can write the header structure directly to the wire,
 // but must copy the msgbody separately
 
 /* a fulll OpenCALEA message */
-typedef struct {
+typedef struct msg_t {
     Msgh msgh;
     u_char *msgbody;
-} msg_t; 
-#define Msg msg_t
+} Msg; 
 
 
 /* Message Agent (for Log and Control messages) */
@@ -111,23 +109,21 @@ enum e_agentsubtype {
 };
 #define AgentSubType enum e_agenttype
 
-typedef struct {
+typedef struct agent_t {
     u_char IAPSystemID[MAX_IAP_SYSTEM_ID_LENGTH];
     AgentType type;
     AgentSubType subtype;
-} agent_t;
-#define Agent agent_t
+} Agent;
 
 
 /* Extra Message Data */
-typedef struct {
+typedef struct msgdata_t {
     int size;                   /* Length of Data following */
     u_char *data;
     /*  Note: data here and msgbody above are pointers;
      *  you can write the header structure directly to the wire,
      *  but must copy the data separately */
-} msgdata_t;
-#define MsgData msgdata_t
+} MsgData;
 
 
 
@@ -135,11 +131,10 @@ typedef struct {
  * OpenCALEA Log Message
  */
 
-struct {
+typedef struct logmsg_t {
     Agent agent;                /* Agent Sending Log Message */
     MsgData data;               /* Surveillance Log (actual message text) */
-} logmsg_t;
-#define LogMsg logmsg_t
+} LogMsg;
 
 
 
@@ -168,13 +163,12 @@ enum e_ctrlcmd {
 
 
 /* An Intercept */
-typedef struct {
+typedef struct intercept_t {
     u_char CaseID[MAX_CASE_ID_LENGTH];          /* Intercept CaseID */
     u_char SubjectID[MAX_SUBJECT_ID_LENGTH];    /* Intercept Subject Identifier */
     time_t start;                               /* Intercept Start Time */
     time_t stop;                                /* Intercept Stop Time */
-} intercept_t;
-#define Intercept intercept_t
+} Intercept;
 
 
 /* Type of Intercept Subject */
@@ -189,30 +183,28 @@ enum e_isubtype {
 
 #define MAX_FORMATTED_ID_LENGTH 256
 /* An Intercept Subject */
-typedef struct {
+typedef struct subject_t {
     SubjectType subtype;        /* Type of Intercept Subject */
                                 /* See Intercept.SubjectID for unformatted Subject ID */
     u_char id[MAX_FORMATTED_ID_LENGTH];         /* Formatted ID (pcap filter, modified username, etc.) */
     u_char protocol[4];         /* "tcp" ("tcp4") or "udp" ("udp4") */
     u_char host[INET_ADDRSTRLEN];  /* IPv4 Addr (will change for ipv6) */
     int port;                   /* tcp/udp port */
-} subject_t;
-#define Subject subject_t
+} Subject;
 
 
 /* Generic Message Destination */
-typedef struct {
+typedef struct msgdest_t {
     u_char protocol[4];         /* "unix", "tcp" ("tcp4") or "udp" ("udp4") */
     u_char host[INET_ADDRSTRLEN];  /* IPv4 Addr (will change for ipv6) */
     int port;                   /* tcp/udp port */
     u_char sock[128];           /* unix domain socket */
     MsgFmt format;
-} msgdest_t;
-#define MsgDest msgdest_t
+} MsgDest;
 
 
 /* Control Message Reply */
-enum enum e_cmdreply {
+enum e_cmdreply {
     CMDREPLY_NONE,              /* 0 = uninitialized or not present */
     CMDREPLY_OK,                /* Command Succeeded */
     CMDREPLY_FAIL		/* Command Failed */
@@ -221,7 +213,7 @@ enum enum e_cmdreply {
 
 
 /* an OpenCALEA control message header */
-typedef struct {
+typedef struct ctrlh_t {
     CtrlCmd cmd;                /* Control Command */
     Agent agent;                /* Agent initiating or sending command */
     Intercept intercept;        /* Intercept Info */
@@ -235,17 +227,17 @@ typedef struct {
     MsgDest dfhost;
     MsgDest loghost;
     CmdReply reply;
-} ctrlh_t;
-#define Ctrlh ctrlh_t
+} Ctrlh;
 
 /* an OpenCALEA control message in C struct format */
-typedef struct {
+typedef struct ctrlmsg_t {
     Ctrlh ctrlh;                /* Control Message Header */
     MsgData data;               /* Extra Message Data (eg. content of STATUS reply) */
-} ctrlmsg_t;
-#define CtrlMsg ctrlmsg_t
+} CtrlMsg;
 
 // note: need a means to start an ias cmii agent for an active session and provide the session id
+
+// note: a vop cmii agent will need to know the CF addr/port to put in CCOpen messages
 
 #endif
 
