@@ -93,7 +93,7 @@ int directsignalreporting(HEADER *dfheader) {
 
   char sigprot[] = "SIP"; 
 
-  int ret;
+  int rc;
 
   int frac_digits = 4;
   int force_gmt = 1;
@@ -113,8 +113,8 @@ int directsignalreporting(HEADER *dfheader) {
   LAESProtocol->enhancedProtocol = enhancedProtocol;
   LAESProtocol->present = LAESProtocol_PR_enhancedProtocol;
 
-  ret = OBJECT_IDENTIFIER_set_arcs(&enhancedProtocol->protocolIdentifier, oid, sizeof(oid[0]), sizeof(oid) / sizeof(oid[0]));
-  assert(ret == 0);
+  rc = OBJECT_IDENTIFIER_set_arcs(&enhancedProtocol->protocolIdentifier, oid, sizeof(oid[0]), sizeof(oid) / sizeof(oid[0]));
+  assert(rc == 0);
 
   /* LAESMessage: DirectSignalReporting */
   enhancedProtocol->laesMessage.present = LaesMessage_PR_directSignalReporting;
@@ -140,6 +140,19 @@ int directsignalreporting(HEADER *dfheader) {
   asn_set_add(signalingMsg, encapsulatedSignalingMessage);
   memcpy(&directSignalReporting->signalingMsg, signalingMsg, sizeof(struct DirectSignalReporting__signalingMsg));
 
-  encode_laes_protocol(dfheader, LAESProtocol);
-  return 0;
+  rc = encode_laes_protocol(dfheader, LAESProtocol);
+
+  /* Free Memory Allocations */
+
+  CorrelationIdentifier_free(&asn_DEF_CorrelationIdentifier, correlationIdentifier, 0);
+  //free(correlationID);
+
+  free(enhancedProtocol);
+  free(directSignalReporting);
+  free(encapsulatedSignalingMessage);
+
+  free(LAESProtocol);
+
+  return rc;
+
 }
