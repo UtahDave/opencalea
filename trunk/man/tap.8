@@ -30,7 +30,7 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.TH "tap" "8" "svn-20070411" "The OpenCALEA Project" "OpenCALEA"
+.TH "tap" "8" "svn-20070501" "The OpenCALEA Project" "OpenCALEA"
 .SH "NAME"
 .LP 
 tap \- OpenCALEA network tap
@@ -40,6 +40,7 @@ tap \- OpenCALEA network tap
 \fB\-x\fR \fIcontent\-id\fR
 \fB\-y\fR \fIcase\-id\fR
 \fB\-z\fR \fIiap\-system\-id\fR
+[\fB\-f\fR \fIconfig\-file\fR]
 [\fB\-i\fR \fIinterface\fR]
 [\fB\-d\fR \fIdestination\fR]
 [\fB\-c\fR]
@@ -51,7 +52,7 @@ tap \- OpenCALEA network tap
 [\fB\-D\fR \fIdebug\-file\fR]
 [\fB\-l\fR \fIlog\-level\fR]
 [\fB\-L\fR \fIlogfile\fR]
-[\fB\-f\fR \fIcapture\-filter\fR]
+[\fIcapture\-filter\fR]
 .SH "DESCRIPTION"
 .LP 
 This program is a network tap (packet sniffer) from the OpenCALEA project.  It can be invoked to collect CACmII (Content Associated Communications Identifying Information) and CmC (Communication Content) for an intercept subject, which is sent to a running \fBlea_collector\fR(8) program somewhere in the network.  \fBtap\fR(8) can be invoked by itself or started via the \fBcontroller\fR(8) program.
@@ -78,6 +79,12 @@ Specifies the IAP System ID for this system; placed in CmII and CmC messages.
 .br 
 Default: \fBIAPSystemID\fR from config file.
 
+.TP 
+\fB\-f\fR \fIconfig\-file\fR
+Specifies an alternate \fIconfig file\fR.
+.br 
+Default: \fB/etc/opencalea/opencalea.conf\fR
+and \fB/etc/opencalea/tap.conf\fR
 .TP 
 \fB\-i\fR \fIinterface\fR
 Specifies the network \fIinterface\fR to capture on.
@@ -149,7 +156,7 @@ Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a \fIfilename\fR.
 Default: \fBLog_Destination\fR from config file or \fBsyslog\fR.
 
 .TP 
-\fB\-f\fR \fIcapture\-filter\fR
+\fIcapture\-filter\fR
 Specify packet capture filter in libpcap syntax.
 See \fItcpdump\fR(8) man page for syntax.
 .br 
@@ -170,7 +177,7 @@ To run \fItap\fR(8) with the minimum of \fIcontent\-id\fR, \fIcase\-id\fR and \f
 .LP 
 \fBtap\fR
 \fB\-x\fR "Content ID" \fB\-y\fR Case\-ID \fB\-z\fR IAP_System_ID
-\fB\-d\fR 192.168.0.20 \fB\-f\fR "host 123.45.67.89"
+\fB\-d\fR 192.168.0.20  host 123.45.67.89
 .LP 
 To run \fItap\fR(8) capturing all data on the "eth2" \fIinterface\fR, \fIdebug\fRging to standard out, with \fIlea_collector\fR(8) running on localhost:
 .LP 
@@ -188,14 +195,18 @@ To run \fItap\fR(8) capturing both CACmII and CmC traffic to/from mac address "0
 .LP 
 \fBtap\fR
 \fB\-x\fR x \fB\-y\fR y \fB\-z\fR z
-\fB\-c\fR \fB\-f\fR "ether host 00:11:22:33:44:55"
+\fB\-c\fR
 \fB\-l\fR 5 \fB\-L\fR /tmp/tap.log
 \fB\-n\fR 1234 \fB\-m\fR 1235 \fB\-d\fR lea\-collector.mydomain.com
+ether host 00:11:22:33:44:55
+
 .SH "AUTHORS"
 .LP 
 Manish Karir <mkarir@merit.edu>
 .br 
 Jesse Norell <jesse@kci.net>
+.br 
+Norman Brandinger <norm@goes.com>
 .SH "SEE ALSO"
 .LP 
 \fIcontroller\fR(8), \fIcollector\fR(8), \fIdf_collector\fR(8), \fIlea_collector\fR(8), \fIopencalea\fR(8)
