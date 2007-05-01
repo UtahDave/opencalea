@@ -27,6 +27,7 @@
  */
 
 #include "common.h"
+#include "msg.h"
 #include "calea.h"
 
 /* generate a correctly formated timestamp
@@ -78,8 +79,7 @@ int CmCPacketSend ( CmC *packet, int length, int *send_socket,
 /* send a Packet Data Header Report msg to lea 
    collection function
 */
-int CmIIPacketSend ( CmII *packet, int length, int *cmii_send_socket, 
-                    struct sockaddr_in *cmii_send_addr ) {
+int CmIIPacketSend ( Msg *packet, int length, int *cmii_send_socket, struct sockaddr_in *cmii_send_addr ) { 
 
     int bytes_sent;
 
@@ -105,44 +105,46 @@ int CmIIPacketSend ( CmII *packet, int length, int *cmii_send_socket,
     return bytes_sent;
 }
 
-CmC* CmCPacketBuild ( CmCh *header, char *buf, int len ) {
+Msg *CmCPacketBuild (HEADER *dfheader) {
 
-    CmC *cmc_pkt;
+    Msg *msg;
+    size_t msg_len;
 
-    //cmc_pkt = (CmC*) malloc ( sizeof( CmC ) );
-    if (! ( cmc_pkt = (CmC*) malloc ( sizeof( CmC ) ) ) ) {
+    msg_len = sizeof(Msg);
+    if (! ( msg = (Msg *) malloc ( msg_len + dfheader->encoded_size ) ) ) {
         perror("malloc");
         exit ( -1 );
     }
-   
-    memcpy ( &(cmc_pkt->cmch), header, sizeof( CmCh ) ); 
-    memcpy ( cmc_pkt->pkt, buf, len );
 
-    return cmc_pkt;
+    msg->msgh.msgtype = MSGTYPE_CMC;
+    msg->msgh.format  = MSGFMT_BER;
+    msg->msgh.msglen  = dfheader->encoded_size;
+
+    memcpy ( ((char *)msg + msg_len), dfheader->encoded, dfheader->encoded_size);
+    return msg;
 }
 
-void CmCPacketFree ( CmC *cmc_pkt ) {
+Msg *CmIIPacketBuild (HEADER *dfheader) {
 
-    free ( cmc_pkt );
-}
+    Msg *msg;
+    size_t msg_len;
 
-CmII* CmIIPacketBuild ( CmIIh *header, char *buf, int len ) {
-
-    CmII *cmii_pkt;
-
-    if (! ( cmii_pkt = (CmII*) malloc ( sizeof( CmII ) ) ) ) {
+    msg_len = sizeof(Msg);
+    if (! ( msg = (Msg *) malloc ( msg_len + dfheader->encoded_size ) ) ) {
         perror("malloc");
         exit ( -1 );
     }
-   
-    memcpy ( &(cmii_pkt->cmiih), header, sizeof( CmIIh ) ); 
-    memcpy ( &(cmii_pkt->pkt), buf, len );
 
-    return cmii_pkt;
+    msg->msgh.msgtype = MSGTYPE_CMII;
+    msg->msgh.format  = MSGFMT_BER;
+    msg->msgh.msglen  = dfheader->encoded_size;
+
+    memcpy ( ((char *)msg + msg_len), dfheader->encoded, dfheader->encoded_size);
+    return msg;
 }
 
-void CmIIPacketFree ( CmII *cmii_pkt ) {
+void PacketFree ( Msg *msg ) {
 
-    free ( cmii_pkt );
+    free ( msg );
 }
 

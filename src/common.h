@@ -92,6 +92,24 @@
 #define CmC_PORT 41815
 #endif
 
+#ifndef DF_CONTROL_PORT
+#define DF_CONTROL_PORT 41816
+#endif
+
+#ifndef LEA_COLLECTOR_CmII_PORT
+#define LEA_COLLECTOR_CmII_PORT 41817
+#endif
+
+#ifndef LEA_COLLECTOR_CmC_PORT
+#define LEA_COLLECTOR_CmC_PORT 41818
+#endif
+
+#define MAX_CONTENT_ID_LENGTH 128
+#define MAX_CASE_ID_LENGTH 128
+#define MAX_IAP_SYSTEM_ID_LENGTH 128
+#define MAX_SUBJECT_ID_LENGTH 128
+#define MAX_SESSION_ID_LENGTH 128
+#define TS_LENGTH 23  // time in ascii "YYYY-MM-DDThh:mm:ss.sss"
 
 #define DEF_USER "calea"
 #define DEF_GROUP "calea"
@@ -115,6 +133,10 @@
 #define NACK                  1 
 #define QUIT                  2 
 
-#define MAX_MSGSIZE 1024       /* max size of control message/response */
+#define MAX_MSGSIZE 2048       /* max size of control message/response */
+
+#define min(a,b)        ((a) < (b) ? (a) : (b))
+#define max(a,b)        ((a) > (b) ? (a) : (b))
+
 
 #endif

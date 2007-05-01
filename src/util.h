@@ -29,6 +29,8 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#define CALLOC(parm) (parm *)Calloc(sizeof(parm))
+
 void *Calloc(size_t size);
 void *Strdup(const char *str);
 void print_hex(const u_char *payload, size_t payload_size);

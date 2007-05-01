@@ -29,9 +29,6 @@
 #ifndef _MSG_H
 #define _MSG_H
 
-#include "calea.h"
-
-
 /*
  * Generic OpenCALEA Message
  */
