@@ -64,6 +64,9 @@ void print_hex(const u_char *payload, size_t payload_size) {
   size_t i, j, k, index = 0;
   char line[80];
 
+  sprintf(line, "Starting Address: %p (%05Zud) (%05lXx)  ", payload, (long unsigned)payload_size, (long unsigned)payload_size);
+  debug_5(line);
+
   for (index=0; index < payload_size; index+=16) {
     bzero(line, 80);
 
@@ -108,3 +111,54 @@ void print_hex(const u_char *payload, size_t payload_size) {
 
 }
 
+/* tcp_read */
+ssize_t tcp_read(int fd, void *buf, size_t tot_len) {
+	size_t len;		/* length of the current read */
+	ssize_t num_read;	/* number of bytes returned by last read operation */
+	char *buf_index;	/* index into the buffer where the next data read will be placed */
+
+	buf_index = buf;	/* initialize the index into the buffer */
+	len = tot_len;		/* initialize the number of bytes to read */
+
+	/* loop while the length of data to read is > 0 */
+	/* or an error condition is raised		*/
+	/* or an EOF condition is raised		*/
+	while (len > 0) {
+		if ( (num_read = read(fd, buf_index, len)) < 0) {
+			if (errno == EINTR) {
+				num_read = 0;
+			} else {
+				return -1;
+			}
+		} else if (num_read == 0)		/* zero bytes read indicate an EOF condition */
+			break;
+
+		len = len - num_read;			/* reduce total length by number of bytes read */
+		buf_index = buf_index + num_read;	/* prepare index into buffer for next read */
+	}
+	return (tot_len - len);				/* return actual number of bytes read */
+}
+
+/* tcp_write */
+ssize_t tcp_write(int fd, const void *buf, size_t tot_len) {
+	size_t num_left;	/* number of bytes left to write */
+	ssize_t num_written;	/* number of bytes written by last write operation */
+	const char *buf_index;  /* index into the buffer where the next data to be written will be found */
+
+	buf_index = buf;	/* iniitialize the index into the buffer */
+	num_left = tot_len;	/* initialuze the number of bytes to write */
+	while (num_left > 0) {
+		if ( (num_written = write(fd, buf_index, num_left)) <= 0) {
+			if (num_written < 0 && errno == EINTR)
+				num_written = 0;
+			else
+				return -1;
+		}
+
+		num_left = num_left - num_written;	/* reduce the number of bytes left to write */
+		buf_index = buf_index + num_written;	/* move the index into the buffer for the next write */
+	}
+	return(tot_len);				/* return the number of bytes written */
+}
+
+/* */

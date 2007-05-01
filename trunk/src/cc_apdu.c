@@ -99,7 +99,7 @@ int cc_apdu(HEADER *dfheader) {
 
   UTCtime = gmtime ( &dfheader->sec );
 
-  CC_APDU       = CALLOC(CC_APDU_t);
+  CC_APDU      	    = CALLOC(CC_APDU_t);
   ccDeliveryHeader  = CALLOC(CCDeliveryHeader_t);
   correlationID     = CALLOC(CorrelationIdentifier_t);
   contentIdentifier = CALLOC(ContentIdentifier_t);

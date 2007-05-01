@@ -29,16 +29,6 @@
 #ifndef _CALEA_H
 #define _CALEA_H
 
-#define MAX_CONTENT_ID_LENGTH 128
-#define MAX_CASE_ID_LENGTH 128
-#define MAX_IAP_SYSTEM_ID_LENGTH 128
-#define MAX_SUBJECT_ID_LENGTH 128
-#define MAX_SESSION_ID_LENGTH 128
-#define TS_LENGTH 23  // time in ascii "YYYY-MM-DDThh:mm:ss.sss"
-
-#define CALLOC(parm) (parm *)Calloc(sizeof(parm))
-void *Calloc(size_t size);
-
 typedef struct {
     char contentID[MAX_CONTENT_ID_LENGTH];
     char ts[TS_LENGTH];
@@ -93,17 +83,5 @@ typedef struct {
     u_char pkt[9000];
 } cmii_pkt_t;
 #define CmII cmii_pkt_t
-
-int CmCPacketSend ( CmC *packet, int length, int *send_sock, 
-                    struct sockaddr_in *send_addr );
-int CmIIPacketSend ( CmII *packet, int length, int *send_sock, 
-                     struct sockaddr_in *send_addr );
-
-void get_calea_time ( time_t sec, time_t usec, char *buf );
-
-CmC* CmCPacketBuild ( CmCh *header, char *buf, int len );
-CmII* CmIIPacketBuild ( CmIIh *header, char *buf, int len );
-void CmCPacketFree ( CmC *cmc_pkt );
-void CmIIPacketFree ( CmII *cmii_pkt );
 
 #endif

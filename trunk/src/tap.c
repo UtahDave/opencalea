@@ -27,6 +27,7 @@
  */
 
 #include "common.h"
+#include "msg.h"
 #include "calea.h"
 #include "tap.h"
 
@@ -36,6 +37,16 @@
 char *cc_apdu(HEADER *dfheader);
 char *packet_data_header_report(HEADER *dfheader);
 char *directsignalreporting(HEADER *dfheader);
+
+void get_calea_time ( time_t sec, time_t usec, char *buf );
+
+Msg *CmCPacketBuild ( HEADER *dfheader );
+int CmCPacketSend  ( Msg *packet, int length, int *send_sock, struct sockaddr_in *send_addr );
+
+Msg *CmIIPacketBuild ( HEADER *dfheader );
+int CmIIPacketSend ( Msg *packet, int length, int *send_sock, struct sockaddr_in *send_addr );
+
+void PacketFree ( Msg *packet );
 
 
 /*
@@ -73,9 +84,8 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
     struct udphdr *udp;
     struct tcphdr *tcp;
     CmCh cmch;
-    CmC *cmcpkt;
-    CmIIh cmiih;
-    CmII *cmiipkt;
+    Msg *cmc_pkt;
+    Msg *cmii_pkt;
     int total_pkt_length;
     int ip_size;
     int tcp_size;
@@ -101,12 +111,6 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
     dfheader->sec = header->ts.tv_sec;
     dfheader->usec = header->ts.tv_usec/100;
 
-    /* Send the Packet Data Header Report msg */
-
-    memcpy( cmiih.ts, calea_time, TS_LENGTH );
-    memcpy( cmiih.contentID, contentID, MAX_CONTENT_ID_LENGTH );
-    memcpy( cmiih.caseID, caseID, MAX_CASE_ID_LENGTH );
-    memcpy( cmiih.IAPSystemID, iapID, MAX_IAP_SYSTEM_ID_LENGTH );
 
     /* Ethernet Packet */
     ethernet = (struct ether_header *)(packet);
@@ -214,48 +218,48 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
       memcpy( cmch.contentID, contentID, MAX_CONTENT_ID_LENGTH );
       memcpy( cmch.ts, calea_time, TS_LENGTH );
 
-      total_pkt_length = header->len + sizeof( CmCh );
+      total_pkt_length = sizeof(Msg) + dfheader->encoded_size;
       debug_5 ( "building CmC packet size: %d", total_pkt_length );
-      cmcpkt = CmCPacketBuild ( &cmch, dfheader->encoded, dfheader->encoded_size );
+      cmc_pkt = CmCPacketBuild ( dfheader );
       debug_5 ( "sending CmC packet size: %d", total_pkt_length );
-      CmCPacketSend ( cmcpkt, total_pkt_length, &send_cmc_socket, &send_cmc_addr );
-      CmCPacketFree ( cmcpkt );
+      CmCPacketSend ( cmc_pkt, total_pkt_length, &send_cmc_socket, &send_cmc_addr );
+      PacketFree ( cmc_pkt );
 
       free(dfheader->encoded);
 
     }
 
     if (packet_data_header_report(dfheader) == 0) {
-      debug_5("Packet_Data_Header_Report encoded size: %Zd", dfheader->encoded_size);
-      debug_5("Packet_Data_Header_Report encoded addr: %p", dfheader->encoded);
+      debug_5("Packet_Data_Header_Report encoded addr: %p, size: %Zd", dfheader->encoded, dfheader->encoded_size);
       print_hex((const u_char *)dfheader->encoded, (size_t)dfheader->encoded_size);
     } else {
       return;
     }
 
-    total_pkt_length = sizeof( CmIIh );
+    total_pkt_length = sizeof(Msg) + dfheader->encoded_size;
     debug_5 ( "building T1.IAS CmII packet size: %d", total_pkt_length);
-    cmiipkt = CmIIPacketBuild ( &cmiih, dfheader->encoded, dfheader->encoded_size); 
+    cmii_pkt = CmIIPacketBuild ( dfheader ); 
     debug_5 ( "sending T1.IAS CmII packet size: %d", total_pkt_length );
-    CmIIPacketSend ( cmiipkt, total_pkt_length, &send_cmii_socket, &send_cmii_addr ); 
-    CmIIPacketFree ( cmiipkt ); 
+    print_hex((const u_char *)cmii_pkt, (size_t)total_pkt_length);
+    CmIIPacketSend ( cmii_pkt, total_pkt_length, &send_cmii_socket, &send_cmii_addr ); 
+    PacketFree ( cmii_pkt ); 
 
     free(dfheader->encoded);
 
     if (directsignalreporting(dfheader) == 0) {
-      debug_5("Direct Signal Reporting encoded size: %Zd", dfheader->encoded_size);
-      debug_5("Direct Signal Reporting encoded addr: %p", dfheader->encoded);
+      debug_5("Direct Signal Reporting encoded addr: %p, size: %Zd", dfheader->encoded, dfheader->encoded_size);
       print_hex((const u_char *)dfheader->encoded, (size_t)dfheader->encoded_size);
     } else {
       return;
     }
 
-    total_pkt_length = sizeof( CmIIh );
+    total_pkt_length = sizeof(Msg) + dfheader->encoded_size;
     debug_5 ( "building T1.678 CmII packet size: %d", total_pkt_length);
-    cmiipkt = CmIIPacketBuild ( &cmiih, dfheader->encoded, dfheader->encoded_size); 
+    cmii_pkt = CmIIPacketBuild ( dfheader ); 
     debug_5 ( "sending T1.678 CmII packet size: %d", total_pkt_length );
-    CmIIPacketSend ( cmiipkt, total_pkt_length, &send_cmii_socket, &send_cmii_addr ); 
-    CmIIPacketFree ( cmiipkt ); 
+    print_hex((const u_char *)cmii_pkt, (size_t)total_pkt_length);
+    CmIIPacketSend ( cmii_pkt, total_pkt_length, &send_cmii_socket, &send_cmii_addr ); 
+    PacketFree ( cmii_pkt ); 
 
     free(dfheader->encoded);
 }
