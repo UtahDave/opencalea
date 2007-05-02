@@ -30,14 +30,14 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.TH "OpenCALEA" "8" "svn-20070411" "The OpenCALEA Project" "OpenCALEA"
+.TH "OpenCALEA" "8" "svn-20070502" "The OpenCALEA Project" "OpenCALEA"
 .SH "NAME"
 .LP 
 opencalea \- OpenCALEA Overview
 .SH "DESCRIPTION"
 .LP 
 \fBOpenCALEA\fR is a project intiated by Merit Network Inc. whose goal is
-to develop simple OpenSource based tools and collect a body of information
+to develop a comprehensive OpenSource based tools and collect a body of information
 that can help the Internet Service Provider (ISP) community to meet their
 CALEA compliance needs.  \fBOpenCALEA\fR is additionally expanding with
 tools to facilitate CALEA requirements for Voice over Internet Protocol (VOIP)
@@ -56,6 +56,42 @@ Using \fBOpenCALEA\fR as a component of your overall CALEA compliance
 requires proper implementation, with an understanding of both the network
 and services, and of the OpenCALEA tools, and often even modification to
 the physical network.
+.SH "DESIGN"
+.LP 
+
+\fB    Note: most of this section speaks in the present tense, though much of OpenCALEA has yet to be developed.  If you don't find a component in the latest svn, it may be on some developer's workstation, or not even started yet.\fR
+
+
+.LP 
+\fBOpenCALEA\fR is designed to handle the CALEA capture needs of very large networks; the design is overkill for small (eg. single capture box) networks, but hopefully the default settings will favor them to work largely out\-of\-the\-box.
+.LP 
+At the heart of \fBOpenCALEA\fR is a control daemon, \fBcontrollerd\fR(8).
+There are clients that connect to \fBcontrollerd\fR(8) and wait for commands,
+eg. \fBtap_controller\fR(8) which connects and waits for commands
+to start up or stop a \fBtap\fR(8).
+There is a commandline program, \fBcontroller\fR(8), also a controller client,
+which can start/stop an intercept, check status, etc.
+We've chosen to call various \fBOpenCALEA\fR components \fIagents\fR;
+eg. a \fBtap_controller\fR(8) (and it's associated \fBtap\fR(8)s)
+is called a \fICmC agent\fR.
+.LP 
+Another core component is the \fIDelivery Function\fR (DF),
+\fBdf_collector\fR(8).  \fBdf_collector\fR(8) itself is a client
+to \fBcontrollerd\fR(8), and is a \fIDF agent\fR.
+\fBdf_collector\fR(8) accepts data from the various
+\fICmII/CmC agents\fR, which normally is sent on to a
+\fILaw Enforcement Agency\fR (LEA)'s \fICollection Function\fR (CF).
+We provide a test CF in \fIlea_collector\fR(8).
+.LP 
+\fBOpenCALEA\fR will also handle recording some events in a Surveillance Log.
+\fBdf_collector\fR(8) is a likely candidate to handle surveillance log messages,
+though \fBcontrollerd\fR(8) or a separate daemon are also being considered.
+.LP 
+\fBdf_collector\fR(8) is also a likely candidate to handle the file
+handling/data delivery from the WISPA standard, if that follows what appears
+to be the current path it's taking.  \fBOpenCALEA\fR will be able to support
+multiple \fBdf_collector\fR(8)s, making this a more viable option.
+
 .SH "SECURITY"
 .LP 
 In the extreme case, a fully configured \fBOpenCALEA\fR implementation would potentially allow easy access to any traffic on a given network, with delivery to any arbitrary destination; it's designed to be distributed and handle very large networks; and it, or rather CALEA compliance, comes with a deadline.  This is an obvious recipe for disaster.
@@ -71,8 +107,6 @@ Improper implementation of an \fBOpenCALEA\fR system will fail to be CALEA compl
 In the long term, expect security issues to be adaquately addressed.  Core security features will be built in.  Fundamental design can be reconsidered and changed.  Known security problems will be addressed.  Security discussion and code contributions are both quite welcome.
 .SH "FILES"
 .LP 
-
-    \fBNote: config files are not yet used\fR
 .TP 
 \fI/etc/opencalea/opencalea.conf\fP
 OpenCALEA shared settings
@@ -80,14 +114,17 @@ OpenCALEA shared settings
 \fI/etc/opencalea/tap.conf\fP
 \fItap\fR(8) specific configuration
 .TP 
+\fI/etc/opencalea/tap_collector.conf\fP
+\fItap_collector\fR(8) specific configuration
+.TP 
 \fI/etc/opencalea/lea_collector.conf\fP
 \fIlea_collector\fR(8) specific configuration
 .TP 
 \fI/etc/opencalea/controller.conf\fP
 \fIcontroller\fR(8) specific configuration
 .TP 
-\fI/etc/opencalea/collector.conf\fP
-\fIcollector\fR(8) specific configuration
+\fI/etc/opencalea/controllerd.conf\fP
+\fIcontrollerd\fR(8) specific configuration
 .TP 
 \fI/etc/opencalea/df_collector.conf\fP
 \fIdf_collector\fR(8) specific configuration
@@ -100,11 +137,11 @@ Norman Brandinger <norm@goes.com>
 Jesse Norell <jesse@kci.net>
 .SH "SEE ALSO"
 .LP 
-\fIcontroller\fR(8), \fIcollector\fR(8), \fIdf_collector\fR(8),
-\fIlea_collector\fR(8), \fItap\fR(8)
+\fIcontroller\fR(8), \fIcontrollerd\fR(8), \fIdf_collector\fR(8),
+\fIlea_collector\fR(8), \fItap\fR(8), \fItap_collector\fR(8)
 .LP 
-\fIopencalea.conf\fR(5), \fIcontroller.conf\fR(5), \fIcollector.conf\fR(5),
-\fIdf_collector.conf\fR(5), \fIlea_collector.conf\fR(5), \fItap.conf\fR(5)
+\fIopencalea.conf\fR(5), \fIcontroller.conf\fR(5), \fIcontrollerd.conf\fR(5),
+\fIdf_collector.conf\fR(5), \fIlea_collector.conf\fR(5), \fItap.conf\fR(5), \fItap_controller.conf\fR(5)
 .LP 
 http://www.opencalea.org/
 .SH "BUGS"
@@ -135,3 +172,5 @@ Lawfully Authorized Electronic Surveillance (LAES) for Internet Access and Servi
 \fIATIS\-PP\-1000678.2006,
 Lawfully Authorized Electronic Surveillance (LAES) for Voice over
 Packet Technologies in Wireline Telecommunications Networks, Version 2.\fR
+.LP 
+OpenCALEA is following the development of the WISPA standard for data capture and will add support when possible.

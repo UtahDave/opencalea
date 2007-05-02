@@ -30,7 +30,7 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.TH "df_collector" "8" "conceptware-0.0.1" "The OpenCALEA Project" "OpenCALEA"
+.TH "df_collector" "8" "svn-20070502" "The OpenCALEA Project" "OpenCALEA"
 .SH "NAME"
 .LP 
 df_collector \- OpenCALEA Delivery Function (DF)
@@ -41,12 +41,10 @@ df_collector \- OpenCALEA Delivery Function (DF)
 [\fB\-u\fR \fIuser\fR]
 [\fB\-g\fR \fIgroup\fR]
 [\fB\-b\fR \fIbind\-addr\fR]
-[\fB\-m\fR \fIdf\-cmc\-port\fR]
-[\fB\-n\fR \fIdf\-cmii\-port\fR]
+[\fB\-p\fR \fIdf\-port\fR]
 [\fB\-d\fR \fIdestination\fR]
 [\fB\-M\fR \fIcf\-cmc\-port\fR]
 [\fB\-N\fR \fIcf\-cmii\-port\fR]
-[\fB\-o\fR \fIcmii\-output\-format\fR]
 [\fB\-v\fR [\fI...\fR]]
 [\fB\-D\fR \fIdebug\-file\fR]
 [\fB\-l\fR \fIlog\-level\fR]
@@ -55,63 +53,67 @@ df_collector \- OpenCALEA Delivery Function (DF)
 .SH "DESCRIPTION"
 .LP 
 This program is the DF (Delivery Function) from the OpenCALEA project.  It accepts data from one or more CmII or CmC agents and sends it to a CF (Collection Function), such as \fBlea_collector\fR(8).
+.LP 
+\fBdf_collector\fR(8) is also a client to \fBcontrollerd\fR(8), used to create df "routes" among other things.
+.LP 
+\fBdf_collector\fR(8) may additionally be used to keep the surveillance log.
 .SH "OPTIONS"
 .LP 
 
 .TP 
 \fB\-f\fR \fIconfig\-file\fR
-Specifies an alternate \fIconfig\-file\fR.
+Specifies an alternate \fIconfig file\fR.
+
 .br 
-Default: \fB/etc/opencalea/df_collector.conf\fR.
+Default: see FILES below.
 
 .TP 
 \fB\-u\fR \fIuser\fR
 Specifies the \fIuser\fR to change to if run as root.
+
 .br 
 Default: \fBUser\fR from config file or \fBcalea\fR.
 
 .TP 
 \fB\-g\fR \fIgroup\fR
 Specifies the \fIgroup\fR to change to if run as root.
+
 .br 
 Default: \fBGroup\fR from config file or \fBcalea\fR.
 
 .TP 
 \fB\-b\fR \fIbind\-addr\fR
 Specifies the ip address to bind to.
+
 .br 
-Default: \fBBind_Addr\fR from config file or 0.0.0.0 (any)
+Default: \fBBind_Addr\fR from config file or \fB0.0.0.0\fR (any)
 
 .TP 
-\fB\-m\fR \fIdf\-cmc\-port\fR
-Specifies the \fIport\fR to listen on for CmC agent data.
-Requires \fB\-f\fR to be specified.
-.br 
-Default: \fBDF_CmC_Port\fR from config file or \fB41805\fR.
+\fB\-p\fR \fIdf\-port\fR
+Specifies the \fIport\fR to listen on for data.
 
-.TP 
-\fB\-n\fR \fIdf\-cmii\-port\fR
-Specifies the \fIport\fR to listen on for CmII agent data.
 .br 
-Default: \fBDF_CmII_Port\fR from config file or \fB41800\fR.
+Default: \fBDF_Port\fR from config file or \fB41805\fR.
 
 .TP 
 \fB\-d\fR \fIdestination\fR
 Specifies the \fIdestination\fR CF host to send CmII and CmC to.
 For testing this host should be running \fIlea_collector\fR(8).
+
 .br 
 Default: \fBCF_Destination\fR \fBlocalhost\fR (127.0.0.1).
 
 .TP 
 \fB\-M\fR \fIcf\-cmc\-port\fR
 Specifies the \fIport\fR on \fIdestination\fR above to send CmC data to.
-Requires \fB\-f\fR to be specified.
+
 .br 
-Default: \fBCF_CmC_Port\fR from config file or \fB41815\fR.
+Default: \fBCF_CmC_Port\fR from config file or \fB41820\fR.
 
 .TP 
 \fB\-N\fR \fIcf\-cmii\-port\fR
 Specifies the \fIport\fR on \fIdestination\fR above to send CmII data to.
+
 .br 
 Default: \fBCF_CmII_Port\fR from config file or \fB41810\fR.
 
@@ -121,37 +123,8 @@ Specifies the \fICmII output format\fR.  Valid values are \fBber\fR or \fBxml\fR
 .br 
 Default: \fBCmII_Output_Format\fR from config file or \fBber\fR.
 
-.TP 
-\fB\-v\fR [\fI...\fR]
-Enable debugging (\fB\-d\fR was taken).  Use multiple times to increase verbosity.
-.br 
-Default: \fBDebug_Level\fR from config file or off.
-
-.TP 
-\fB\-D\fR \fIdebug\-file\fR
-Specifies where to debug to.
-Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a \fIfilename\fR.
-.br 
-Default: \fBDebug_Destination\fR from config file or \fBsyslog\fR.
-
-.TP 
-\fB\-l\fR \fIlog\-level\fR
-Specifies log level.
-\fIlog\-level\fR should be a numeric value from \fB1\fR (least) to \fB5\fR (most).
-.br 
-Default: \fBLog_Level\fR from config file or \fB1\fR.
-
-.TP 
-\fB\-L\fR \fIlogfile\fR
-Specifies where to log to.
-Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a \fIfilename\fR.
-.br 
-Default: \fBLog_Destination\fR from config file or \fBsyslog\fR.
-
 .SH "FILES"
 .LP 
-    \fBNote: config files are not yet used\fR
-
 .TP 
 \fI/etc/opencalea/opencalea.conf\fP
 OpenCALEA shared settings
@@ -160,17 +133,16 @@ OpenCALEA shared settings
 \fIdf_collector\fR(8) specific configuration
 .SH "EXAMPLES"
 .LP 
-There's nothing to see just yet.
-
+To run \fIdf_collector\fR(8) with the default settings from the config file:
+.LP 
+\fBdf_collector\fR
 .SH "AUTHORS"
 .LP 
-Manish Karir <mkarir@merit.edu>
-.br 
-Jesse Norell <jesse@kci.net>
+Norman Brandinger <norm@goes.com>
 .SH "SEE ALSO"
 .LP 
-\fIcontroller\fR(8), \fIcollector\fR(8), \fIlea_collector\fR(8),
-\fIopencalea\fR(8), \fItap\fR(8)
+\fIcontrollerd\fR(8), \fIlea_collector\fR(8), \fIopencalea\fR(8),
+\fItap\fR(8), \fBvop_cmii\fR(8), \fBdhcp_cmii\fR(8), \fBradius_cmii\fR(8)
 .LP 
 \fIdf_collector.conf\fR(5), \fIopencalea.conf\fR(5)
 .LP 
@@ -185,9 +157,11 @@ Lawfully Authorized Electronic Surveillance (LAES) for Internet Access and Servi
 ATIS\-PP\-1000678.2006,
 Lawfully Authorized Electronic Surveillance (LAES) for Voice over
 Packet Technologies in Wireline Telecommunications Networks, Version 2.
+.LP 
+OpenCALEA is following the development of the WISPA standard for data capture and will add support when possible.
 .SH "SECURITY"
 .LP 
-\fBdf_collector\fR(8) is currently conceptware.  This section will be updated as the implementation unfolds.
+This section will be updated as the implementation unfolds.
 .SH "BUGS"
 .LP 
 Please report all bugs to the OpenCALEA mailing list at:
