@@ -57,37 +57,43 @@ This program is the Control Daemon from the OpenCALEA project.  It runs as a dae
 
 .TP 
 \fB\-f\fR \fIconfig\-file\fR
-Specifies an alternate \fIconfig\-file\fR.
+Specifies an alternate \fIconfig file\fR.
+
 .br 
-Default: \fB/etc/opencalea/controllerd.conf\fR.
+Default: see FILES below.
 
 .TP 
 \fB\-u\fR \fIuser\fR
 Specifies the \fIuser\fR to change to if run as root.
+
 .br 
 Default: \fBUser\fR from config file or \fBcalea\fR.
 
 .TP 
 \fB\-g\fR \fIgroup\fR
 Specifies the \fIgroup\fR to change to if run as root.
+
 .br 
 Default: \fBGroup\fR from config file or \fBcalea\fR.
 
 .TP 
 \fB\-b\fR \fIbind\-addr\fR
 Specifies the ip address to bind to.
+
 .br 
-Default: \fBBind_Addr\fR from config file or 0.0.0.0 (any)
+Default: \fBBind_Addr\fR from config file or \fB0.0.0.0\fR (any)
 
 .TP 
 \fB\-p\fR \fIcontroller\-port\fR
 Specifies the tcp \fIport\fR to use for control connections.
+
 .br 
-Default: \fBPort\fR from config file or \fB41802\fR.
+Default: \fBControl_Port\fR from config file or \fB41800\fR.
 
 .TP 
 \fB\-v\fR [\fI...\fR]
 Enable debugging (\fB\-d\fR was taken).  Use multiple times to increase verbosity.
+
 .br 
 Default: \fBDebug_Level\fR from config file or off.
 
@@ -95,6 +101,7 @@ Default: \fBDebug_Level\fR from config file or off.
 \fB\-D\fR \fIdebug\-file\fR
 Specifies where to debug to.
 Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a \fIfilename\fR.
+
 .br 
 Default: \fBDebug_Destination\fR from config file or \fBsyslog\fR.
 
@@ -102,6 +109,7 @@ Default: \fBDebug_Destination\fR from config file or \fBsyslog\fR.
 \fB\-l\fR \fIlog\-level\fR
 Specifies log level.
 \fIlog\-level\fR should be a numeric value from \fB1\fR (least) to \fB5\fR (most).
+
 .br 
 Default: \fBLog_Level\fR from config file or \fB1\fR.
 
@@ -109,13 +117,11 @@ Default: \fBLog_Level\fR from config file or \fB1\fR.
 \fB\-L\fR \fIlogfile\fR
 Specifies where to log to.
 Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a \fIfilename\fR.
+
 .br 
 Default: \fBLog_Destination\fR from config file or \fBsyslog\fR.
-
 .SH "FILES"
 .LP 
-    \fBNote: config files are not yet used\fR
-
 .TP 
 \fI/etc/opencalea/opencalea.conf\fP
 OpenCALEA shared settings
@@ -151,6 +157,8 @@ Lawfully Authorized Electronic Surveillance (LAES) for Internet Access and Servi
 ATIS\-PP\-1000678.2006,
 Lawfully Authorized Electronic Surveillance (LAES) for Voice over
 Packet Technologies in Wireline Telecommunications Networks, Version 2.
+.LP 
+OpenCALEA is following the development of the WISPA standard for data capture and will add support when possible.
 .SH "SECURITY"
 .LP 
 \fBcontrollerd\fR(8) is currently conceptware.  This section will be updated as the implementation unfolds.

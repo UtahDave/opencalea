@@ -1,5 +1,5 @@
-.\" This is part of a set of commands and information released under the OpenCALEA Project.
-.\" http://www.opencalea.org/
+.\" This is part of a set of commands and information released under the
+.\" OpenCALEA Project.  http://www.opencalea.org/
 .\" 
 .\" OpenCalea is distributed under the terms of the modified BSD license:
 .\" 
@@ -30,24 +30,23 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.TH "tap" "8" "svn-20070501" "The OpenCALEA Project" "OpenCALEA"
+.TH "tap" "8" "svn-20070502" "The OpenCALEA Project" "OpenCALEA"
 .SH "NAME"
 .LP 
 tap \- OpenCALEA network tap
 .SH "SYNTAX"
 .LP 
 \fBtap\fR
-\fB\-x\fR \fIcontent\-id\fR
-\fB\-y\fR \fIcase\-id\fR
-\fB\-z\fR \fIiap\-system\-id\fR
 [\fB\-f\fR \fIconfig\-file\fR]
-[\fB\-i\fR \fIinterface\fR]
-[\fB\-d\fR \fIdestination\fR]
-[\fB\-c\fR]
 [\fB\-u\fR \fIuser\fR]
 [\fB\-g\fR \fIgroup\fR]
-[\fB\-m\fR \fIcmc\-port\fR]
-[\fB\-n\fR \fIcmii\-port\fR]
+[\fB\-i\fR \fIinterface\fR]
+[\fB\-d\fR \fIdestination\fR]
+[\fB\-p\fR \fIdf\-port\fR]
+[\fB\-c\fR \fIcontent\-type\fR]
+[\fB\-x\fR \fIcontent\-id\fR]
+[\fB\-y\fR \fIcase\-id\fR]
+[\fB\-z\fR \fIiap\-system\-id\fR]
 [\fB\-v\fR [\fI...\fR]]
 [\fB\-D\fR \fIdebug\-file\fR]
 [\fB\-l\fR \fIlog\-level\fR]
@@ -55,82 +54,112 @@ tap \- OpenCALEA network tap
 [\fIcapture\-filter\fR]
 .SH "DESCRIPTION"
 .LP 
-This program is a network tap (packet sniffer) from the OpenCALEA project.  It can be invoked to collect CACmII (Content Associated Communications Identifying Information) and CmC (Communication Content) for an intercept subject, which is sent to a running \fBlea_collector\fR(8) program somewhere in the network.  \fBtap\fR(8) can be invoked by itself or started via the \fBcontroller\fR(8) program.
+This program is a network tap (packet sniffer) from the OpenCALEA project.  It can be invoked to collect CACmII (Content Associated Communications Identifying Information) and CmC (Communication Content) for an intercept subject, which is sent to a running \fBdf_collector\fR(8) program somewhere in the network.
 .LP 
-\fBtap\fR(8) is planned to talk with \fBdf_collector\fR(8) rather than directly to \fBlea_collector\fR(8), but will otherwise remain largely the same.
+We currently use the same content format for an Internet data tap (T1.IAS standard) and a Voice intercept (T1.678 standard), ie. a \fICC\-APDU\fR structure.  More formats will likely be added in the future.  The \fB\-c\fR switch will parse other formats, but they're not there yet.
+.LP 
+\fBtap\fR(8) can be invoked by itself, but is normally started by the \fBtap_controller\fR(8) program.  See \fBtap_controller\fR(8) for more information.
 .SH "OPTIONS"
 .LP 
-
-.TP 
-\fB\-x\fR \fIcontent\-id\fR
-Specifies the Content ID; placed in CmII and CmC messages.
-.br 
-Default: none, must be specified.
-
-.TP 
-\fB\-y\fR \fIcase\-id\fR
-Specifies the Case ID; placed in CmII and CmC messages.
-.br 
-Default: none, must be specified.
-
-.TP 
-\fB\-z\fR \fIiap\-system\-id\fR
-Specifies the IAP System ID for this system; placed in CmII and CmC messages.
-.br 
-Default: \fBIAPSystemID\fR from config file.
+\fBtap\fR(8) can run with no command line options, configured entirely by a config file.  In the absence of any config file, you must specify the content type and other options required by that content type.
 
 .TP 
 \fB\-f\fR \fIconfig\-file\fR
 Specifies an alternate \fIconfig file\fR.
-.br 
-Default: \fB/etc/opencalea/opencalea.conf\fR
-and \fB/etc/opencalea/tap.conf\fR
-.TP 
-\fB\-i\fR \fIinterface\fR
-Specifies the network \fIinterface\fR to capture on.
-.br 
-Default: system dependent.
 
-.TP 
-\fB\-d\fR \fIdestination\fR
-Specifies the destination host to send CmII and CmC messages to.
-This host should be running \fIlea_collector\fR(8).
 .br 
-Default: \fBlocalhost\fR (127.0.0.1).
-
-.TP 
-\fB\-c\fR
-Specifies to capture/send CmC (packet contents) as well as CACmII (header info).
-.br 
-Default: off.
+Default: see FILES below.
 
 .TP 
 \fB\-u\fR \fIuser\fR
 Specifies the \fIuser\fR to change to if run as root.
+
 .br 
 Default: \fBUser\fR from config file or \fBcalea\fR.
 
 .TP 
 \fB\-g\fR \fIgroup\fR
 Specifies the \fIgroup\fR to change to if run as root.
+
 .br 
 Default: \fBGroup\fR from config file or \fBcalea\fR.
 
 .TP 
-\fB\-m\fR \fIcmc\-port\fR
-Specifies the \fIport\fR on \fIdestination\fR above to send CmC data to.
+\fB\-i\fR \fIinterface\fR
+Specifies the network \fIinterface\fR to capture on.
+
 .br 
-Default: \fBCmC_Port\fR from config file or \fB6666\fR (this will change).
+Default: \fBInterface\fR from config file or system dependent.
 
 .TP 
-\fB\-n\fR \fIcmii\-port\fR
-Specifies the \fIport\fR on \fIdestination\fR above to send CmII data to.
+\fB\-d\fR \fIdestination\fR
+Specifies the destination host to send CmII and CmC messages to.
+This host should be running \fIdf_collector\fR(8).
+
 .br 
-Default: \fBCmII_Port\fR from config file or \fB6667\fR (this will change).
+Default: \fBDF_Collector\fR from config file or \fBlocalhost\fR (127.0.0.1).
+
+.TP 
+\fB\-p\fR \fIdf\-port\fR
+Specifies the \fIport\fR on \fIdestination\fR above where \fBdf_collector\fR(8) is listening for data.
+
+.br 
+Default: \fBDF_Port\fR from config file or \fB41805\fR.
+
+.TP 
+\fB\-c\fR \fIcontent\-type\fR
+Specifies the type of content to send.
+Valid values of \fIcontent\-type\fR are:
+
+.br 
+\fBvop\-cc\fR  Send ATIS VOP content (CC\-APDU).
+.br 
+\fBias\-cmii\fR  Send ATIS IAS CACmII (Packet\-Data\-Header\-Report).
+.br 
+\fBias\-cmc\fR  Send ATIS IAS CACmII and CmC (IAS\-CC\-APDU).
+.br 
+\fBias\-cmc\-udp\fR  Send ATIS IAS CACmII and CmC (Annex D.3.1 udp encapsulation).
+.br 
+\fBraw\fR  Send captured packets, sans link layer headers (no formatting).
+.br 
+\fBraw\-full\fR  Send captured packets with link layer headers (no formatting).
+
+.br 
+Default: \fBContent_Type\fR from config file.
+.br 
+Required: yes.
+
+.TP 
+\fB\-x\fR \fIcontent\-id\fR
+Specifies the Content ID; placed in CmII and CmC messages.
+
+.br 
+Default: \fBContentID\fR from config file.
+.br 
+Required: For all ATIS content types (vop\-* and ias\-*).
+
+.TP 
+\fB\-y\fR \fIcase\-id\fR
+Specifies the Case ID; placed in CmII and CmC messages.
+
+.br 
+Default: \fBCaseID\fR from config file.
+.br 
+Required: For all ATIS content types (vop\-* and ias\-*).
+
+.TP 
+\fB\-z\fR \fIiap\-system\-id\fR
+Specifies the IAP System ID for this system; placed in CmII and CmC messages.
+
+.br 
+Default: \fBIAPSystemID\fR from config file.
+.br 
+Required: For all ATIS content types (vop\-* and ias\-*).
 
 .TP 
 \fB\-v\fR [\fI...\fR]
 Enable debugging (\fB\-d\fR was taken).  Use multiple times to increase verbosity.
+
 .br 
 Default: \fBDebug_Level\fR from config file or off.
 
@@ -138,6 +167,7 @@ Default: \fBDebug_Level\fR from config file or off.
 \fB\-D\fR \fIdebug\-file\fR
 Specifies where to debug to.
 Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a \fIfilename\fR.
+
 .br 
 Default: \fBDebug_Destination\fR from config file or \fBsyslog\fR.
 
@@ -145,6 +175,7 @@ Default: \fBDebug_Destination\fR from config file or \fBsyslog\fR.
 \fB\-l\fR \fIlog\-level\fR
 Specifies log level.
 \fIlog\-level\fR should be a numeric value from \fB1\fR (least) to \fB5\fR (most).
+
 .br 
 Default: \fBLog_Level\fR from config file or \fB1\fR.
 
@@ -152,6 +183,7 @@ Default: \fBLog_Level\fR from config file or \fB1\fR.
 \fB\-L\fR \fIlogfile\fR
 Specifies where to log to.
 Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a \fIfilename\fR.
+
 .br 
 Default: \fBLog_Destination\fR from config file or \fBsyslog\fR.
 
@@ -159,45 +191,47 @@ Default: \fBLog_Destination\fR from config file or \fBsyslog\fR.
 \fIcapture\-filter\fR
 Specify packet capture filter in libpcap syntax.
 See \fItcpdump\fR(8) man page for syntax.
+
 .br 
-Default: none.
+Default: \fBPCAP_Filter\fR from config file or none.
 .SH "FILES"
 .LP 
-    \fBNote: config files are not yet used\fR
-
 .TP 
 \fI/etc/opencalea/opencalea.conf\fP
-OpenCALEA shared settings
+OpenCALEA shared config file
 .TP 
 \fI/etc/opencalea/tap.conf\fP
 \fItap\fR(8) specific configuration
 .SH "EXAMPLES"
 .LP 
-To run \fItap\fR(8) with the minimum of \fIcontent\-id\fR, \fIcase\-id\fR and \fIiap\-system\-id\fR and intercepting ip address 123.45.67.89, with \fIlea_collector\fR(8) running on 192.168.0.20:
+To run \fItap\fR(8) intercepting voice (VOP) content for ip address 123.45.67.89, with the minimum of \fIcontent\-id\fR and \fIcase\-id\fR, and sending to \fIdf_collector\fR(8) running on 192.168.0.20:
 .LP 
 \fBtap\fR
-\fB\-x\fR "Content ID" \fB\-y\fR Case\-ID \fB\-z\fR IAP_System_ID
+\fB\-x\fR "Intercept Subject .89" \fB\-y\fR Case\-ID\-001
+\fB\-c\fR vop\-cc
 \fB\-d\fR 192.168.0.20  host 123.45.67.89
 .LP 
-To run \fItap\fR(8) capturing all data on the "eth2" \fIinterface\fR, \fIdebug\fRging to standard out, with \fIlea_collector\fR(8) running on localhost:
+To run \fItap\fR(8) capturing all data on the "eth2" \fIinterface\fR, \fIdebug\fRging to standard out, sending CACmII (not content) to \fIdf_collector\fR(8) running on localhost:
 .LP 
 \fBtap\fR
-\fB\-x\fR x \fB\-y\fR y \fB\-z\fR z 
+\fB\-x\fR x \fB\-y\fR y 
+\fB\-c\fR ias\-cmii
 \fB\-i\fR eth2 \fB\-vvv \-D\fR stdout
-.IP 
+.LP 
 or
 .LP 
 \fBtap\fR
-\fB\-x\fR x \fB\-y\fR y \fB\-z\fR z 
+\fB\-x\fR x \fB\-y\fR y 
+\fB\-c\fR ias\-cmii
 \fB\-i\fR eth2 \fB\-vvv \-D\fR stdout \fB\-d\fR localhost\fR
 .LP 
-To run \fItap\fR(8) capturing both CACmII and CmC traffic to/from mac address "00:11:22:33:44:55", \fIlog\fRging to a file, with \fIlea_collector\fR(8) running on \fIcmii port\fR 1234, \fIcmc port\fR 1235 on host lea\-collector.mydomain.com:
+To run \fItap\fR(8) capturing both CACmII and CmC traffic to/from mac address "00:11:22:33:44:55", \fIlog\fRging to a file, with \fIdf_collector\fR(8) running on \fIport\fR 1234 on host df\-collector.mydomain.com:
 .LP 
 \fBtap\fR
-\fB\-x\fR x \fB\-y\fR y \fB\-z\fR z
-\fB\-c\fR
+\fB\-x\fR x \fB\-y\fR y
+\fB\-c\fR ias\-cmc
 \fB\-l\fR 5 \fB\-L\fR /tmp/tap.log
-\fB\-n\fR 1234 \fB\-m\fR 1235 \fB\-d\fR lea\-collector.mydomain.com
+\fB\-n\fR 1234 \fB\-d\fR df\-collector.mydomain.com
 ether host 00:11:22:33:44:55
 
 .SH "AUTHORS"
@@ -209,7 +243,7 @@ Jesse Norell <jesse@kci.net>
 Norman Brandinger <norm@goes.com>
 .SH "SEE ALSO"
 .LP 
-\fIcontroller\fR(8), \fIcollector\fR(8), \fIdf_collector\fR(8), \fIlea_collector\fR(8), \fIopencalea\fR(8)
+\fItap_controller\fR(8), \fIdf_collector\fR(8), \fIopencalea\fR(8)
 .LP 
 \fItap.conf\fR(5), \fIopencalea.conf\fR(5)
 .LP 
@@ -224,6 +258,8 @@ Lawfully Authorized Electronic Surveillance (LAES) for Internet Access and Servi
 \fIATIS\-PP\-1000678.2006,
 Lawfully Authorized Electronic Surveillance (LAES) for Voice over
 Packet Technologies in Wireline Telecommunications Networks, Version 2.\fR
+.LP 
+OpenCALEA is following the development of the WISPA standard for data capture and will add support when possible.
 .SH "SECURITY"
 .LP 
 \fItap\fR(8) is effectively a packet sniffer designed to ship captured traffic to an arbitrary location; ie. a prime target for misuse.  It needs to be run either by root or a user with appropriate (OS specific) capabilities/setup to access bpf or open raw devices.  Please use \-u and \-g to change the user/group id once started.
