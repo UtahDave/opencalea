@@ -241,15 +241,11 @@ int df_process_msg(Msg *msg, int n) {
 					return -1;
 				}
 
-				bzero(&route[id].lea_addr, sizeof(route[id].lea_addr));
-				route[id].lea_addr.sin_family = AF_INET;
-				route[id].lea_addr.sin_family = AF_INET;
-
 			        /*************************/
         			/* Create a route to LEA */
         			/*************************/
     				sprintf(route_port, "%d", ntohs(ctrlmsg->ctrlh.dfhost.port));
-    				memset ( &hints, 0, sizeof ( hints ) );
+    				bzero(&hints, sizeof(hints));
     				hints.ai_family = AF_INET;
 				if (strcmp((char *)ctrlmsg->ctrlh.dfhost.protocol,"udp") == 0) {
     					hints.ai_socktype = SOCK_DGRAM;
@@ -266,27 +262,28 @@ int df_process_msg(Msg *msg, int n) {
     				switch (res->ai_family) {
        				    case AF_INET:
 
+					bzero(&route[id].lea_addr, sizeof(route[id].lea_addr));
 					route[id].lea_addr.sin_family = res->ai_family;
 					route[id].lea_addr.sin_port = ((struct sockaddr_in *)res->ai_addr)->sin_port;
 					route[id].lea_addr.sin_addr.s_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr; 
-					route[id].fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-       					if (route[id].fd < 0) {
+					if ((route[id].fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
        						debug_5("df_collector: ipv4 route[%d]=%d socket failure", id, route[id].fd);
        						break;
        					}
-       					//if (connect(route[id].routeid, res->ai_addr, res->ai_addrlen) < 0) {
-       					//	debug_5("df_collector: ipv4 route[%d] connect failure", id);
-            				//	close(route[id].routeid);
-            				//	route[id].routeid = -1;
-            			 	//	break;
-       					//}
+
+            				if (connect(route[id].fd, res->ai_addr, res->ai_addrlen) < 0) {
+                				debug_4 ( "df_collector: connect error");
+                				close(route[id].fd);
+						route[id].fd = -1;
+					}
+
+  					debug_5("df_collector: route[%d] created to %s:%d", id, (char *)ctrlmsg->ctrlh.dfhost.host, ntohs(route[id].lea_addr.sin_port));
+					msg->msgh.routeid = htons(id);
        					break;
        				    case AF_INET6:
        					break;
     				}
     				freeaddrinfo(res);
-				msg->msgh.routeid = htons(id);
-  				debug_5("df_collector: route[%d] created to %s:%s", id, (char *)ctrlmsg->ctrlh.dfhost.host, route_port);
 				return DF_REPLY;
 			}
 
@@ -305,7 +302,7 @@ int df_process_msg(Msg *msg, int n) {
 
 			id =  ntohs(msg->msgh.routeid);
 
-			debug_5("df_collector: CmII sending to route[%d]=%d", id, route[id].fd);
+			debug_5("df_collector: CmII sending to route[%d]=%d port:%d", id, route[id].fd, ntohs(route[id].lea_addr.sin_port));
 
 			sendto (route[id].fd, ((char *)msg + msg_len),  msg->msgh.msglen, 0, (struct sockaddr *)&route[id].lea_addr, sizeof(route[id].lea_addr));
                         break;
@@ -325,7 +322,7 @@ int df_process_msg(Msg *msg, int n) {
 				}
 			}
 			id =  ntohs(msg->msgh.routeid);
-			debug_5("df_collector: CmC sending to route[%d]=%d", id, route[id].fd);
+			debug_5("df_collector: CmC sending to route[%d]=%d port:%d", id, route[id].fd, ntohs(route[id].lea_addr.sin_port));
 			sendto (route[id].fd, ((char *)msg + msg_len),  msg->msgh.msglen, 0, (struct sockaddr *)&route[id].lea_addr, sizeof(route[id].lea_addr));
                         break;
                 case MSGTYPE_CC:
