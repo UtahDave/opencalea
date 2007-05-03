@@ -1,0 +1,1 @@
+gcc -I../../T1.678/VoP -lVoP -DPDU=CC_APDU -o CC_APDU_converter ../../T1.678/CCDeliveryHeader/converter-sample.c
