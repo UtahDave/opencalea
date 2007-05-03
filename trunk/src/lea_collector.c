@@ -117,6 +117,12 @@ int main ( int argc, char *argv[] ) {
     char *debug_file = NULL;
     char *log_file = NULL;
 
+    fd_set sock_fds;
+    int num_sock_fds;
+    int max_fd;
+
+    struct in_addr myaddr, myaddr2;
+
     setdebug( DEF_DEBUG_LEVEL, "syslog", 1 );
     setlog( DEF_LOG_LEVEL, "syslog", 1 );
 
@@ -345,15 +351,8 @@ int main ( int argc, char *argv[] ) {
         cmii_receiver_addr.sin_port   = ((struct sockaddr_in *)res->ai_addr)->sin_port;
         cmii_receiver_addr.sin_addr.s_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
 
-        if ( cmc_capture_file != NULL ) {
-            cmii_receiver_addr.sin_family = cmc_receiver_addr.sin_family;
-            cmii_receiver_addr.sin_addr.s_addr = cmc_receiver_addr.sin_addr.s_addr;
-            debug_5 ( "using cmii_receiver_addr %s:%d",
-                inet_ntoa ( cmii_receiver_addr.sin_addr ), htons ( cmii_receiver_addr.sin_port ) );
-        } else {
-            debug_5 ( "trying cmii_receiver_addr %s:%d",
-                inet_ntoa ( cmii_receiver_addr.sin_addr ), htons ( cmii_receiver_addr.sin_port ) );
-        }
+        debug_5 ( "trying cmii_receiver_addr %s:%d",
+            inet_ntoa ( cmii_receiver_addr.sin_addr ), htons ( cmii_receiver_addr.sin_port ) );
 
         debug_5 ( "creating cmii_receiver_socket" );
         cmii_receiver_socket = socket( res->ai_family, res->ai_socktype, res->ai_protocol );
@@ -386,12 +385,8 @@ int main ( int argc, char *argv[] ) {
 
     freeaddrinfo(res0);
 
-    debug_3 ( "setting SIGINT signal handler" );
-    signal (SIGINT, signal_handler);
-
-    fd_set sock_fds;
-    int num_sock_fds;
-    int max_fd;
+    // debug_3 ( "setting SIGINT signal handler" );
+    // signal (SIGINT, signal_handler);
 
     FD_ZERO( &sock_fds );
     FD_SET( cmii_receiver_socket, &sock_fds );
@@ -412,12 +407,12 @@ int main ( int argc, char *argv[] ) {
         pdie ( "CmC fopen" );
     }
 
-    struct in_addr myaddr, myaddr2;
-
     debug_2 ( "entering receiver select loop" );
     len = sizeof ( struct sockaddr );
     while ( 1 ) {
-        num_sock_fds = select( max_fd, &sock_fds, NULL, NULL, NULL);
+        FD_SET( cmii_receiver_socket, &sock_fds );
+        FD_SET( cmc_receiver_socket, &sock_fds );
+        num_sock_fds = select( max_fd+1 , &sock_fds, NULL, NULL, NULL);
         if ( num_sock_fds < 0 ) {
             pdie ( "lea_collector: select " );
         } else if ( num_sock_fds == 0 ) {
@@ -426,9 +421,9 @@ int main ( int argc, char *argv[] ) {
             /* read data on sockets */
             if ( FD_ISSET( cmii_receiver_socket, &sock_fds )) {
                 debug_5 ( "lea_collector: CmII socket ready" );
-                bzero( buf, 10000 );
+                // bzero( buf, 10000 );
                 if ((n = recvfrom ( cmii_receiver_socket, buf, 10000, 0, (struct sockaddr*) &cmii_receiver_addr, &len)) == -1) { 
-                    pdie ( "lea_collector: recvfrom" );;
+                    pdie ( "lea_collector: cmii recvfrom" );
                 } else {
                     debug_5 ( "lea_collector: cmii recvfrom returned %d bytes", n );
                 } 
@@ -459,9 +454,9 @@ int main ( int argc, char *argv[] ) {
 
             if ( FD_ISSET( cmc_receiver_socket, &sock_fds )) {
                 debug_5 ( "lea_collector: CmC socket ready" );
-                bzero( buf, 10000 );
+                // bzero( buf, 10000 );
                 if ((n = recvfrom ( cmc_receiver_socket, buf, 10000, 0, (struct sockaddr*) &cmc_receiver_addr, &len)) == -1) { 
-                    pdie ( "lea_collector: recvfrom " );;
+                    pdie ( "lea_collector: cmc recvfrom " );
                 } else {
                     debug_5 ( "lea_collector: cmc recvfrom returned %d bytes", n );
                 }
