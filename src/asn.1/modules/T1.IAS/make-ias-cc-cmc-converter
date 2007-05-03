@@ -1,0 +1,1 @@
+gcc -I../../T1.IAS/CmCC -lCmCC -DPDU=IAS_CC_APDU -o IAS_CmCC_converter ../../T1.IAS/CmCC/converter-sample.c
