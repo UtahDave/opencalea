@@ -133,7 +133,7 @@
 #define NACK                  1 
 #define QUIT                  2 
 
-#define MAX_MSGSIZE 2048       /* max size of control message/response */
+#define MAX_MSGSIZE 4096       /* max size of control message/response */
 
 #define min(a,b)        ((a) < (b) ? (a) : (b))
 #define max(a,b)        ((a) > (b) ? (a) : (b))

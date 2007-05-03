@@ -49,8 +49,7 @@ void get_calea_time ( time_t sec, time_t usec, char *buf ) {
 /* send a Communications Content packet to lea 
    collection function
 */
-int CmCPacketSend ( CmC *packet, int length, int *send_socket, 
-                    struct sockaddr_in *send_addr ) {
+int CmCPacketSend (CmC *packet, int length, int *send_socket) {
 
     int bytes_sent;
 
@@ -79,7 +78,7 @@ int CmCPacketSend ( CmC *packet, int length, int *send_socket,
 /* send a Packet Data Header Report msg to lea 
    collection function
 */
-int CmIIPacketSend ( Msg *packet, int length, int *cmii_send_socket, struct sockaddr_in *cmii_send_addr ) { 
+int CmIIPacketSend (Msg *packet, int length, int *cmii_send_socket) { 
 
     int bytes_sent;
 
@@ -118,6 +117,7 @@ Msg *CmCPacketBuild (HEADER *dfheader) {
 
     msg->msgh.msgtype = MSGTYPE_CMC;
     msg->msgh.format  = MSGFMT_BER;
+    msg->msgh.routeid = htons(dfheader->cmc_routeid);
     msg->msgh.msglen  = dfheader->encoded_size;
 
     memcpy ( ((char *)msg + msg_len), dfheader->encoded, dfheader->encoded_size);
@@ -127,19 +127,18 @@ Msg *CmCPacketBuild (HEADER *dfheader) {
 Msg *CmIIPacketBuild (HEADER *dfheader) {
 
     Msg *msg;
-    size_t msg_len;
 
-    msg_len = sizeof(Msg);
-    if (! ( msg = (Msg *) malloc ( msg_len + dfheader->encoded_size ) ) ) {
+    if (! ( msg = (Msg *) malloc ( sizeof(Msg) + dfheader->encoded_size ) ) ) {
         perror("malloc");
         exit ( -1 );
     }
 
     msg->msgh.msgtype = MSGTYPE_CMII;
     msg->msgh.format  = MSGFMT_BER;
+    msg->msgh.routeid = htons(dfheader->cmii_routeid);
     msg->msgh.msglen  = dfheader->encoded_size;
 
-    memcpy ( ((char *)msg + msg_len), dfheader->encoded, dfheader->encoded_size);
+    memcpy ( ((char *)msg + sizeof(Msg)), dfheader->encoded, dfheader->encoded_size);
     return msg;
 }
 
@@ -148,3 +147,62 @@ void PacketFree ( Msg *msg ) {
     free ( msg );
 }
 
+Msg *CtrlMsgBuild (HEADER *dfheader) {
+
+    Msg *msg;
+    CtrlMsg *ctrlmsg;
+
+    if ( !(msg = (Msg *)malloc(sizeof(Msg) + sizeof(CtrlMsg) ) ) ) {
+        perror("CtrlMsgBuild: malloc");
+        exit(-1);
+    }
+
+    ctrlmsg = (CtrlMsg *)((char *)msg + sizeof(Msg));
+
+    msg->msgh.msgtype = MSGTYPE_CONTROL;
+    msg->msgh.format  = MSGFMT_NONE;
+    msg->msgh.routeid = htons(-1);
+    msg->msgh.msglen  = sizeof(CtrlMsg);
+
+    ctrlmsg->ctrlh.cmd = CTRLCMD_ROUTE_ADD;
+
+    strcpy((char *)ctrlmsg->ctrlh.agent.IAPSystemID, dfheader->iAPSystemId);
+    ctrlmsg->ctrlh.agent.type = AGENTTYPE_CONTROL;
+    ctrlmsg->ctrlh.agent.subtype = AGENTSUBTYPE_IASTAP;
+
+    strcpy((char *)ctrlmsg->ctrlh.intercept.CaseID, dfheader->caseId);
+    strcpy((char *)ctrlmsg->ctrlh.intercept.SubjectID, dfheader->correlationID);
+
+    strcpy((char *)ctrlmsg->ctrlh.dfhost.protocol, "udp");
+    strcpy((char *)ctrlmsg->ctrlh.dfhost.host, "127.0.0.1");
+
+    return msg;
+}
+
+int PacketSend (char *packet, int length, int *send_socket) {
+
+    int bytes_sent;
+
+    if ( (bytes_sent = send ( *send_socket, packet, length, 0)) == -1 ) {
+        pdie ( "PacketSend:" );
+        switch ( errno ) {
+        case EHOSTUNREACH:
+        case EHOSTDOWN:
+        case ENETDOWN:
+            return -1;
+            break;
+        case ENOBUFS:
+            log_1 ( "%s%s%s", "Whoah, slow down there!  You're sending packets too fast.\n",
+                "Check your filter (eg. you're not capturing the very packets your sending out),\n",
+                "and make sure you're capturing on the right interface." );
+            break;
+        default:
+            exit ( -1 );
+            break;
+         }
+     }
+
+    return bytes_sent;
+}
+
+/* */

@@ -41,13 +41,16 @@ char *directsignalreporting(HEADER *dfheader);
 void get_calea_time ( time_t sec, time_t usec, char *buf );
 
 Msg *CmCPacketBuild ( HEADER *dfheader );
-int CmCPacketSend  ( Msg *packet, int length, int *send_sock, struct sockaddr_in *send_addr );
+int CmCPacketSend  ( Msg *packet, int length, int *send_sock );
 
 Msg *CmIIPacketBuild ( HEADER *dfheader );
-int CmIIPacketSend ( Msg *packet, int length, int *send_sock, struct sockaddr_in *send_addr );
+int CmIIPacketSend ( Msg *packet, int length, int *send_sock );
 
 void PacketFree ( Msg *packet );
 
+Msg *CtrlMsgBuild (HEADER *dfheader);
+ssize_t tcp_write(int fd, const void *buf, size_t tot_len);
+ssize_t tcp_read(int fd, void *buf, size_t tot_len);
 
 /*
  * Config settings are set as follows (each step
@@ -194,7 +197,7 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
     if ( content_option == 1 ) {
 
       debug_5("IP (%d bytes):", ip_size_total);
-      print_hex((const u_char *)ip, (size_t)ip_size_total);
+      //print_hex((const u_char *)ip, (size_t)ip_size_total);
 
       dfheader->sequenceNumber++;
       dfheader->payload = (const char *)ip;
@@ -222,7 +225,7 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
       debug_5 ( "building CmC packet size: %d", total_pkt_length );
       cmc_pkt = CmCPacketBuild ( dfheader );
       debug_5 ( "sending CmC packet size: %d", total_pkt_length );
-      CmCPacketSend ( cmc_pkt, total_pkt_length, &send_cmc_socket, &send_cmc_addr );
+      CmCPacketSend ( cmc_pkt, total_pkt_length, &send_cmc_socket );
       PacketFree ( cmc_pkt );
 
       free(dfheader->encoded);
@@ -231,7 +234,7 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
 
     if (packet_data_header_report(dfheader) == 0) {
       debug_5("Packet_Data_Header_Report encoded addr: %p, size: %Zd", dfheader->encoded, dfheader->encoded_size);
-      print_hex((const u_char *)dfheader->encoded, (size_t)dfheader->encoded_size);
+      //print_hex((const u_char *)dfheader->encoded, (size_t)dfheader->encoded_size);
     } else {
       return;
     }
@@ -240,15 +243,15 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
     debug_5 ( "building T1.IAS CmII packet size: %d", total_pkt_length);
     cmii_pkt = CmIIPacketBuild ( dfheader ); 
     debug_5 ( "sending T1.IAS CmII packet size: %d", total_pkt_length );
-    print_hex((const u_char *)cmii_pkt, (size_t)total_pkt_length);
-    CmIIPacketSend ( cmii_pkt, total_pkt_length, &send_cmii_socket, &send_cmii_addr ); 
+    //print_hex((const u_char *)cmii_pkt, (size_t)total_pkt_length);
+    CmIIPacketSend ( cmii_pkt, total_pkt_length, &send_cmii_socket ); 
     PacketFree ( cmii_pkt ); 
 
     free(dfheader->encoded);
 
     if (directsignalreporting(dfheader) == 0) {
       debug_5("Direct Signal Reporting encoded addr: %p, size: %Zd", dfheader->encoded, dfheader->encoded_size);
-      print_hex((const u_char *)dfheader->encoded, (size_t)dfheader->encoded_size);
+      //print_hex((const u_char *)dfheader->encoded, (size_t)dfheader->encoded_size);
     } else {
       return;
     }
@@ -257,8 +260,8 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
     debug_5 ( "building T1.678 CmII packet size: %d", total_pkt_length);
     cmii_pkt = CmIIPacketBuild ( dfheader ); 
     debug_5 ( "sending T1.678 CmII packet size: %d", total_pkt_length );
-    print_hex((const u_char *)cmii_pkt, (size_t)total_pkt_length);
-    CmIIPacketSend ( cmii_pkt, total_pkt_length, &send_cmii_socket, &send_cmii_addr ); 
+    //print_hex((const u_char *)cmii_pkt, (size_t)total_pkt_length);
+    CmIIPacketSend ( cmii_pkt, total_pkt_length, &send_cmii_socket ); 
     PacketFree ( cmii_pkt ); 
 
     free(dfheader->encoded);
@@ -310,6 +313,12 @@ int main( int argc, char *argv[] ) {
     char *conf_temp = NULL;
 
     HEADER *dfheader;
+    Msg *ctrlmsg;
+    int     controlfd = 0;
+    char df_control_port[8];
+    char addrstr[100];
+    void *ptr = NULL;
+    CtrlMsg *temp;
 
     setdebug( DEF_DEBUG_LEVEL, "syslog", 1 );
     setlog( DEF_LOG_LEVEL, "syslog", 1 );
@@ -670,6 +679,71 @@ int main( int argc, char *argv[] ) {
     dfheader->caseId = caseID;
     dfheader->iAPSystemId = iapID;
     dfheader->sequenceNumber = 0;
+
+    /****************************************************************/
+    /* temporary code to send a control message to the df_collector */
+    /* this control message will add a new route to a lea_collector */
+    /****************************************************************/
+    memset ( &hints, 0, sizeof ( hints ) );
+    hints.ai_family = PF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    sprintf(df_control_port, "%d", DF_CONTROL_PORT);
+
+    i = getaddrinfo (dest, df_control_port, &hints, &res);
+    if (i != 0) { 
+      perror ("getaddrinfo");
+      return -1;
+    }
+
+    while (res) {
+      inet_ntop (res->ai_family, res->ai_addr->sa_data, addrstr, 100);
+
+      switch (res->ai_family) {
+        case AF_INET:
+          ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
+          controlfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+          if (controlfd < 0) {
+            debug_5("tap: ipv4 control socket failure");
+            break;
+          }
+          if (connect(controlfd, res->ai_addr, res->ai_addrlen) < 0) {
+            debug_5("tap: ipv4 control connect failure");
+            close(controlfd);
+            controlfd = -1;
+            break;
+          }
+          break;
+        case AF_INET6:
+          ptr = &((struct sockaddr_in6 *) res->ai_addr)->sin6_addr;
+          break;
+      }
+      inet_ntop (res->ai_family, ptr, addrstr, 100);
+      debug_5 ("tap: df_control IPv%d address: %s (%s)\n", res->ai_family == PF_INET6 ? 6 : 4, addrstr, res->ai_canonname);
+      res = res->ai_next;
+    }
+    freeaddrinfo(res);
+
+    ctrlmsg = CtrlMsgBuild (dfheader);
+
+    temp = (CtrlMsg *)((char *)ctrlmsg + sizeof(Msg));
+ 
+    temp->ctrlh.dfhost.port = htons(LEA_COLLECTOR_CmII_PORT);
+    i = tcp_write(controlfd, ctrlmsg, sizeof(Msg) + sizeof(CtrlMsg));
+    tcp_read(controlfd, ctrlmsg, i);
+    debug_5("tap: df_collector returned route[%d]", ntohs(ctrlmsg->msgh.routeid));
+    dfheader->cmii_routeid = ntohs(ctrlmsg->msgh.routeid);
+
+    ctrlmsg->msgh.routeid = htons(-1);
+    temp->ctrlh.dfhost.port = htons(LEA_COLLECTOR_CmC_PORT);
+    i = tcp_write(controlfd, ctrlmsg, i);
+    tcp_read(controlfd, ctrlmsg, i);
+    debug_5("tap: df_collector returned route[%d]", ntohs(ctrlmsg->msgh.routeid));
+    dfheader->cmc_routeid = ntohs(ctrlmsg->msgh.routeid);
+
+    free(ctrlmsg);
+
+    /****************************************************************/
 
     debug_4 ( "begining pcap_loop" );
     pcap_loop( handle, -1, process_packet, (u_char *)dfheader );
