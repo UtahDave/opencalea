@@ -24,12 +24,19 @@
  * SUCH DAMAGE.
  */
 
+#include <string.h>
+
 #include "common.h"
 #include "msg.h"
 #include "calea.h"
 
+ssize_t tcp_write(int fd, const void *buf, size_t tot_len);
 ssize_t tcp_read(int fd, void *buf, size_t tot_len);
 void usage (void);
+int PacketSend  ( char *packet, int length, int *send_sock );
+
+#define MAXROUTES 10
+#define DF_REPLY 1
 
 char *prog_name       = "df_collector";
 int   syslog_facility = DEF_SYSLOG_FACILITY;
@@ -40,6 +47,18 @@ char *cmc_file = NULL;
 char *cmii_file = NULL;
 int   cmc_port  = 0;
 int   cmii_port = 0;
+
+/* Routes to LEA */
+
+typedef struct route_t {
+  char  protocol[8];		/* Protocol used to communicate across this route */
+  int  fd;			/* file descriptor used for communications across this route */
+  struct sockaddr_in lea_addr;	/* socket address structure for this route */
+} Route;
+
+Route route[MAXROUTES];
+
+struct addrinfo hints, *res;
 
 char *bindaddr = NULL;
 
@@ -179,14 +198,15 @@ void parse_commandline(int argc, char *argv[]) {
 
 }
 
-void df_process_msg(Msg *msg, int n) {
+int df_process_msg(Msg *msg, int n) {
 	size_t msg_len;
 	size_t ret;
 	msg_len = sizeof(Msg);
+	CtrlMsg *ctrlmsg;
+	int i, id;
+	char route_port[8];
 
 	debug_5("Message Size: %d", n);
-        print_hex((const u_char *)msg, msg_len);
-        print_hex((const u_char *)((char *)msg + msg_len), msg->msgh.msglen);
 
         switch(msg->msgh.msgtype) {
         	case MSGTYPE_NONE:
@@ -194,30 +214,119 @@ void df_process_msg(Msg *msg, int n) {
                         break;
                 case MSGTYPE_CONTROL:
                         debug_5("df_collector: MSGTYPE_CONTROL OpenCALEA Control message");
+			ctrlmsg = (CtrlMsg *)((char *)msg + msg_len);
+        		//print_hex((const u_char *)msg, msg_len);
+        		//print_hex((const u_char *)((char *)msg + msg_len), msg->msgh.msglen);
+        		//print_hex((const u_char *)msg, n);
+
+			debug_5("df_collector: IAPSystemId: %s", ctrlmsg->ctrlh.agent.IAPSystemID);
+			debug_5("df_collector: CaseID:      %s", ctrlmsg->ctrlh.intercept.CaseID);
+			debug_5("df_collector: SubjectID:   %s", ctrlmsg->ctrlh.intercept.SubjectID);
+
+
+			debug_5("df_collector: dfhost protocol: %s", ctrlmsg->ctrlh.dfhost.protocol);
+			debug_5("df_collector: dfhost host:     %s", ctrlmsg->ctrlh.dfhost.host);
+			debug_5("df_collector: dfhost port:     %d", ntohs(ctrlmsg->ctrlh.dfhost.port));
+
+			if (ctrlmsg->ctrlh.cmd == CTRLCMD_ROUTE_ADD) {
+				debug_5("df_collector: ROUTE ADD Control message received");
+
+				/* look for a free route */
+				for (id=0; id<MAXROUTES; id++) {
+				  if (route[id].fd == -1) 
+				  	break;
+				}
+				if (id == MAXROUTES) {
+					debug_5("df_collector: no available routes");
+					return -1;
+				}
+
+				bzero(&route[id].lea_addr, sizeof(route[id].lea_addr));
+				route[id].lea_addr.sin_family = AF_INET;
+				route[id].lea_addr.sin_family = AF_INET;
+
+			        /*************************/
+        			/* Create a route to LEA */
+        			/*************************/
+    				sprintf(route_port, "%d", ntohs(ctrlmsg->ctrlh.dfhost.port));
+    				memset ( &hints, 0, sizeof ( hints ) );
+    				hints.ai_family = AF_INET;
+				if (strcmp((char *)ctrlmsg->ctrlh.dfhost.protocol,"udp") == 0) {
+    					hints.ai_socktype = SOCK_DGRAM;
+				} else {
+					debug_5("df_collector: unsupported route protocol");
+    					hints.ai_socktype = SOCK_STREAM;
+				}
+    				i = getaddrinfo ((char *)ctrlmsg->ctrlh.dfhost.host, route_port, &hints, &res);
+    				if (i != 0) {
+      					perror ("df_collector: getaddrinfo");
+      					return -1;
+    				}
+
+    				switch (res->ai_family) {
+       				    case AF_INET:
+
+					route[id].lea_addr.sin_family = res->ai_family;
+					route[id].lea_addr.sin_port = ((struct sockaddr_in *)res->ai_addr)->sin_port;
+					route[id].lea_addr.sin_addr.s_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr; 
+					route[id].fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+       					if (route[id].fd < 0) {
+       						debug_5("df_collector: ipv4 route[%d]=%d socket failure", id, route[id].fd);
+       						break;
+       					}
+       					//if (connect(route[id].routeid, res->ai_addr, res->ai_addrlen) < 0) {
+       					//	debug_5("df_collector: ipv4 route[%d] connect failure", id);
+            				//	close(route[id].routeid);
+            				//	route[id].routeid = -1;
+            			 	//	break;
+       					//}
+       					break;
+       				    case AF_INET6:
+       					break;
+    				}
+    				freeaddrinfo(res);
+				msg->msgh.routeid = htons(id);
+  				debug_5("df_collector: route[%d] created to %s:%s", id, (char *)ctrlmsg->ctrlh.dfhost.host, route_port);
+				return DF_REPLY;
+			}
+
                         break;
                 case MSGTYPE_LOG:
                         debug_5("df_collector: MSGTYPE_LOG Surveillance Log message");
                         break;
                 case MSGTYPE_CMII:
                         debug_5("df_collector: MSGTYPE_CMII Communications Identifying Information message");
+        		//print_hex((const u_char *)msg, msg_len);
+        		//print_hex((const u_char *)((char *)msg + msg_len), msg->msgh.msglen);
 			ret = fwrite(((char *)msg + msg_len),  msg->msgh.msglen, 1, CmII_fp);
 			if (ret != 1) {
                           debug_5("df_collector: error writing to CmII file");
 			}
+
+			id =  ntohs(msg->msgh.routeid);
+
+			debug_5("df_collector: CmII sending to route[%d]=%d", id, route[id].fd);
+
+			sendto (route[id].fd, ((char *)msg + msg_len),  msg->msgh.msglen, 0, (struct sockaddr *)&route[id].lea_addr, sizeof(route[id].lea_addr));
                         break;
                 case MSGTYPE_CII:
                         debug_5("df_collector: MSGTYPE_CII Call Identifying Information message");
                         break;
                 case MSGTYPE_CMC:
                         debug_5("df_collector: MSGTYPE_CMC Communications Content message");
+        		//print_hex((const u_char *)msg, msg_len);
+        		//print_hex((const u_char *)((char *)msg + msg_len), msg->msgh.msglen);
 			if (cmc_file == NULL) {
-                        	debug_5("df_collector: Warning CmC capture file not available");
+                         	debug_5("df_collector: Warning CmC capture file not available");
 			} else {
 				ret = fwrite(((char *)msg + msg_len),  msg->msgh.msglen, 1, CmC_fp);
 				if (ret != 1) {
                           	debug_5("df_collector: error writing to CmC file");
 				}
 			}
+			id =  ntohs(msg->msgh.routeid);
+			debug_5("df_collector: CmC sending to route[%d]=%d", id, route[id].fd);
+			sendto (route[id].fd, ((char *)msg + msg_len),  msg->msgh.msglen, 0, (struct sockaddr *)&route[id].lea_addr, sizeof(route[id].lea_addr));
                         break;
                 case MSGTYPE_CC:
                         debug_5("df_collector: MSGTYPE_CC Call Content message");
@@ -257,7 +366,7 @@ void df_process_msg(Msg *msg, int n) {
                         break;
 		}
 	
-	return;
+	return 0;
 }
 
 void usage ( void ) {
@@ -348,17 +457,22 @@ int main ( int argc, char *argv[] ) {
 	listen(CmC_tcpfd, 10);
 
         /*****************************/
-        /* Create control UDP socket */
+        /* Create control TCP socket */
         /*****************************/
 
-        controlfd = socket(AF_INET, SOCK_DGRAM, 0);
+        controlfd = socket(AF_INET, SOCK_STREAM, 0);
 
         bzero(&servaddr, sizeof(servaddr));
         servaddr.sin_family = AF_INET;
         servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
         servaddr.sin_port = htons(DF_CONTROL_PORT);
 
+        setsockopt(controlfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+
         bind(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+
+        listen(controlfd, 10);
+
 	
 	/**************************/
 	/* Create CmII UDP socket */
@@ -388,6 +502,10 @@ int main ( int argc, char *argv[] ) {
 
 	/********************************************************************/
 
+	for (i=0; i<MAXROUTES; i++) {
+		route[i].fd = -1;
+	}
+
 	maxi = -1;		/* index into client[] array */
 	for (i=0; i<FD_SETSIZE; i++) {
 		client[i] = -1;	/* -1 indicates and empty slot in the client[] array */
@@ -405,6 +523,7 @@ int main ( int argc, char *argv[] ) {
 	maxfd = max(CmII_tcpfd, CmII_udpfd);
 	maxfd = max(maxfd, CmC_udpfd);		
 	maxfd = max(maxfd, CmC_tcpfd);		
+	maxfd = max(maxfd, controlfd);		
 
 	for (;;) {
 		rset = allset;	/* initialize */
@@ -417,11 +536,11 @@ int main ( int argc, char *argv[] ) {
 			}
 		}
 
-		/* CmII TCP socket ready to receive data */
-		if (FD_ISSET(CmII_tcpfd, &rset)) {	/* new client connection */
-
+		/* control TCP socket ready to receive data */
+		if (FD_ISSET(controlfd, &rset)) {	/* new control client connection */
+			debug_5("df_collector: control socket ready to receive data");
 			clilen = sizeof(cliaddr);
-			connfd = accept(CmII_tcpfd, (struct sockaddr *) &cliaddr, &clilen);
+			connfd = accept(controlfd, (struct sockaddr *) &cliaddr, &clilen);
 
 			for (i=0; i<FD_SETSIZE; i++) { 
 				if (client[i] < 0) {
@@ -447,13 +566,6 @@ int main ( int argc, char *argv[] ) {
 
 		}			
 
-		/* check control UDP socket for data */	
-		if (FD_ISSET(controlfd, &rset)) {
-			len = sizeof(cliaddr);
-			n = recvfrom(controlfd, buf, MAX_MSGSIZE, 0, (struct sockaddr *) &cliaddr, &len);
-			df_process_msg((Msg *)buf, n);
-		}
-
 		/* check CmII UDP socket for data */	
 		if (FD_ISSET(CmII_udpfd, &rset)) {
 			len = sizeof(cliaddr);
@@ -474,13 +586,16 @@ int main ( int argc, char *argv[] ) {
 				continue;
 			if (FD_ISSET(sockfd, &rset)) {
 
-				if ((n=tcp_read(sockfd, buf, MAX_MSGSIZE)) == 0) {
+				debug_5("df_collector: starting to read data for client[%d] = %d", i, sockfd);
+				if ((n=read(sockfd, buf, MAX_MSGSIZE)) <= 0) {
 					/* conneciton closed by client */
 					close(sockfd);
 					FD_CLR(sockfd, &allset);
 					client[i] = -1;
 				} else {
-					df_process_msg((Msg *)buf, n);
+					if (df_process_msg((Msg *)buf, n) == DF_REPLY) {
+						tcp_write(sockfd, buf, n);
+					}
 				}
 
 				if (--nready <= 0)

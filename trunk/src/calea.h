@@ -65,6 +65,8 @@ typedef struct {
     size_t encoded_size;
     char src_ip[INET_ADDRSTRLEN];
     char dst_ip[INET_ADDRSTRLEN];
+    int cmc_routeid;
+    int cmii_routeid;
 } header_t;
 #define HEADER header_t
 

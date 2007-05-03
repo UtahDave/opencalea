@@ -60,6 +60,7 @@ enum e_msgfmt {
 typedef struct msgh_t {
     MsgType msgtype;
     MsgFmt format;
+    int routeid;		/* DF route id for this message (if applicable) */
     int msglen;                 /* Length of msgbody, not including the Msgh */
 } Msgh; 
 
@@ -192,7 +193,7 @@ typedef struct subject_t {
 
 /* Generic Message Destination */
 typedef struct msgdest_t {
-    u_char protocol[4];         /* "unix", "tcp" ("tcp4") or "udp" ("udp4") */
+    u_char protocol[5];         /* "unix", "tcp" ("tcp4") or "udp" ("udp4") */
     u_char host[INET_ADDRSTRLEN];  /* IPv4 Addr (will change for ipv6) */
     int port;                   /* tcp/udp port */
     u_char sock[128];           /* unix domain socket */

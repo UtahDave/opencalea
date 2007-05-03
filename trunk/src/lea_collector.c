@@ -37,6 +37,7 @@ char *prog_name = "lea_collector";
 int syslog_facility = DEF_SYSLOG_FACILITY;
 
 FILE *cmii_fp = NULL;
+FILE *cmc_fp = NULL;
 struct pcap_dumper *pd = NULL;
 
 void print_packet( const u_char *packet, u_short  size ) {
@@ -97,7 +98,7 @@ int main ( int argc, char *argv[] ) {
     char contentID[MAX_CONTENT_ID_LENGTH+1];
     char caseID[MAX_CASE_ID_LENGTH+1];
     char IAPSystemID[MAX_IAP_SYSTEM_ID_LENGTH+1];
-    char *capture_file = NULL;
+    char *cmc_capture_file = NULL;
     char *cmii_capture_file = NULL;
     char *bindaddr = NULL;
     struct addrinfo hints, *res, *res0;
@@ -123,8 +124,8 @@ int main ( int argc, char *argv[] ) {
     while (( i = getopt ( argc, argv, "t:f:b:hm:n:xu:g:vD:l:L:" )) != -1 ) {
 
         switch ( i ) {
-            case 'f':   // pcap capture file 
-                if ( ( capture_file = strdup ( optarg ) ) == NULL )
+            case 'f':   // cmc capture file 
+                if ( ( cmc_capture_file = strdup ( optarg ) ) == NULL )
                     pdie ( "strdup" );
                 debug_5 ( "got opt %c: %s", i, optarg );
                 break;
@@ -196,9 +197,33 @@ int main ( int argc, char *argv[] ) {
         }
     }
 
+    /* do as much as possible after dropping privs */
+    if ( debug_file && strlen ( debug_file ) ) {
+        debug_level_set = ( debug_level_set ) ? debug_level_set : DEF_DEBUG_LEVEL;
+        debug_3 ( "resetting debug level (%d) and destination (%s)",
+            debug_level_set, debug_file );
+        setdebug( debug_level_set, debug_file, 1 );
+    } else {
+        debug_3 ( "resetting debug level (%d)", debug_level_set );
+        setdebug( debug_level_set, "syslog", 1 );
+    }
+    if ( log_file && strlen ( log_file ) ) {
+        log_level_set = ( log_level_set ) ? log_level_set : DEF_LOG_LEVEL;
+        debug_3 ( "resetting log level (%d) and destination (%s)",
+            log_level_set, log_file );
+        setlog( log_level_set, log_file, 1 );
+    } else {
+        debug_3 ( "resetting log level (%d)", log_level_set );
+        setlog( log_level_set, "syslog", 1 );
+    }
+
     if ( cmii_capture_file == NULL ) {
         usage();
-        die ( "cmii capture file not specified (need -f)." );
+        die ( "cmii capture file not specified (need -t)." );
+    }
+    if ( cmc_capture_file == NULL ) {
+        usage();
+        die ( "cmc capture file not specified (need -f)." );
     }
 
     /* drop privs if running as root or told to do so */
@@ -229,43 +254,21 @@ int main ( int argc, char *argv[] ) {
             pdie ( "setgid" );
     }
 
-
-    /* do absolutely as much as possible AFTER dropping privs */
-    if ( debug_file && strlen ( debug_file ) ) {
-        debug_level_set = ( debug_level_set ) ? debug_level_set : DEF_DEBUG_LEVEL;
-        debug_5 ( "resetting debug level (%d) and destination (%s)",
-            debug_level_set, debug_file );
-        setdebug( debug_level_set, debug_file, 1 );
-    } else {
-        debug_5 ( "resetting debug level (%d)", debug_level_set );
-        setdebug( debug_level_set, "syslog", 1 );
-    }
-    if ( log_file && strlen ( log_file ) ) {
-        log_level_set = ( log_level_set ) ? log_level_set : DEF_LOG_LEVEL;
-        debug_5 ( "resetting log level (%d) and destination (%s)",
-            log_level_set, log_file );
-        setlog( log_level_set, log_file, 1 );
-    } else {
-        debug_5 ( "resetting log level (%d)", log_level_set );
-        setlog( log_level_set, "syslog", 1 );
-    }
-
-
     if ( cmii_port == NULL ) {
         if ( ! ( cmii_port = malloc ( 64 ) ) )
             perror ( "malloc" );
-        snprintf ( cmii_port, 64, "%d", CmII_PORT );
+        snprintf ( cmii_port, 64, "%d", LEA_COLLECTOR_CmII_PORT );
         debug_5 ( "using default cmii port (%s)", cmii_port );
     }
 
-    if ( capture_file == NULL ) {
+    if ( cmc_capture_file == NULL ) {
         log_2 ( "CmC capture file not specified, CmC collection disabled." );
         debug_2 ( "CmC capture file not specified, CmC collection disabled." );
     } else { 
         if ( cmc_port == NULL ) {
             if ( ! ( cmc_port = malloc ( 64 ) ) )
                 perror ( "malloc" );
-            snprintf ( cmc_port, 64, "%d", CmC_PORT );
+            snprintf ( cmc_port, 64, "%d", LEA_COLLECTOR_CmC_PORT );
             debug_5 ( "using default cmc port (%s)", cmc_port );
         }
 
@@ -342,7 +345,7 @@ int main ( int argc, char *argv[] ) {
         cmii_receiver_addr.sin_port   = ((struct sockaddr_in *)res->ai_addr)->sin_port;
         cmii_receiver_addr.sin_addr.s_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
 
-        if ( capture_file != NULL ) {
+        if ( cmc_capture_file != NULL ) {
             cmii_receiver_addr.sin_family = cmc_receiver_addr.sin_family;
             cmii_receiver_addr.sin_addr.s_addr = cmc_receiver_addr.sin_addr.s_addr;
             debug_5 ( "using cmii_receiver_addr %s:%d",
@@ -388,33 +391,25 @@ int main ( int argc, char *argv[] ) {
 
     fd_set sock_fds;
     int num_sock_fds;
+    int max_fd;
 
     FD_ZERO( &sock_fds );
     FD_SET( cmii_receiver_socket, &sock_fds );
+    FD_SET( cmc_receiver_socket, &sock_fds );
+    max_fd = max(cmii_receiver_socket, cmc_receiver_socket);
+
     debug_5 ( "opening cmii_capture_file" );
-    cmii_fp = fopen ( cmii_capture_file , "w" );
+    cmii_fp = fopen ( cmii_capture_file , "wb" );
 
     if (cmii_fp == NULL) {
-        pdie ( "fopen" );
+        pdie ( "CmII fopen" );
     }
 
-    if ( capture_file != NULL ) {
-        FD_SET( cmc_receiver_socket, &sock_fds );
-        if ( cooked_format == 1 ) {
-            debug_5 ( "calling pcap_open_dead" );
-            pt =  pcap_open_dead ( DLT_LINUX_SLL,  10000 );
-            debug_5 ( "calling pcap_set_datalink" );
-            if ( pcap_set_datalink(pt, DLT_EN10MB) == -1 )
-                die ( "pcap_set_datalink failure" );
-        } else {
-            debug_5 ( "calling pcap_open_dead" );
-            pt =  pcap_open_dead ( DLT_EN10MB,  1024 );
-        }
+    debug_5 ( "opening cmc_capture_file" );
+    cmc_fp = fopen ( cmc_capture_file , "wb" );
 
-        debug_5 ( "calling pcap_dump_open" );
-        pd =  pcap_dump_open( pt, capture_file );
-        if (pd == NULL)
-            pdie ( "pcap_dump_open" );
+    if (cmc_fp == NULL) {
+        pdie ( "CmC fopen" );
     }
 
     struct in_addr myaddr, myaddr2;
@@ -422,23 +417,24 @@ int main ( int argc, char *argv[] ) {
     debug_2 ( "entering receiver select loop" );
     len = sizeof ( struct sockaddr );
     while ( 1 ) {
-        num_sock_fds = select( FD_SETSIZE, &sock_fds, (fd_set *) NULL, 
-		  (fd_set *) NULL, NULL );
+        num_sock_fds = select( max_fd, &sock_fds, NULL, NULL, NULL);
         if ( num_sock_fds < 0 ) {
-            pdie ( "select " );
+            pdie ( "lea_collector: select " );
         } else if ( num_sock_fds == 0 ) {
-            debug_5 ( "select returned with 0 descriptors ready" );
+            debug_5 ( "lea_collector: select returned with 0 descriptors ready" );
         } else {
             /* read data on sockets */
             if ( FD_ISSET( cmii_receiver_socket, &sock_fds )) {
-                memset ( buf, '\0', 10000 );
-                if ((n = recvfrom ( cmii_receiver_socket, buf, 10000, 0, 
-                    (struct sockaddr*) &cmii_receiver_addr, &len)) == -1) {
-                    pdie ( "recvfrom" );;
+                debug_5 ( "lea_collector: CmII socket ready" );
+                bzero( buf, 10000 );
+                if ((n = recvfrom ( cmii_receiver_socket, buf, 10000, 0, (struct sockaddr*) &cmii_receiver_addr, &len)) == -1) { 
+                    pdie ( "lea_collector: recvfrom" );;
                 } else {
-                    debug_5 ( "cmii recvfrom returned %d bytes", n );
+                    debug_5 ( "lea_collector: cmii recvfrom returned %d bytes", n );
                 } 
-                
+             
+                fwrite( buf, n, 1, cmii_fp);
+/* 
                 cmiipkt = (CmII*) buf;
                 CmIIh *cmiih;
                 cmiih = (CmIIh*) &(cmiipkt->cmiih);
@@ -458,17 +454,20 @@ int main ( int argc, char *argv[] ) {
                              ) < 0 ) {
                     pdie ("fprintf");
                 }
+*/
             }
 
-            if ( capture_file != NULL ) {
-                if ( FD_ISSET( cmc_receiver_socket, &sock_fds )) {
-                    memset ( buf, '\0', 10000 );
-                    if ((n = recvfrom ( cmc_receiver_socket, buf, 10000, 0, 
-                        (struct sockaddr*) &cmc_receiver_addr, &len)) == -1) {
-                        pdie ( "recvfrom" );;
-                    } else {
-                        debug_5 ( "cmc  recvfrom returned %d bytes", n );
-                    } 
+            if ( FD_ISSET( cmc_receiver_socket, &sock_fds )) {
+                debug_5 ( "lea_collector: CmC socket ready" );
+                bzero( buf, 10000 );
+                if ((n = recvfrom ( cmc_receiver_socket, buf, 10000, 0, (struct sockaddr*) &cmc_receiver_addr, &len)) == -1) { 
+                    pdie ( "lea_collector: recvfrom " );;
+                } else {
+                    debug_5 ( "lea_collector: cmc recvfrom returned %d bytes", n );
+                }
+
+		fwrite( buf, n, 1, cmc_fp);
+/*
                     cmcpkt = (CmC*) buf;
                     sscanf ( cmcpkt->cmch.ts, 
                             "%d-%d-%dT%d:%d:%d.%ld", &(mytm.tm_year), 
@@ -483,7 +482,7 @@ int main ( int argc, char *argv[] ) {
                     h.len = n - sizeof ( CmCh );
                     debug_5 ( "pcap_dump'ing cmc packet to file" );
                     pcap_dump( (u_char*) pd ,  &h, (u_char*) cmcpkt->pkt);
-                }
+*/
             }
        }
         

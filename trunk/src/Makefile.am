@@ -6,11 +6,11 @@ tap_SOURCES = tap.c tap.h common.h calea.c calea.h log_debug.c log_debug.h cc_ap
 tap_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 tap_LDADD = -lpcap -Lasn.1/T1.678/CCDeliveryHeader -lCCDeliveryHeader -Lasn.1/T1.IAS/CmII -lCmII -Lasn.1/T1.678/VoP -lVoP $(GLIB_LIBS) 
 
-df_collector_SOURCES = df_collector.c common.h log_debug.c log_debug.h util.h util.c
+df_collector_SOURCES = df_collector.c common.h log_debug.c log_debug.h util.h calea.c util.c
 df_collector_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 df_collector_LDADD = -lpcap -lpthread $(GLIB_LIBS)
 
-lea_collector_SOURCES = lea_collector.c lea_collector.h common.h log_debug.c log_debug.h util.h util.c
+lea_collector_SOURCES = lea_collector.c lea_collector.h common.h log_debug.c log_debug.h util.h calea.c util.c
 lea_collector_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 lea_collector_LDADD = -lpcap $(GLIB_LIBS)
 

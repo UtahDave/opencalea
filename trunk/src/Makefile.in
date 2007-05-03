@@ -63,14 +63,16 @@ controller_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(controller_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_df_collector_OBJECTS = df_collector-df_collector.$(OBJEXT) \
-	df_collector-log_debug.$(OBJEXT) df_collector-util.$(OBJEXT)
+	df_collector-log_debug.$(OBJEXT) df_collector-calea.$(OBJEXT) \
+	df_collector-util.$(OBJEXT)
 df_collector_OBJECTS = $(am_df_collector_OBJECTS)
 df_collector_DEPENDENCIES = $(am__DEPENDENCIES_1)
 df_collector_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(df_collector_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 am_lea_collector_OBJECTS = lea_collector-lea_collector.$(OBJEXT) \
-	lea_collector-log_debug.$(OBJEXT) lea_collector-util.$(OBJEXT)
+	lea_collector-log_debug.$(OBJEXT) \
+	lea_collector-calea.$(OBJEXT) lea_collector-util.$(OBJEXT)
 lea_collector_OBJECTS = $(am_lea_collector_OBJECTS)
 lea_collector_DEPENDENCIES = $(am__DEPENDENCIES_1)
 lea_collector_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -220,10 +222,10 @@ AM_CFLAGS = -g -O2 -Wall -Iasn.1/T1.678/CCDeliveryHeader -Iasn.1/T1.IAS/CmII -Ia
 tap_SOURCES = tap.c tap.h common.h calea.c calea.h log_debug.c log_debug.h cc_apdu.c packet_data_header_report.c directsignalreporting.c util.h util.c
 tap_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 tap_LDADD = -lpcap -Lasn.1/T1.678/CCDeliveryHeader -lCCDeliveryHeader -Lasn.1/T1.IAS/CmII -lCmII -Lasn.1/T1.678/VoP -lVoP $(GLIB_LIBS) 
-df_collector_SOURCES = df_collector.c common.h log_debug.c log_debug.h util.h util.c
+df_collector_SOURCES = df_collector.c common.h log_debug.c log_debug.h util.h calea.c util.c
 df_collector_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 df_collector_LDADD = -lpcap -lpthread $(GLIB_LIBS)
-lea_collector_SOURCES = lea_collector.c lea_collector.h common.h log_debug.c log_debug.h util.h util.c
+lea_collector_SOURCES = lea_collector.c lea_collector.h common.h log_debug.c log_debug.h util.h calea.c util.c
 lea_collector_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 lea_collector_LDADD = -lpcap $(GLIB_LIBS)
 controller_SOURCES = controller.c common.h process_registry.c process_registry.h log_debug.c log_debug.h util.h util.c
@@ -323,9 +325,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/controller-log_debug.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/controller-process_registry.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/controller-util.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/df_collector-calea.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/df_collector-df_collector.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/df_collector-log_debug.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/df_collector-util.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lea_collector-calea.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lea_collector-lea_collector.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lea_collector-log_debug.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lea_collector-util.Po@am__quote@
@@ -498,6 +502,20 @@ df_collector-log_debug.obj: log_debug.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -c -o df_collector-log_debug.obj `if test -f 'log_debug.c'; then $(CYGPATH_W) 'log_debug.c'; else $(CYGPATH_W) '$(srcdir)/log_debug.c'; fi`
 
+df_collector-calea.o: calea.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -MT df_collector-calea.o -MD -MP -MF $(DEPDIR)/df_collector-calea.Tpo -c -o df_collector-calea.o `test -f 'calea.c' || echo '$(srcdir)/'`calea.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/df_collector-calea.Tpo $(DEPDIR)/df_collector-calea.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='calea.c' object='df_collector-calea.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -c -o df_collector-calea.o `test -f 'calea.c' || echo '$(srcdir)/'`calea.c
+
+df_collector-calea.obj: calea.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -MT df_collector-calea.obj -MD -MP -MF $(DEPDIR)/df_collector-calea.Tpo -c -o df_collector-calea.obj `if test -f 'calea.c'; then $(CYGPATH_W) 'calea.c'; else $(CYGPATH_W) '$(srcdir)/calea.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/df_collector-calea.Tpo $(DEPDIR)/df_collector-calea.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='calea.c' object='df_collector-calea.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -c -o df_collector-calea.obj `if test -f 'calea.c'; then $(CYGPATH_W) 'calea.c'; else $(CYGPATH_W) '$(srcdir)/calea.c'; fi`
+
 df_collector-util.o: util.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(df_collector_CFLAGS) $(CFLAGS) -MT df_collector-util.o -MD -MP -MF $(DEPDIR)/df_collector-util.Tpo -c -o df_collector-util.o `test -f 'util.c' || echo '$(srcdir)/'`util.c
 @am__fastdepCC_TRUE@	mv -f $(DEPDIR)/df_collector-util.Tpo $(DEPDIR)/df_collector-util.Po
@@ -539,6 +557,20 @@ lea_collector-log_debug.obj: log_debug.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='log_debug.c' object='lea_collector-log_debug.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collector_CFLAGS) $(CFLAGS) -c -o lea_collector-log_debug.obj `if test -f 'log_debug.c'; then $(CYGPATH_W) 'log_debug.c'; else $(CYGPATH_W) '$(srcdir)/log_debug.c'; fi`
+
+lea_collector-calea.o: calea.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collector_CFLAGS) $(CFLAGS) -MT lea_collector-calea.o -MD -MP -MF $(DEPDIR)/lea_collector-calea.Tpo -c -o lea_collector-calea.o `test -f 'calea.c' || echo '$(srcdir)/'`calea.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/lea_collector-calea.Tpo $(DEPDIR)/lea_collector-calea.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='calea.c' object='lea_collector-calea.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collector_CFLAGS) $(CFLAGS) -c -o lea_collector-calea.o `test -f 'calea.c' || echo '$(srcdir)/'`calea.c
+
+lea_collector-calea.obj: calea.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collector_CFLAGS) $(CFLAGS) -MT lea_collector-calea.obj -MD -MP -MF $(DEPDIR)/lea_collector-calea.Tpo -c -o lea_collector-calea.obj `if test -f 'calea.c'; then $(CYGPATH_W) 'calea.c'; else $(CYGPATH_W) '$(srcdir)/calea.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/lea_collector-calea.Tpo $(DEPDIR)/lea_collector-calea.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='calea.c' object='lea_collector-calea.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collector_CFLAGS) $(CFLAGS) -c -o lea_collector-calea.obj `if test -f 'calea.c'; then $(CYGPATH_W) 'calea.c'; else $(CYGPATH_W) '$(srcdir)/calea.c'; fi`
 
 lea_collector-util.o: util.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(lea_collector_CFLAGS) $(CFLAGS) -MT lea_collector-util.o -MD -MP -MF $(DEPDIR)/lea_collector-util.Tpo -c -o lea_collector-util.o `test -f 'util.c' || echo '$(srcdir)/'`util.c
