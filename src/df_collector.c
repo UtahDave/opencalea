@@ -430,9 +430,9 @@ int main ( int argc, char *argv[] ) {
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port = htons(cmii_port);
 
-	setsockopt(CmII_tcpfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+	Setsockopt(CmII_tcpfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
-	bind(CmII_tcpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+	Bind(CmII_tcpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
 	Listen(CmII_tcpfd, BACKLOG);
 
@@ -447,9 +447,9 @@ int main ( int argc, char *argv[] ) {
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port = htons(cmc_port);
 
-	setsockopt(CmC_tcpfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+	Setsockopt(CmC_tcpfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
-	bind(CmC_tcpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+	Bind(CmC_tcpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
 	Listen(CmC_tcpfd, BACKLOG);
 
@@ -464,9 +464,9 @@ int main ( int argc, char *argv[] ) {
         servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
         servaddr.sin_port = htons(DF_CONTROL_PORT);
 
-        setsockopt(controlfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+        Setsockopt(controlfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
-        bind(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+        Bind(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
         Listen(controlfd, BACKLOG);
 
@@ -482,7 +482,7 @@ int main ( int argc, char *argv[] ) {
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port = htons(cmii_port);
 
-	bind(CmII_udpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+	Bind(CmII_udpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 	
 	/*************************/
 	/* Create CmC UDP socket */
@@ -495,7 +495,7 @@ int main ( int argc, char *argv[] ) {
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port = htons(cmc_port);
 
-	bind(CmC_udpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+	Bind(CmC_udpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
 	/********************************************************************/
 

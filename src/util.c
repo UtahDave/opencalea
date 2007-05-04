@@ -374,7 +374,6 @@ ssize_t tcp_write(int fd, const void *buf, size_t tot_len) {
  */
  
 int Socket(int domain, int type, int protocol) {
-
 	int fd;	/* socket file descriptor */
 
 	fd = socket(domain, type, protocol);
@@ -399,8 +398,8 @@ int Connect(int socket, const struct sockaddr *address, socklen_t address_len) {
 }
 
 int Listen(int socket, int backlog) {
-
 	int rc;
+
 	rc = listen(socket, backlog);
 	if (rc == -1) {
 		debug_5("Listen error: %s", strerror(errno));
@@ -408,4 +407,33 @@ int Listen(int socket, int backlog) {
 	return rc;
 }
 
+/**
+ * Bind - bind a name to a socket
+ */
+
+int Bind(int socket, const struct sockaddr *address, socklen_t address_len) {
+	int rc;
+
+	rc = bind(socket, address, address_len);
+	if (rc == -1) {
+		debug_5("Bind error: %s", strerror(errno));
+	}
+	return rc;
+}
+
+/**
+ * Setsockopt - set the socket options
+ */
+
+int Setsockopt(int socket, int level, int option_name, const void *option_value, socklen_t option_len) {
+	int rc;
+
+	rc = setsockopt(socket, level, option_name, option_value, option_len);
+	if (rc == -1) {
+		debug_5("Setsockopt error: %s", strerror(errno));
+	}
+	return rc;
+}
+
+	
 /* */
