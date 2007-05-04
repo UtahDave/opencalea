@@ -423,7 +423,7 @@ int main ( int argc, char *argv[] ) {
 	/* Create CmII TCP listening socket */
 	/************************************/
 
-	CmII_tcpfd = socket(AF_INET, SOCK_STREAM, 0);
+	CmII_tcpfd = Socket(AF_INET, SOCK_STREAM, 0);
 	
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
@@ -434,13 +434,13 @@ int main ( int argc, char *argv[] ) {
 
 	bind(CmII_tcpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
-	listen(CmII_tcpfd, 10);
+	Listen(CmII_tcpfd, BACKLOG);
 
 	/***********************************/
 	/* Create CmC TCP listening socket */
 	/***********************************/
 
-	CmC_tcpfd = socket(AF_INET, SOCK_STREAM, 0);
+	CmC_tcpfd = Socket(AF_INET, SOCK_STREAM, 0);
 	
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
@@ -451,13 +451,13 @@ int main ( int argc, char *argv[] ) {
 
 	bind(CmC_tcpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
-	listen(CmC_tcpfd, 10);
+	Listen(CmC_tcpfd, BACKLOG);
 
         /*****************************/
         /* Create control TCP socket */
         /*****************************/
 
-        controlfd = socket(AF_INET, SOCK_STREAM, 0);
+        controlfd = Socket(AF_INET, SOCK_STREAM, 0);
 
         bzero(&servaddr, sizeof(servaddr));
         servaddr.sin_family = AF_INET;
@@ -468,14 +468,14 @@ int main ( int argc, char *argv[] ) {
 
         bind(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
-        listen(controlfd, 10);
+        Listen(controlfd, BACKLOG);
 
 	
 	/**************************/
 	/* Create CmII UDP socket */
 	/**************************/
 
-	CmII_udpfd = socket(AF_INET, SOCK_DGRAM, 0);
+	CmII_udpfd = Socket(AF_INET, SOCK_DGRAM, 0);
 
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
@@ -488,7 +488,7 @@ int main ( int argc, char *argv[] ) {
 	/* Create CmC UDP socket */
 	/*************************/
 
-	CmC_udpfd = socket(AF_INET, SOCK_DGRAM, 0);
+	CmC_udpfd = Socket(AF_INET, SOCK_DGRAM, 0);
 
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
