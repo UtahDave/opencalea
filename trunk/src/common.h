@@ -63,6 +63,10 @@
 #define DEF_OPENCALEA_CONF "/etc/opencalea/opencalea.conf"
 #endif
 
+#ifndef OPENCALEA_CONF_SECTION
+#define OPENCALEA_CONF_SECTION "OpenCALEA"
+#endif
+
 #ifndef DEF_SYSLOG_FACILITY
 #define DEF_SYSLOG_FACILITY LOG_USER
 #endif
@@ -71,8 +75,16 @@
 #define DEF_DEBUG_LEVEL 5
 #endif
 
+#ifndef DEF_DEBUG_DEST
+#define DEF_DEBUG_DEST "syslog"
+#endif
+
 #ifndef DEF_LOG_LEVEL
 #define DEF_LOG_LEVEL 1
+#endif
+
+#ifndef DEF_LOG_DEST
+#define DEF_LOG_DEST "syslog"
 #endif
 
 
@@ -138,5 +150,8 @@
 #define min(a,b)        ((a) < (b) ? (a) : (b))
 #define max(a,b)        ((a) > (b) ? (a) : (b))
 
+
+/* need some of the earlier #defines before including these */
+#include "msg.h"
 
 #endif
