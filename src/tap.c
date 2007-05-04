@@ -27,58 +27,33 @@
  */
 
 #include "common.h"
-#include "msg.h"
 #include "calea.h"
 #include "tap.h"
 
 #include <pcap.h> 
 #include <net/ethernet.h>
 
-char *cc_apdu(HEADER *dfheader);
-char *packet_data_header_report(HEADER *dfheader);
-char *directsignalreporting(HEADER *dfheader);
+/* function declarations */
+char *cc_apdu(HEADER *);
+char *packet_data_header_report(HEADER *);
+char *directsignalreporting(HEADER *);
+void get_calea_time (time_t, time_t, char *);
+Msg *CmCPacketBuild (HEADER *);
+int CmCPacketSend  ( Msg *, int, int * );
+Msg *CmIIPacketBuild (HEADER *);
+int CmIIPacketSend ( Msg *, int, int * );
+void PacketFree (Msg *);
+Msg *CtrlMsgBuild (HEADER *);
+ssize_t tcp_write(int, const void *, size_t);
+ssize_t tcp_read(int, void *, size_t);
 
-void get_calea_time ( time_t sec, time_t usec, char *buf );
-
-Msg *CmCPacketBuild ( HEADER *dfheader );
-int CmCPacketSend  ( Msg *packet, int length, int *send_sock );
-
-Msg *CmIIPacketBuild ( HEADER *dfheader );
-int CmIIPacketSend ( Msg *packet, int length, int *send_sock );
-
-void PacketFree ( Msg *packet );
-
-Msg *CtrlMsgBuild (HEADER *dfheader);
-ssize_t tcp_write(int fd, const void *buf, size_t tot_len);
-ssize_t tcp_read(int fd, void *buf, size_t tot_len);
-
-/*
- * Config settings are set as follows (each step
- *     overwrites settings from an earlier step):
- *
- *   - Use compile time defaults
- *   - read alternate config file from "-f"
- *   - if no "-f" given, read DEF_OPENCALEA_CONF,
- *     then re-read DEF_TAP_CONF
- *   - read command-line options
- */
-
-#ifndef DEF_TAP_CONF
-#define DEF_TAP_CONF "/etc/opencalea/tap.conf"
-#endif
-
-
-/* Config Item: Program_Name */
 char *prog_name = "tap";
-/* Config Item: Syslog_Facility */
 int syslog_facility = DEF_SYSLOG_FACILITY;
 
-/* Config Item: ContentID */
 char contentID[MAX_CONTENT_ID_LENGTH];
-/* Config Item: CaseID */
 char caseID[MAX_CASE_ID_LENGTH];
-/* Config Item: IAPSystemID */
 char iapID[MAX_IAP_SYSTEM_ID_LENGTH];
+
 
 void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_char *packet ) {
 
@@ -151,10 +126,12 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
         /* UDP Payload size */
         payload_size = ntohs(udp->uh_ulen) - udp_size;
 
-        //if (payload_size > 0) {
-        //  debug_5("Payload (%d bytes):", payload_size);
-        //  print_hex(payload, payload_size);
-        //}
+#ifdef DEBUG_PKTS
+        if (payload_size > 0) {
+          debug_5("Payload (%d bytes):", payload_size);
+          print_hex(payload, payload_size);
+        }
+#endif
 
         //format_vop_payload(dfheader);
 
@@ -268,13 +245,17 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
 }
 
 void usage ( void ) {
-    printf ( "Usage: tap -x content-id -y case-id" );
-    printf ( " -z iap-system-id [-i interface]  [-d destination ] [-c]" );
-    printf ( "[-u user] [-g group] " );
-    printf ( " [-m cmc-port] [-n cmii-port]" );
+    printf ( "Usage: tap");
+    printf ( " [-f config-file]" );
+    printf ( " [-u user] [-g group] " );
+    printf ( " [-i interface]  [-d destination ]" );
+    printf ( " [-p df-port]" );
+    printf ( " [-c content-type]" );
+    printf ( " [-x content-id] [-y case-id]" );
+    printf ( " [-z iap-system-id]");
     printf ( " [-v [...]] [-D debug-file]" );
     printf ( " [-l log-level ] [-L logfile]" );
-    printf ( " [-f capture-filter]" );
+    printf ( " [capture-filter]" );
     printf ( "\n" );
 }
 
@@ -293,7 +274,7 @@ int main( int argc, char *argv[] ) {
     bpf_u_int32 mask;		
     bpf_u_int32 net;		
     char *interface = NULL;
-    char *filter = NULL;
+    char *filter;
     char *dest = NULL;
     struct addrinfo hints, *res, *res0;
     int i = 0;
@@ -309,9 +290,9 @@ int main( int argc, char *argv[] ) {
     int debug_level_set = 0;
     char *debug_file = NULL;
     char *log_file = NULL;
-    GKeyFile*   tap_conf_file;
-    char *conf_temp = NULL;
-
+    Config *config = NULL;
+    Config *confptr = NULL;
+    char* conf_file = NULL;
     HEADER *dfheader;
     Msg *ctrlmsg;
     int     controlfd = 0;
@@ -320,56 +301,20 @@ int main( int argc, char *argv[] ) {
     void *ptr = NULL;
     CtrlMsg *temp;
 
-    setdebug( DEF_DEBUG_LEVEL, "syslog", 1 );
-    setlog( DEF_LOG_LEVEL, "syslog", 1 );
 
-    /* loading parameters from conf file */
-    tap_conf_file = g_key_file_new ( );
-    if ( !g_key_file_load_from_file ( tap_conf_file, "tap.conf", 
-           G_KEY_FILE_KEEP_COMMENTS, NULL)) {
-        error ( "unable to parse tap.conf file" );
-    } else {
+    setdebug( DEF_DEBUG_LEVEL, DEF_DEBUG_DEST, 1 );
+    setlog( DEF_LOG_LEVEL, DEF_LOG_DEST, 1 );
 
-        if ( (conf_temp = g_key_file_get_string ( tap_conf_file, 
-                    "PREFERENCES", "Interface", NULL)) != NULL) {
-            interface = Strdup ( conf_temp );
-            debug_3 ( "Using config item Interface: %s", interface );
-        } else {
-            debug_4 ( "Not set in config file: Interface" );
-        }
-
-        if ( (conf_temp = g_key_file_get_string ( tap_conf_file, 
-                    "PREFERENCES", "IAPSystemID", NULL)) != NULL) {
-            strncpy ( iapID, conf_temp, MAX_IAP_SYSTEM_ID_LENGTH);
-            debug_3 ( "Using config item IAPSystemID: %s", iapID );
-        } else {
-            debug_4 ( "Not set in config file: IAPSystemID" );
-        }
-     
-        /* we are done loading from conf file */
-        g_key_file_free ( tap_conf_file );
-    }
 
     /* command line options processing */
-    while (( i = getopt ( argc, argv, "i:cf:d:hm:n:x:y:z:u:g:vD:l:L:" )) != -1 ) {
+    opterr = 0;
+    while (( i = getopt ( argc, argv, "i:cf:F:d:hm:n:x:y:z:u:g:vD:l:L:" )) != -1 ) {
 
         switch ( i ) {
-            case 'i':   // interface
-                interface = Strdup ( optarg );
+            case 'f':   // config file
+                conf_file = Strdup ( optarg );
                 debug_4 ( "got opt %c: %s", i, optarg );
                 break;
-            case 'c':   // packet contents
-                content_option = 1;
-                debug_4 ( "got opt %c", i );
-                break;
-            case 'f':   // filter
-                filter = Strdup ( optarg );
-                debug_4 ( "got opt %c: %s", i, optarg );
-                break; 
-            case 'd':   // tunnel destination 
-                dest = Strdup ( optarg );
-                debug_4 ( "got opt %c: %s", i, optarg );
-                break; 
             case 'u':   // username
                 strncpy ( user, optarg, 31 );
                 debug_4 ( "got opt %c: %s", i, optarg );
@@ -380,10 +325,25 @@ int main( int argc, char *argv[] ) {
                 debug_4 ( "got opt %c: %s", i, optarg );
                 change_group = 1;
                 break;
+            case 'i':   // interface
+                interface = Strdup ( optarg );
+                debug_4 ( "got opt %c: %s", i, optarg );
+                break;
+            case 'd':   // content destination 
+                dest = Strdup ( optarg );
+                debug_4 ( "got opt %c: %s", i, optarg );
+                break; 
+/* needs changed to -p */
            case 'm':   // cmc port 
                 cmc_port = Strdup ( optarg );
                 debug_4 ( "got opt %c: %s", i, optarg );
                 break; 
+/* needs changed to "-c content-type" */
+            case 'c':   // packet contents
+                content_option = 1;
+                debug_4 ( "got opt %c", i );
+                break;
+/* needs removed */
             case 'n':   // cmii port 
                 cmii_port = Strdup ( optarg );
                 debug_4 ( "got opt %c: %s", i, optarg );
@@ -435,9 +395,38 @@ int main( int argc, char *argv[] ) {
         }
     }
 
+    filter = copy_argv(&argv[optind]);
+
+    /* if config file was specified, read that */
+    if (conf_file && strlen(conf_file)) {
+        if (parse_config(config, OPENCALEA_CONF_SECTION, conf_file) < 0)
+            die("Error with config file \"%s\"", conf_file);
+        if (parse_config(config, TAP_CONF_SECTION, conf_file) < 0)
+            die("Error with config file \"%s\"", conf_file);
+    } else {
+        /* otherwise read default config files */
+        if (parse_config(config, OPENCALEA_CONF_SECTION, DEF_OPENCALEA_CONF) < 0)
+            die("Error parsing config file: %s", DEF_OPENCALEA_CONF);
+        if (parse_config(config, TAP_CONF_SECTION, DEF_OPENCALEA_CONF) < 0)
+            die("Error parsing config file: %s", DEF_OPENCALEA_CONF);
+        if (parse_config(config, OPENCALEA_CONF_SECTION, DEF_TAP_CONF) < 0)
+            die("Error parsing config file: %s", DEF_TAP_CONF);
+        if (parse_config(config, TAP_CONF_SECTION, DEF_TAP_CONF) < 0)
+            die("Error parsing config file: %s", DEF_TAP_CONF);
+    }
+
     if ( strcmp ( contentID, "\0" )  == 0 ) {
-        usage ();
-        die ( "Error: contentID must be specified" );
+/*
+Jesse left off here....
+        if ((confptr = get_config(config, "ContentID")) != NULL) {
+            contentID = Strdup ( (char *)confptr->nextval++ );
+strncpy, not strdup
+        }
+        if ( strcmp ( contentID, "\0" )  == 0 ) {
+*/
+            usage ();
+            die ( "Error: contentID must be specified" );
+//       }
     }
     if ( strcmp ( caseID, "\0" )  == 0 ) {
         usage ();
@@ -503,7 +492,7 @@ int main( int argc, char *argv[] ) {
         setdebug( debug_level_set, debug_file, 1 );
     } else {
         debug_3 ( "resetting debug level (%d)", debug_level_set );
-        setdebug( debug_level_set, "syslog", 1 );
+        setdebug( debug_level_set, DEF_DEBUG_DEST, 1 );
     }
     if ( log_file && strlen ( log_file ) ) {
         log_level_set = ( log_level_set ) ? log_level_set : DEF_LOG_LEVEL;
@@ -512,7 +501,7 @@ int main( int argc, char *argv[] ) {
         setlog( log_level_set, log_file, 1 );
     } else {
         debug_3 ( "resetting log level (%d)", log_level_set );
-        setlog( log_level_set, "syslog", 1 );
+        setlog( log_level_set, DEF_LOG_DEST, 1 );
     }
 
     if ( cmii_port == NULL ) {  

@@ -29,6 +29,15 @@
 #ifndef _TAP_H
 #define _TAP_H
 
+#ifndef DEF_TAP_CONF
+#define DEF_TAP_CONF "/etc/opencalea/tap.conf"
+#endif
+
+#ifndef TAP_CONF_SECTION
+#define TAP_CONF_SECTION "TAP"
+#endif
+
+
 int send_cmc_socket;
 struct sockaddr_in send_cmc_addr;
 

@@ -30,7 +30,7 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.TH "tap" "8" "svn-20070502" "The OpenCALEA Project" "OpenCALEA"
+.TH "tap" "8" "svn-20070503" "The OpenCALEA Project" "OpenCALEA"
 .SH "NAME"
 .LP 
 tap \- OpenCALEA network tap
@@ -51,6 +51,7 @@ tap \- OpenCALEA network tap
 [\fB\-D\fR \fIdebug\-file\fR]
 [\fB\-l\fR \fIlog\-level\fR]
 [\fB\-L\fR \fIlogfile\fR]
+[\fB\-h\fR]
 [\fIcapture\-filter\fR]
 .SH "DESCRIPTION"
 .LP 
@@ -186,6 +187,10 @@ Valid values are \fBstdout\fR, \fBstderr\fR, \fBsyslog\fR or a \fIfilename\fR.
 
 .br 
 Default: \fBLog_Destination\fR from config file or \fBsyslog\fR.
+
+.TP 
+\fB\-h\fR
+Prints help / usage message.
 
 .TP 
 \fIcapture\-filter\fR

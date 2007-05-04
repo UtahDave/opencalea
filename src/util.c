@@ -14,10 +14,10 @@
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY MERIT NETWORK, INC. ``AS IS'' AND ANY
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR OR CONTRIBUTORS ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL MERIT NETWORK, INC. BE LIABLE FOR ANY
+ * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -27,6 +27,7 @@
  */
 
 #include "common.h"
+
 
 
 /* Helper Routines */
@@ -41,13 +42,220 @@ void *Calloc(size_t size) {
 }
 
 
-void *Strdup(const char *str) {
-  char *ptr;
-  ptr = strdup(str);
-  if(!ptr) {
-    pdie("strdup");
-  }
-  return ptr;
+/* Note: you need to free() the pointer returned yourself */
+void *Strdup ( const char *format, ... ) {
+    va_list ap;
+    char *ptr;
+
+    va_start( ap, format );
+    if (vasprintf(&ptr, format, ap) == -1)
+        pdie("Strdup: vasprintf");
+    va_end( ap );
+
+    if(!ptr) {
+        pdie("Strdup: vasprintf");
+    }
+
+    return ptr;
+}
+
+
+
+/* Config management routines */
+
+/* Allocate space for a Config structure */
+Config *configalloc(void) {
+    return (Config *) Calloc( sizeof(Config) );
+}
+
+/* Add a config item to the tree */
+Config *add_config_item(Config *p, char *key, char *val) {
+    int cond, i;
+    char **oldvalue;
+
+    if (p == NULL) {
+        debug_5 ("add_config_item: adding %s = %s", key, val);
+        p = configalloc();
+        p->key = Strdup( key );
+        p->num = 0;
+        p->value = Calloc( sizeof(char *) * 2 );
+        p->value[p->num++] = Strdup( val );
+        p->value[p->num] = NULL;      /* NULL terminate */
+        p->nextval = p->value;
+        p->left = p->right = NULL;
+    } else if ((cond = strcmp(key, p->key)) == 0) {
+        debug_5 ("add_config_item: adding %s = %s", key, val);
+        oldvalue = p->value;
+        p->value = Calloc( sizeof(char *) * (p->num + 2) );
+        for (i=0; i < p->num; i++)
+            p->value[i] = oldvalue[i];
+        p->value[p->num++] = Strdup( val );
+        p->value[p->num] = NULL;      /* NULL terminate */
+        if (oldvalue)
+            free(oldvalue);
+    } else if (cond < 0)
+        p->left = add_config_item(p->left, key, val);
+    else
+        p->right = add_config_item(p->right, key, val);
+
+    return p;
+}
+
+/* Update a config item in the tree */
+Config *set_config_item(Config *p, char *key, char *val) {
+    int cond, i;
+
+    if (p == NULL) {
+        debug_5 ("set_config_item: setting %s via add_config_item", key);
+        return add_config_item(p, key, val);
+    } else if ((cond = strcmp(key, p->key)) == 0) {
+        debug_5 ("set_config_item: setting %s = %s", key, val);
+        if (p->value) {
+            for (i=0; i <= p->num; i++)
+                free(p->value[i]);
+            free(p->value);
+        }
+        p->num=0;
+        p->value = Calloc( sizeof(char *) );
+        p->value[p->num++] = Strdup( val );
+        p->value[p->num] = NULL;      /* NULL terminate */
+        p->nextval = p->value;
+        return p;
+    } else if (cond < 0)
+        return set_config_item(p->left, key, val);
+    else
+        return set_config_item(p->right, key, val);
+}
+
+/* Delete a config item from the tree */
+void del_config_item(Config *p, char *key) {
+    int cond, i;
+
+    if (p == NULL)
+        return;
+    else if ((cond = strcmp(key, p->key)) == 0) {
+        debug_5 ("del_config_item: deleting %s", key);
+        if (p->value) {
+            for (i=0; i <= p->num; i++)
+                free(p->value[i]);
+            free(p->value);
+        }
+        p->num=0;
+        p->value=NULL;
+        p->nextval=NULL;
+        return;
+    } else if (cond < 0)
+        return del_config_item(p->left, key);
+    else
+        return del_config_item(p->right, key);
+}
+
+/* Search for a config item in the tree */
+Config *get_config(Config *p, char *key) {
+    int cond;
+
+    if (p == NULL)
+        return (Config *)NULL;
+    else if ((cond = strcmp(key, p->key)) == 0) {
+        debug_5 ("get_config: found %s with %i values", key, p->num);
+        if (p->value) {
+            p->nextval=p->value;
+            return p;
+        } else
+            return (Config *)NULL;
+    } else if (cond < 0)
+        return get_config(p->left, key);
+    else
+        return get_config(p->right, key);
+}
+
+
+/* parse_config: parse a config file into a Config tree */
+/* returns < 0 for fatal error, > 0 for non-fatal */
+int parse_config(Config *cfg, char *section, char *file) {
+    GKeyFile* gkeyfile;
+    GError *gerror = NULL;
+    char **key = NULL;
+    char **keys = NULL;
+    char **keyptr = NULL;
+    char **keysptr = NULL;
+
+    gkeyfile = g_key_file_new ( );
+    debug_4("parsing config file: %s", file);
+    if ( !g_key_file_load_from_file ( gkeyfile, file, 
+           G_KEY_FILE_KEEP_COMMENTS, &gerror) ) {
+        log_2 ( "g_key_file_load_from_file(%s): %s", file, gerror->message );
+        debug_2 ( "g_key_file_load_from_file(%s): %s", file, gerror->message );
+        g_error_free ( gerror );
+        g_key_file_free ( gkeyfile );
+        return 1;
+    } else {
+        g_key_file_set_list_separator(gkeyfile, (gchar)',');
+        debug_5("parse_config: reading keys from %s section [%s]", file, section);
+        keys = g_key_file_get_keys ( gkeyfile, section, NULL, &gerror );
+        if (keys == NULL) {
+            error ("g_get_file_get_keys(%s): %s", file, gerror->message);
+            g_error_free ( gerror );
+            g_key_file_free ( gkeyfile );
+            return 2;
+        }
+        for (keysptr=keys; *keysptr; keysptr++) {
+            debug_5 ("parse_config: reading key %s", *keysptr);
+            if ( (key = g_key_file_get_string_list(gkeyfile,
+                section, *keysptr, NULL, &gerror)) == NULL ) {
+                error ("g_key_file_get_string_list(%s): %s", *keysptr, gerror->message);
+                g_error_free ( gerror );
+                g_strfreev(keys);
+                g_key_file_free ( gkeyfile );
+                return 3;
+            }
+            for (keyptr = key; *keyptr; keyptr++) {
+                debug_5 ("parse_config: got %s value %s", *keysptr, *keyptr);
+                if (keyptr == key)
+                    set_config_item(cfg,*keysptr,*keyptr);  /* first item we set */
+                else
+                    add_config_item(cfg,*keysptr,*keyptr);  /* the rest we add */
+            }
+            g_strfreev(key);
+        }
+        g_strfreev ( keys );
+        g_key_file_free ( gkeyfile );
+    }
+
+    return 0;
+}
+
+
+
+/*
+ * Copy arg vector into a new buffer, concatenating arguments with spaces.
+ * (copied/adapted from tcpdump)
+ */
+char *copy_argv(register char **argv) {
+	register char **p;
+	register u_int len = 0;
+	char *buf;
+	char *src, *dst;
+
+	p = argv;
+	if (*p == 0)
+		return 0;
+
+	while (*p)
+		len += strlen(*p++) + 1;
+
+	buf = (char *)Calloc(len);
+
+	p = argv;
+	dst = buf;
+	while ((src = *p++) != NULL) {
+		while ((*dst++ = *src++) != '\0')
+			;
+		dst[-1] = ' ';
+	}
+	dst[-1] = '\0';
+
+	return buf;
 }
 
 

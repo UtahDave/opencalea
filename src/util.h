@@ -14,10 +14,10 @@
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY MERIT NETWORK, INC. ``AS IS'' AND ANY
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR OR CONTRIBUTORS ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL MERIT NETWORK, INC. BE LIABLE FOR ANY
+ * DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -29,10 +29,28 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
+/* binary tree for config settings */
+typedef struct config_t {
+    char *key;                         /* config item key (name) */
+    int num;                           /* number of values currently set */
+    char **value;
+    char **nextval;                    /* pointer used to retrieve all values */
+    struct config_t *left;
+    struct config_t *right;
+} Config;
+
+Config *add_config_item(Config *, char *, char *);
+Config *set_config_item(Config *, char *, char *);
+void del_config_item(Config *, char *);
+Config *get_config(Config *, char *);
+int parse_config(Config *, char *, char *);
+
+char *copy_argv(register char **);
+
 #define CALLOC(parm) (parm *)Calloc(sizeof(parm))
 
-void *Calloc(size_t size);
-void *Strdup(const char *str);
-void print_hex(const u_char *payload, size_t payload_size);
+void *Calloc(size_t);
+void *Strdup ( const char *, ... );
+void print_hex(const u_char *, size_t);
 
 #endif
