@@ -27,7 +27,7 @@
  */
 
 #include "common.h"
-
+#include "log_debug.h"
 
 
 /* Helper Routines */
@@ -367,6 +367,45 @@ ssize_t tcp_write(int fd, const void *buf, size_t tot_len) {
 		buf_index = buf_index + num_written;	/* move the index into the buffer for the next write */
 	}
 	return(tot_len);				/* return the number of bytes written */
+}
+
+/**
+ * Socket - create an endpoint for communication
+ */
+ 
+int Socket(int domain, int type, int protocol) {
+
+	int fd;	/* socket file descriptor */
+
+	fd = socket(domain, type, protocol);
+	if (fd == -1) {
+		debug_5("Socket error: %s", strerror(errno));
+	}
+	return fd;
+}
+
+/**
+ * Connect - connect to a socket
+ */
+
+int Connect(int socket, const struct sockaddr *address, socklen_t address_len) {
+  int rc;
+
+  rc = connect(socket, address, address_len);
+  if (!rc) {
+		debug_5("Connect error: %s", strerror(errno));
+  }
+  return rc;
+}
+
+int Listen(int socket, int backlog) {
+
+	int rc;
+	rc = listen(socket, backlog);
+	if (rc == -1) {
+		debug_5("Listen error: %s", strerror(errno));
+	}
+	return rc;
 }
 
 /* */

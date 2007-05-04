@@ -116,6 +116,8 @@
 #define LEA_COLLECTOR_CmC_PORT 41818
 #endif
 
+#define BACKLOG 10			/* for socket connections, limit the queue of incoming connections */
+
 #define MAX_CONTENT_ID_LENGTH 128
 #define MAX_CASE_ID_LENGTH 128
 #define MAX_IAP_SYSTEM_ID_LENGTH 128

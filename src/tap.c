@@ -29,6 +29,7 @@
 #include "common.h"
 #include "calea.h"
 #include "tap.h"
+#include "util.h"
 
 #include <pcap.h> 
 #include <net/ethernet.h>
@@ -557,23 +558,19 @@ strncpy, not strdup
             send_cmc_addr.sin_port   = ((struct sockaddr_in *)res->ai_addr)->sin_port;
             send_cmc_addr.sin_addr.s_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
 
-            debug_4 ( "trying send_cmc_addr %s:%d",
+            debug_4 ( "tap: trying send_cmc_addr %s:%d",
                 inet_ntoa ( send_cmc_addr.sin_addr ), htons ( send_cmc_addr.sin_port ) );
 
             debug_4 ( "creating send_cmc_socket" );
-            send_cmc_socket = socket( res->ai_family, res->ai_socktype, res->ai_protocol );
-            if (send_cmc_socket < 0) {
-                debug_4 ( "socket: %s", strerror ( errno ) );
-                strncpy ( errbuf, "socket", PCAP_ERRBUF_SIZE );
+            send_cmc_socket = Socket( res->ai_family, res->ai_socktype, res->ai_protocol );
+            if (send_cmc_socket == -1) {
                 if ( res->ai_next )
-                     debug_4 ( "socket failed, trying next ip addr" );
+                     debug_4 ( "tap: socket failed, trying next ip addr" );
                 continue;
             }
 
-            debug_4 ( "connecting send_cmc_socket" );
-            if ( connect ( send_cmc_socket, res->ai_addr, res->ai_addrlen ) < 0 ) {
-                strncpy ( errbuf, "connect", PCAP_ERRBUF_SIZE );
-                debug_4 ( "connect: %s", strerror ( errno ) );
+            debug_4 ( "tap: connecting send_cmc_socket" );
+            if ( Connect(send_cmc_socket, res->ai_addr, res->ai_addrlen) == -1 ) {
                 if ( close( send_cmc_socket ) == -1 )
                     pdie ( "close" );
                 send_cmc_socket = -1;
@@ -623,7 +620,7 @@ strncpy, not strdup
         }
 
         debug_4 ( "creating send_cmii_socket" );
-        send_cmii_socket = socket( res->ai_family, res->ai_socktype, res->ai_protocol );
+        send_cmii_socket = Socket( res->ai_family, res->ai_socktype, res->ai_protocol );
         if (send_cmii_socket < 0) {
             debug_4 ( "socket: %s", strerror ( errno ) );
             strncpy ( errbuf, "socket", PCAP_ERRBUF_SIZE );
@@ -691,12 +688,12 @@ strncpy, not strdup
       switch (res->ai_family) {
         case AF_INET:
           ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
-          controlfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-          if (controlfd < 0) {
+          controlfd = Socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+          if (controlfd == -1) {
             debug_5("tap: ipv4 control socket failure");
             break;
           }
-          if (connect(controlfd, res->ai_addr, res->ai_addrlen) < 0) {
+          if (Connect(controlfd, res->ai_addr, res->ai_addrlen) == -1) {
             debug_5("tap: ipv4 control connect failure");
             close(controlfd);
             controlfd = -1;

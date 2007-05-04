@@ -53,4 +53,8 @@ void *Calloc(size_t);
 void *Strdup ( const char *, ... );
 void print_hex(const u_char *, size_t);
 
+int Socket(int domain, int type, int protocol);
+int Connect(int socket, const struct sockaddr *address, socklen_t address_len);
+int Listen(int socket, int backlog);
+
 #endif
