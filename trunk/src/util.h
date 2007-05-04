@@ -50,11 +50,13 @@ char *copy_argv(register char **);
 #define CALLOC(parm) (parm *)Calloc(sizeof(parm))
 
 void *Calloc(size_t);
-void *Strdup ( const char *, ... );
+void *Strdup ( const char *format, ... );
 void print_hex(const u_char *, size_t);
 
 int Socket(int domain, int type, int protocol);
 int Connect(int socket, const struct sockaddr *address, socklen_t address_len);
+int Bind(int socket, const struct sockaddr *address, socklen_t address_len);
 int Listen(int socket, int backlog);
-
+int Setsockopt(int socket, int level, int option_name, const void *option_value, socklen_t option_len);
+ 
 #endif
