@@ -90,7 +90,6 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
     dfheader->sec = header->ts.tv_sec;
     dfheader->usec = header->ts.tv_usec/100;
 
-
     /* Ethernet Packet */
     ethernet = (struct ether_header *)(packet);
 

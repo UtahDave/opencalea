@@ -58,5 +58,7 @@ int Connect(int socket, const struct sockaddr *address, socklen_t address_len);
 int Bind(int socket, const struct sockaddr *address, socklen_t address_len);
 int Listen(int socket, int backlog);
 int Setsockopt(int socket, int level, int option_name, const void *option_value, socklen_t option_len);
- 
+struct addrinfo *host_addr(const char *hostname, const char *service, int family, int socktype);
+int create_socket(char *hostname, int port, int family, int type);
+
 #endif
