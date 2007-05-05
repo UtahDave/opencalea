@@ -344,7 +344,7 @@ ssize_t tcp_read(int fd, void *buf, size_t tot_len) {
 		len = len - num_read;			/* reduce total length by number of bytes read */
 		buf_index = buf_index + num_read;	/* prepare index into buffer for next read */
 	}
-	return (tot_len - len);				/* return actual number of bytes read */
+	return(tot_len - len);				/* return actual number of bytes read */
 }
 
 /* tcp_write */
@@ -380,7 +380,7 @@ int Socket(int domain, int type, int protocol) {
 	if (fd == -1) {
 		debug_5("Socket error: %s", strerror(errno));
 	}
-	return fd;
+	return(fd);
 }
 
 /**
@@ -394,7 +394,7 @@ int Connect(int socket, const struct sockaddr *address, socklen_t address_len) {
   if (!rc) {
 		debug_5("Connect error: %s", strerror(errno));
   }
-  return rc;
+  return(rc);
 }
 
 int Listen(int socket, int backlog) {
@@ -404,7 +404,7 @@ int Listen(int socket, int backlog) {
 	if (rc == -1) {
 		debug_5("Listen error: %s", strerror(errno));
 	}
-	return rc;
+	return(rc);
 }
 
 /**
@@ -418,7 +418,7 @@ int Bind(int socket, const struct sockaddr *address, socklen_t address_len) {
 	if (rc == -1) {
 		debug_5("Bind error: %s", strerror(errno));
 	}
-	return rc;
+	return(rc);
 }
 
 /**
@@ -432,8 +432,68 @@ int Setsockopt(int socket, int level, int option_name, const void *option_value,
 	if (rc == -1) {
 		debug_5("Setsockopt error: %s", strerror(errno));
 	}
-	return rc;
+	return(rc);
 }
 
+/**
+ * Host_addr - take a host:port and return an addrinfo structure
+ */
+
+struct addrinfo *host_addr(const char *hostname, const char *service, int family, int socktype) {
+    int rc;
+    struct addrinfo hints;
+	struct addrinfo *res;
+
+    bzero(&hints, sizeof(struct addrinfo));
+    hints.ai_flags = AI_CANONNAME;
+    hints.ai_family = family;
+    hints.ai_socktype = socktype;
+
+    if ( (rc = getaddrinfo(hostname, service, &hints, &res)) != 0) {
+		return(NULL);
+	}
+
+    return(res);    /* return pointer to first on linked list */
+}
+
+/**
+ * Create socket
+ */
+int create_socket(char *hostname, int port, int family, int type) {
+
+	struct sockaddr_in servaddr;
+	struct addrinfo *res;
+	int socket = 0;
+	char addrstr[100];
+	void *ptr = NULL;
+	char port_s[8];
+	const int on  = 1;
+
+    sprintf(port_s, "%d", port);
+	res = host_addr(hostname, port_s, family, type);
+
+	switch (res->ai_family) {
+		case AF_INET:
+            ptr = &((struct sockaddr_in *) res->ai_addr)->sin_addr;
+			bzero(&servaddr, sizeof(servaddr));
+			servaddr.sin_family = res->ai_family;
+			servaddr.sin_port = ((struct sockaddr_in *)res->ai_addr)->sin_port;
+			servaddr.sin_addr.s_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
+			if ((socket = Socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+				return(-1);
+			}
+			break;
+		default:
+			break;
+	}
+
+	inet_ntop (servaddr.sin_family, &servaddr.sin_addr.s_addr, addrstr, 100);
+	debug_5("create_socket: IPv%d address: %s (%s) port: %d", res->ai_family == PF_INET6 ? 6 : 4, addrstr, res->ai_canonname, ntohs(servaddr.sin_port));
+	Setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+    Bind(socket, (struct sockaddr *) &servaddr, sizeof(servaddr));
+
+	return(socket);
+
+}
 	
 /* */

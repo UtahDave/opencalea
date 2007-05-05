@@ -152,7 +152,6 @@
 #define min(a,b)        ((a) < (b) ? (a) : (b))
 #define max(a,b)        ((a) > (b) ? (a) : (b))
 
-
 /* need some of the earlier #defines before including these */
 #include "msg.h"
 

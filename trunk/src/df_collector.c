@@ -60,7 +60,9 @@ Route route[MAXROUTES];
 
 struct addrinfo hints, *res;
 
-char *bindaddr = NULL;
+char *bind_addr = NULL;
+const int on  = 1;
+const int off = 0;
 
 int change_user = 0;
 int change_group = 0;
@@ -92,8 +94,8 @@ void parse_commandline(int argc, char *argv[]) {
                     pdie ( "strdup" );
                 debug_5 ( "got opt %c: %s", i, optarg );
                 break;
-            case 'b':   // address to bind sure
-                if ( ( bindaddr = strdup ( optarg ) ) == NULL )
+            case 'b':   // address to bind to
+                if ( ( bind_addr = strdup ( optarg ) ) == NULL )
                     pdie ( "strdup" );
                 debug_5 ( "got opt %c: %s", i, optarg );
                 break;
@@ -183,6 +185,11 @@ void parse_commandline(int argc, char *argv[]) {
             pdie ( "setgid" );
     }
 
+    if (!bind_addr) {
+        bind_addr = "127.0.0.1";
+        debug_5 ( "df_collector: Using default bind address (%s)", bind_addr );
+    }
+
     if ( cmii_port == 0 ) {
         cmii_port = CmII_PORT;
         debug_5 ( "df_collector: Using default CmII listener port (%d)", cmii_port );
@@ -203,7 +210,7 @@ int df_process_msg(Msg *msg, int n) {
 	size_t ret;
 	msg_len = sizeof(Msg);
 	CtrlMsg *ctrlmsg;
-	int i, id;
+	int id;
 	char route_port[8];
 
 	debug_5("Message Size: %d", n);
@@ -253,9 +260,7 @@ int df_process_msg(Msg *msg, int n) {
 					debug_5("df_collector: unsupported route protocol");
     					hints.ai_socktype = SOCK_STREAM;
 				}
-    				i = getaddrinfo ((char *)ctrlmsg->ctrlh.dfhost.host, route_port, &hints, &res);
-    				if (i != 0) {
-      					perror ("df_collector: getaddrinfo");
+    				if (getaddrinfo((char *)ctrlmsg->ctrlh.dfhost.host, route_port, &hints, &res)) {
       					return -1;
     				}
 
@@ -391,7 +396,6 @@ int main ( int argc, char *argv[] ) {
 	fd_set	rset, allset;
 
 	char buf[MAX_MSGSIZE];
-	const int on = 1;
 	socklen_t	len, clilen;
 	struct sockaddr_in cliaddr, servaddr;
 
@@ -419,83 +423,33 @@ int main ( int argc, char *argv[] ) {
 		}
 	}
 
-	/************************************/
-	/* Create CmII TCP listening socket */
-	/************************************/
-
-	CmII_tcpfd = Socket(AF_INET, SOCK_STREAM, 0);
-	
-	bzero(&servaddr, sizeof(servaddr));
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	servaddr.sin_port = htons(cmii_port);
-
-	Setsockopt(CmII_tcpfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
-
-	Bind(CmII_tcpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
-
+	/**************************/
+	/* Create CmII TCP socket */
+	/**************************/
+	CmII_tcpfd = create_socket(bind_addr, cmii_port, AF_INET, SOCK_STREAM);
 	Listen(CmII_tcpfd, BACKLOG);
 
-	/***********************************/
-	/* Create CmC TCP listening socket */
-	/***********************************/
-
-	CmC_tcpfd = Socket(AF_INET, SOCK_STREAM, 0);
-	
-	bzero(&servaddr, sizeof(servaddr));
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	servaddr.sin_port = htons(cmc_port);
-
-	Setsockopt(CmC_tcpfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
-
-	Bind(CmC_tcpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
-
+	/*************************/
+	/* Create CmC TCP socket */
+	/*************************/
+	CmC_tcpfd = create_socket(bind_addr, cmc_port, AF_INET, SOCK_STREAM);
 	Listen(CmC_tcpfd, BACKLOG);
 
-        /*****************************/
-        /* Create control TCP socket */
-        /*****************************/
-
-        controlfd = Socket(AF_INET, SOCK_STREAM, 0);
-
-        bzero(&servaddr, sizeof(servaddr));
-        servaddr.sin_family = AF_INET;
-        servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-        servaddr.sin_port = htons(DF_CONTROL_PORT);
-
-        Setsockopt(controlfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
-
-        Bind(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
-
-        Listen(controlfd, BACKLOG);
-
+	/*****************************/
+	/* Create control TCP socket */
+	/*****************************/
+	controlfd = create_socket(bind_addr, DF_CONTROL_PORT, AF_INET, SOCK_STREAM);
+	Listen(controlfd, BACKLOG);
 	
 	/**************************/
 	/* Create CmII UDP socket */
 	/**************************/
+	CmII_udpfd = create_socket(bind_addr, cmii_port, AF_INET, SOCK_DGRAM);
 
-	CmII_udpfd = Socket(AF_INET, SOCK_DGRAM, 0);
-
-	bzero(&servaddr, sizeof(servaddr));
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	servaddr.sin_port = htons(cmii_port);
-
-	Bind(CmII_udpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
-	
 	/*************************/
 	/* Create CmC UDP socket */
 	/*************************/
-
-	CmC_udpfd = Socket(AF_INET, SOCK_DGRAM, 0);
-
-	bzero(&servaddr, sizeof(servaddr));
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	servaddr.sin_port = htons(cmc_port);
-
-	Bind(CmC_udpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+	CmC_udpfd = create_socket(bind_addr, cmc_port, AF_INET, SOCK_DGRAM);
 
 	/********************************************************************/
 
