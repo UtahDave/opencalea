@@ -62,7 +62,6 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
     struct ip *ip;
     struct udphdr *udp;
     struct tcphdr *tcp;
-    CmCh cmch;
     Msg *cmc_pkt;
     Msg *cmii_pkt;
     int total_pkt_length;
@@ -76,9 +75,6 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
     char calea_time[TS_LENGTH];
 
     dfheader = (HEADER *)args;
-    debug_4("ContentID: %s", dfheader->contentId);
-    debug_4("CaseID: %s", dfheader->caseId);
-    debug_4("iAPSystemId: %s", dfheader->iAPSystemId);
 
 #ifdef DEBUG_PKTS
     char msg[ MAX_LOG_DEBUG_MSG_LEN ];
@@ -156,9 +152,6 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
         /* TCP Payload size */
         payload_size = ntohs(ip->ip_len) - (ip_size + tcp_size);
 
-        //format_ias_payload(dfheader, payload, payload_size, 1);
-        //format_vop_payload(dfheader, payload, payload_size, 1);
-
         dfheader->srcPort = ntohs(tcp->th_sport);
         dfheader->dstPort = ntohs(tcp->th_dport);
 
@@ -173,7 +166,7 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
     /*------------------------------------------------------------------------*/
     if ( content_option == 1 ) {
 
-      debug_5("IP (%d bytes):", ip_size_total);
+      //debug_5("IP (%d bytes):", ip_size_total);
       //print_hex((const u_char *)ip, (size_t)ip_size_total);
 
       dfheader->sequenceNumber++;
@@ -189,14 +182,11 @@ void process_packet( u_char *args, const struct pcap_pkthdr *header, const u_cha
       /*          If cc_apdu does not return 0, no deallocation is needed.  */
       /*------------------------------------------------------------------------*/
       if ( cc_apdu(dfheader) == 0) {
-        debug_5("Encoded size: %Zd", dfheader->encoded_size);
-        debug_5("Encoded addr: %p", dfheader->encoded);
+        debug_5("Encoded addr(size): %p(%Zd)", dfheader->encoded_size, dfheader->encoded);
       } else {
+        debug_5("tap: cc_apdu returned nonzero");
         return;
       }
-
-      memcpy( cmch.contentID, contentID, MAX_CONTENT_ID_LENGTH );
-      memcpy( cmch.ts, calea_time, TS_LENGTH );
 
       total_pkt_length = sizeof(Msg) + dfheader->encoded_size;
       debug_5 ( "building CmC packet size: %d", total_pkt_length );
@@ -664,6 +654,10 @@ strncpy, not strdup
     dfheader->caseId = caseID;
     dfheader->iAPSystemId = iapID;
     dfheader->sequenceNumber = 0;
+
+    debug_4("ContentID: %s", dfheader->contentId);
+    debug_4("CaseID: %s", dfheader->caseId);
+    debug_4("iAPSystemId: %s", dfheader->iAPSystemId);
 
     /****************************************************************/
     /* temporary code to send a control message to the df_collector */

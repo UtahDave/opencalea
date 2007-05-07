@@ -49,11 +49,11 @@ void get_calea_time ( time_t sec, time_t usec, char *buf ) {
 /* send a Communications Content packet to lea 
    collection function
 */
-int CmCPacketSend (CmC *packet, int length, int *send_socket) {
+int CmCPacketSend (Msg *packet, int length, int *cmc_send_socket) {
 
     int bytes_sent;
 
-    if ( (bytes_sent = send ( *send_socket, packet, length, 0)) == -1 ) {
+    if ( (bytes_sent = send ( *cmc_send_socket, packet, length, 0)) == -1 ) {
         pdie ( "send" );
         switch ( errno ) {
         case EHOSTUNREACH:
@@ -174,7 +174,7 @@ Msg *CtrlMsgBuild (HEADER *dfheader) {
     strcpy((char *)ctrlmsg->ctrlh.intercept.SubjectID, dfheader->correlationID);
 
     strcpy((char *)ctrlmsg->ctrlh.dfhost.protocol, "udp");
-    strcpy((char *)ctrlmsg->ctrlh.dfhost.host, "127.0.0.1");
+    strcpy((char *)ctrlmsg->ctrlh.dfhost.host, "jabber.goes.com");
 
     return msg;
 }

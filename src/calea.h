@@ -29,19 +29,6 @@
 #ifndef _CALEA_H
 #define _CALEA_H
 
-typedef struct {
-    char contentID[MAX_CONTENT_ID_LENGTH];
-    char ts[TS_LENGTH];
-} cmc_header_t; 
-#define CmCh cmc_header_t
-
-/* Definition of a Communications Content packet according to the std */
-typedef struct {
-    CmCh cmch;
-    u_char pkt[9000];
-} cmc_pkt_t;
-#define CmC cmc_pkt_t
-
 /* Definition of a Header Set according to the std */
 typedef struct {
     uint32_t streamID;
@@ -69,21 +56,5 @@ typedef struct {
     int cmii_routeid;
 } header_t;
 #define HEADER header_t
-
-typedef struct {
-    char caseID[MAX_CASE_ID_LENGTH];
-    char IAPSystemID[MAX_IAP_SYSTEM_ID_LENGTH];
-    char ts[TS_LENGTH];
-    char contentID[MAX_CONTENT_ID_LENGTH];
-} cmii_header_t; 
-#define CmIIh cmii_header_t
-
-/* the Packet Data Header Report Msg Format from the std */
-typedef struct {
-    CmIIh cmiih;
-    HEADER pkt_header;
-    u_char pkt[9000];
-} cmii_pkt_t;
-#define CmII cmii_pkt_t
 
 #endif
