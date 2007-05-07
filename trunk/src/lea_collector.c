@@ -88,16 +88,6 @@ int main ( int argc, char *argv[] ) {
     int n;
     char buf[10000];
     u_int len;
-    struct pcap *pt;
-    struct pcap_pkthdr h;
-    CmC *cmcpkt;
-    CmII *cmiipkt;
-    struct tm mytm;
-    time_t usec;
-    char ts[TS_LENGTH+1];
-    char contentID[MAX_CONTENT_ID_LENGTH+1];
-    char caseID[MAX_CASE_ID_LENGTH+1];
-    char IAPSystemID[MAX_IAP_SYSTEM_ID_LENGTH+1];
     char *cmc_capture_file = NULL;
     char *cmii_capture_file = NULL;
     char *bindaddr = NULL;
@@ -120,8 +110,6 @@ int main ( int argc, char *argv[] ) {
     fd_set sock_fds;
     int num_sock_fds;
     int max_fd;
-
-    struct in_addr myaddr, myaddr2;
 
     setdebug( DEF_DEBUG_LEVEL, "syslog", 1 );
     setlog( DEF_LOG_LEVEL, "syslog", 1 );
@@ -421,7 +409,6 @@ int main ( int argc, char *argv[] ) {
             /* read data on sockets */
             if ( FD_ISSET( cmii_receiver_socket, &sock_fds )) {
                 debug_5 ( "lea_collector: CmII socket ready" );
-                // bzero( buf, 10000 );
                 if ((n = recvfrom ( cmii_receiver_socket, buf, 10000, 0, (struct sockaddr*) &cmii_receiver_addr, &len)) == -1) { 
                     pdie ( "lea_collector: cmii recvfrom" );
                 } else {
@@ -429,55 +416,17 @@ int main ( int argc, char *argv[] ) {
                 } 
              
                 fwrite( buf, n, 1, cmii_fp);
-/* 
-                cmiipkt = (CmII*) buf;
-                CmIIh *cmiih;
-                cmiih = (CmIIh*) &(cmiipkt->cmiih);
-                myaddr.s_addr = ntohl(cmiipkt->pkt_header.srcIP);
-                myaddr2.s_addr = ntohl(cmiipkt->pkt_header.dstIP);
-                snprintf(ts, TS_LENGTH+1, "%s", cmiipkt->cmiih.ts);
-                snprintf(contentID, MAX_CONTENT_ID_LENGTH+1, "%s", cmiipkt->cmiih.contentID);
-                snprintf(caseID, MAX_CASE_ID_LENGTH+1, "%s", cmiipkt->cmiih.caseID);
-                snprintf(IAPSystemID, MAX_IAP_SYSTEM_ID_LENGTH+1, "%s", cmiipkt->cmiih.IAPSystemID);
-
-                debug_5 ( "writing to cmii_fp: %s, %s, %s, %s, %s, %s, %d, %d",
-                        contentID, caseID, IAPSystemID, ts, inet_ntoa(myaddr), inet_ntoa(myaddr2),
-                        ntohs(cmiipkt->pkt_header.srcPort), ntohs(cmiipkt->pkt_header.dstPort) );
-                if ( fprintf ( cmii_fp, "%s, %s, %s, %s, %s, %s, %d, %d\n",
-                        contentID, caseID, IAPSystemID, ts, inet_ntoa(myaddr), inet_ntoa(myaddr2),
-                        ntohs(cmiipkt->pkt_header.srcPort), ntohs(cmiipkt->pkt_header.dstPort)
-                             ) < 0 ) {
-                    pdie ("fprintf");
-                }
-*/
             }
 
             if ( FD_ISSET( cmc_receiver_socket, &sock_fds )) {
                 debug_5 ( "lea_collector: CmC socket ready" );
-                // bzero( buf, 10000 );
                 if ((n = recvfrom ( cmc_receiver_socket, buf, 10000, 0, (struct sockaddr*) &cmc_receiver_addr, &len)) == -1) { 
                     pdie ( "lea_collector: cmc recvfrom " );
                 } else {
                     debug_5 ( "lea_collector: cmc recvfrom returned %d bytes", n );
-                }
+            	}
 
-		fwrite( buf, n, 1, cmc_fp);
-/*
-                    cmcpkt = (CmC*) buf;
-                    sscanf ( cmcpkt->cmch.ts, 
-                            "%d-%d-%dT%d:%d:%d.%ld", &(mytm.tm_year), 
-                             &(mytm.tm_mon), &(mytm.tm_mday), &(mytm.tm_hour), 
-                             &(mytm.tm_min), &(mytm.tm_sec), (long int *)&usec); 
-                    mytm.tm_year -= 1900;
-                    mytm.tm_mon -= 1;
-                    usec = usec * 1000;
-                    h.ts.tv_sec = timegm ( &mytm );
-                    h.ts.tv_usec = usec;
-                    h.caplen = n - sizeof ( CmCh );
-                    h.len = n - sizeof ( CmCh );
-                    debug_5 ( "pcap_dump'ing cmc packet to file" );
-                    pcap_dump( (u_char*) pd ,  &h, (u_char*) cmcpkt->pkt);
-*/
+				fwrite( buf, n, 1, cmc_fp);
             }
        }
         
