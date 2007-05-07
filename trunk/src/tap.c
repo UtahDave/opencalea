@@ -264,7 +264,7 @@ int main( int argc, char *argv[] ) {
     bpf_u_int32 mask;		
     bpf_u_int32 net;		
     char *interface = NULL;
-    char *filter;
+    char *filter = NULL;
     char *dest = NULL;
     struct addrinfo hints, *res, *res0;
     int i = 0;
@@ -280,7 +280,7 @@ int main( int argc, char *argv[] ) {
     int debug_level_set = 0;
     char *debug_file = NULL;
     char *log_file = NULL;
-    Config *config = NULL;
+    Config config;
     Config *confptr = NULL;
     char* conf_file = NULL;
     HEADER *dfheader;
@@ -291,10 +291,8 @@ int main( int argc, char *argv[] ) {
     void *ptr = NULL;
     CtrlMsg *temp;
 
-
     setdebug( DEF_DEBUG_LEVEL, DEF_DEBUG_DEST, 1 );
     setlog( DEF_LOG_LEVEL, DEF_LOG_DEST, 1 );
-
 
     /* command line options processing */
     opterr = 0;
@@ -387,36 +385,38 @@ int main( int argc, char *argv[] ) {
 
     filter = copy_argv(&argv[optind]);
 
+    bzero (&config, sizeof(config));
+
     /* if config file was specified, read that */
     if (conf_file && strlen(conf_file)) {
-        if (parse_config(config, OPENCALEA_CONF_SECTION, conf_file) < 0)
+        if (parse_config(&config, OPENCALEA_CONF_SECTION, conf_file) < 0)
             die("Error with config file \"%s\"", conf_file);
-        if (parse_config(config, TAP_CONF_SECTION, conf_file) < 0)
+        if (parse_config(&config, TAP_CONF_SECTION, conf_file) < 0)
             die("Error with config file \"%s\"", conf_file);
     } else {
         /* otherwise read default config files */
-        if (parse_config(config, OPENCALEA_CONF_SECTION, DEF_OPENCALEA_CONF) < 0)
+        if (parse_config(&config, OPENCALEA_CONF_SECTION, DEF_OPENCALEA_CONF) < 0)
             die("Error parsing config file: %s", DEF_OPENCALEA_CONF);
-        if (parse_config(config, TAP_CONF_SECTION, DEF_OPENCALEA_CONF) < 0)
+        if (parse_config(&config, TAP_CONF_SECTION, DEF_OPENCALEA_CONF) < 0)
             die("Error parsing config file: %s", DEF_OPENCALEA_CONF);
-        if (parse_config(config, OPENCALEA_CONF_SECTION, DEF_TAP_CONF) < 0)
+        if (parse_config(&config, OPENCALEA_CONF_SECTION, DEF_TAP_CONF) < 0)
             die("Error parsing config file: %s", DEF_TAP_CONF);
-        if (parse_config(config, TAP_CONF_SECTION, DEF_TAP_CONF) < 0)
+        if (parse_config(&config, TAP_CONF_SECTION, DEF_TAP_CONF) < 0)
             die("Error parsing config file: %s", DEF_TAP_CONF);
     }
 
     if ( strcmp ( contentID, "\0" )  == 0 ) {
-/*
-Jesse left off here....
-        if ((confptr = get_config(config, "ContentID")) != NULL) {
-            contentID = Strdup ( (char *)confptr->nextval++ );
-strncpy, not strdup
+debug_5("55555 contentID is empty");
+        if ((confptr = get_config(&config, "ContentID")) != NULL) {
+debug_5("55555 confptr is set from get_config");
+            //contentID = Strdup ( (char *)confptr->nextval++ );
+            strncpy ( contentID, (char *)confptr->nextval++, MAX_CONTENT_ID_LENGTH );
+debug_5("55555 contentID is: %s", contentID);
         }
         if ( strcmp ( contentID, "\0" )  == 0 ) {
-*/
             usage ();
             die ( "Error: contentID must be specified" );
-//       }
+        }
     }
     if ( strcmp ( caseID, "\0" )  == 0 ) {
         usage ();
