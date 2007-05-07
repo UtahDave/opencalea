@@ -63,19 +63,16 @@ void *Strdup ( const char *format, ... ) {
 
 /* Config management routines */
 
-/* Allocate space for a Config structure */
-Config *configalloc(void) {
-    return (Config *) Calloc( sizeof(Config) );
-}
-
 /* Add a config item to the tree */
 Config *add_config_item(Config *p, char *key, char *val) {
     int cond, i;
     char **oldvalue;
 
+debug_5 ("add_config_item called, addr of p is: %p", p);
+
     if (p == NULL) {
         debug_5 ("add_config_item: adding %s = %s", key, val);
-        p = configalloc();
+        p = Calloc( sizeof(Config) );
         p->key = Strdup( key );
         p->num = 0;
         p->value = Calloc( sizeof(char *) * 2 );
@@ -105,9 +102,11 @@ Config *add_config_item(Config *p, char *key, char *val) {
 Config *set_config_item(Config *p, char *key, char *val) {
     int cond, i;
 
+debug_5 ("set_config_item called, addr of p is: %p", p);
+
     if (p == NULL) {
         debug_5 ("set_config_item: setting %s via add_config_item", key);
-        return add_config_item(p, key, val);
+        p = add_config_item(p, key, val);
     } else if ((cond = strcmp(key, p->key)) == 0) {
         debug_5 ("set_config_item: setting %s = %s", key, val);
         if (p->value) {
@@ -120,11 +119,12 @@ Config *set_config_item(Config *p, char *key, char *val) {
         p->value[p->num++] = Strdup( val );
         p->value[p->num] = NULL;      /* NULL terminate */
         p->nextval = p->value;
-        return p;
     } else if (cond < 0)
-        return set_config_item(p->left, key, val);
+        p->left = set_config_item(p->left, key, val);
     else
-        return set_config_item(p->right, key, val);
+        p->right = set_config_item(p->right, key, val);
+
+    return p;
 }
 
 /* Delete a config item from the tree */
@@ -154,8 +154,10 @@ void del_config_item(Config *p, char *key) {
 Config *get_config(Config *p, char *key) {
     int cond;
 
-    if (p == NULL)
+    if (p == NULL) {
+        debug_5 ("get_config: got NULL Config pointer");
         return (Config *)NULL;
+    }
     else if ((cond = strcmp(key, p->key)) == 0) {
         debug_5 ("get_config: found %s with %i values", key, p->num);
         if (p->value) {
@@ -211,10 +213,11 @@ int parse_config(Config *cfg, char *section, char *file) {
             }
             for (keyptr = key; *keyptr; keyptr++) {
                 debug_5 ("parse_config: got %s value %s", *keysptr, *keyptr);
+debug_5 ("parse_config addr of cfg is now: %p", cfg);
                 if (keyptr == key)
-                    set_config_item(cfg,*keysptr,*keyptr);  /* first item we set */
+                    cfg = set_config_item(cfg,*keysptr,*keyptr);  /* first item we set */
                 else
-                    add_config_item(cfg,*keysptr,*keyptr);  /* the rest we add */
+                    cfg = add_config_item(cfg,*keysptr,*keyptr);  /* the rest we add */
             }
             g_strfreev(key);
         }
@@ -272,7 +275,7 @@ void print_hex(const u_char *payload, size_t payload_size) {
   size_t i, j, k, index = 0;
   char line[80];
 
-  sprintf(line, "Starting Address: %p (%05Zud) (%05lXx)  ", payload, (long unsigned)payload_size, (long unsigned)payload_size);
+  sprintf(line, "Starting Address: %p (%05ul) (0x%05lX)", payload, (long unsigned)payload_size, (long unsigned)payload_size);
   debug_5(line);
 
   for (index=0; index < payload_size; index+=16) {
