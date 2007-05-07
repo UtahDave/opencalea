@@ -397,8 +397,18 @@ int main( int argc, char *argv[] ) {
         /* otherwise read default config files */
         if (parse_config(&config, OPENCALEA_CONF_SECTION, DEF_OPENCALEA_CONF) < 0)
             die("Error parsing config file: %s", DEF_OPENCALEA_CONF);
+if ((confptr = get_config(&config, "ContentID")) != NULL) {
+debug_5("44444 confptr is set from get_config");
+strncpy ( contentID, (char *)confptr->nextval++, MAX_CONTENT_ID_LENGTH );
+debug_5("44444 contentID is: %s", contentID);
+}
         if (parse_config(&config, TAP_CONF_SECTION, DEF_OPENCALEA_CONF) < 0)
             die("Error parsing config file: %s", DEF_OPENCALEA_CONF);
+if ((confptr = get_config(&config, "ContentID")) != NULL) {
+debug_5("44444 confptr is set from get_config");
+strncpy ( contentID, (char *)confptr->nextval++, MAX_CONTENT_ID_LENGTH );
+debug_5("44444 contentID is: %s", contentID);
+}
         if (parse_config(&config, OPENCALEA_CONF_SECTION, DEF_TAP_CONF) < 0)
             die("Error parsing config file: %s", DEF_TAP_CONF);
         if (parse_config(&config, TAP_CONF_SECTION, DEF_TAP_CONF) < 0)
