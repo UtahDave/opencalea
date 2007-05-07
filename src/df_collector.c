@@ -76,6 +76,8 @@ int debug_level_set = 0;
 char *debug_file_name = NULL;
 char *log_file_name = NULL;
 
+char addrstr[100];
+
 void parse_commandline(int argc, char *argv[]) {
 
     int i=0;
@@ -388,9 +390,11 @@ void usage ( void ) {
 int main ( int argc, char *argv[] ) {
 
 	int	i, maxi, maxfd, connfd, sockfd;
-	int	CmII_tcpfd, CmC_tcpfd;
-	int	CmII_udpfd, CmC_udpfd;
-	int	controlfd;
+	int	CmII_tcpfd = -1;
+	int CmC_tcpfd  = -1;
+	int	CmII_udpfd = -1;
+	int CmC_udpfd  = -1;
+	int	controlfd  = -1;
 	int	nready, client[FD_SETSIZE];
 	ssize_t n;
 	fd_set	rset, allset;
@@ -426,30 +430,130 @@ int main ( int argc, char *argv[] ) {
 	/**************************/
 	/* Create CmII TCP socket */
 	/**************************/
-	CmII_tcpfd = create_socket(bind_addr, cmii_port, AF_INET, SOCK_STREAM);
-	Listen(CmII_tcpfd, BACKLOG);
+    res = Getaddrinfo1st(bind_addr, cmii_port, AF_INET, SOCK_STREAM);
+    switch (res->ai_family) {
+        case AF_INET:
+            bzero(&servaddr, sizeof(servaddr));
+            servaddr.sin_family = res->ai_family;
+            servaddr.sin_port = ((struct sockaddr_in *)res->ai_addr)->sin_port;
+            servaddr.sin_addr.s_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
+            if ((CmII_tcpfd = Socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+                debug_5("df_collector: CmII TCP socket error");
+            }
+            break;
+        default:
+            debug_5("df_collector: CmII TCP unsupported family");
+            break;
+    }
+    inet_ntop (servaddr.sin_family, &servaddr.sin_addr.s_addr, addrstr, 100);
+    debug_5("df_collector: CmII TCP IPv%d address: %s (%s) port: %d", res->ai_family == PF_INET6 ? 6 : 4, addrstr, res->ai_canonname, ntohs(servaddr.sin_port));
+	freeaddrinfo(res);
+
+    Setsockopt(CmII_tcpfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+    Bind(CmII_tcpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+    Listen(CmII_tcpfd, BACKLOG);
 
 	/*************************/
 	/* Create CmC TCP socket */
 	/*************************/
-	CmC_tcpfd = create_socket(bind_addr, cmc_port, AF_INET, SOCK_STREAM);
-	Listen(CmC_tcpfd, BACKLOG);
+    res = Getaddrinfo1st(bind_addr, cmc_port, AF_INET, SOCK_STREAM);
+    switch (res->ai_family) {
+        case AF_INET:
+            bzero(&servaddr, sizeof(servaddr));
+            servaddr.sin_family = res->ai_family;
+            servaddr.sin_port = ((struct sockaddr_in *)res->ai_addr)->sin_port;
+            servaddr.sin_addr.s_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
+            if ((CmC_tcpfd = Socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+                debug_5("df_collector: CmC TCP socket error");
+            }
+            break;
+        default:
+            debug_5("df_collector: CmC TCP unsupported family");
+            break;
+    }
+    inet_ntop (servaddr.sin_family, &servaddr.sin_addr.s_addr, addrstr, 100);
+    debug_5("df_collector: CmC TCP IPv%d address: %s (%s) port: %d", res->ai_family == PF_INET6 ? 6 : 4, addrstr, res->ai_canonname, ntohs(servaddr.sin_port));
+	freeaddrinfo(res);
+
+    Setsockopt(CmC_tcpfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+    Bind(CmC_tcpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+    Listen(CmC_tcpfd, BACKLOG);
 
 	/*****************************/
 	/* Create control TCP socket */
 	/*****************************/
-	controlfd = create_socket(bind_addr, DF_CONTROL_PORT, AF_INET, SOCK_STREAM);
-	Listen(controlfd, BACKLOG);
+    res = Getaddrinfo1st(bind_addr, DF_CONTROL_PORT, AF_INET, SOCK_STREAM);
+    switch (res->ai_family) {
+        case AF_INET:
+            bzero(&servaddr, sizeof(servaddr));
+            servaddr.sin_family = res->ai_family;
+            servaddr.sin_port = ((struct sockaddr_in *)res->ai_addr)->sin_port;
+            servaddr.sin_addr.s_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
+            if ((controlfd = Socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+                debug_5("df_collector: control TCP socket error");
+            }
+            break;
+        default:
+            debug_5("df_collector: control TCP unsupported family");
+            break;
+    }
+    inet_ntop (servaddr.sin_family, &servaddr.sin_addr.s_addr, addrstr, 100);
+    debug_5("df_collector: control TCP IPv%d address: %s (%s) port: %d", res->ai_family == PF_INET6 ? 6 : 4, addrstr, res->ai_canonname, ntohs(servaddr.sin_port));
+	freeaddrinfo(res);
+
+    Setsockopt(controlfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+    Bind(controlfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+    Listen(controlfd, BACKLOG);
 	
 	/**************************/
 	/* Create CmII UDP socket */
 	/**************************/
-	CmII_udpfd = create_socket(bind_addr, cmii_port, AF_INET, SOCK_DGRAM);
+    res = Getaddrinfo1st(bind_addr, cmii_port, AF_INET, SOCK_DGRAM);
+    switch (res->ai_family) {
+        case AF_INET:
+            bzero(&servaddr, sizeof(servaddr));
+            servaddr.sin_family = res->ai_family;
+            servaddr.sin_port = ((struct sockaddr_in *)res->ai_addr)->sin_port;
+            servaddr.sin_addr.s_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
+            if ((CmII_udpfd = Socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+                debug_5("df_collector: CmII UDP socket error");
+            }
+            break;
+        default:
+            debug_5("df_collector: CmII UDP unsupported family");
+            break;
+    }
+    inet_ntop (servaddr.sin_family, &servaddr.sin_addr.s_addr, addrstr, 100);
+    debug_5("df_collector: CmII UDP IPv%d address: %s (%s) port: %d", res->ai_family == PF_INET6 ? 6 : 4, addrstr, res->ai_canonname, ntohs(servaddr.sin_port));
+	freeaddrinfo(res);
+
+    Setsockopt(CmII_udpfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+    Bind(CmII_udpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
 	/*************************/
 	/* Create CmC UDP socket */
 	/*************************/
-	CmC_udpfd = create_socket(bind_addr, cmc_port, AF_INET, SOCK_DGRAM);
+    res = Getaddrinfo1st(bind_addr, cmc_port, AF_INET, SOCK_DGRAM);
+    switch (res->ai_family) {
+        case AF_INET:
+            bzero(&servaddr, sizeof(servaddr));
+            servaddr.sin_family = res->ai_family;
+            servaddr.sin_port = ((struct sockaddr_in *)res->ai_addr)->sin_port;
+            servaddr.sin_addr.s_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
+            if ((CmC_udpfd = Socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+                debug_5("df_collector: CmC UDP socket error");
+            }
+            break;
+        default:
+            debug_5("df_collector: CmC UDP unsupported family");
+            break;
+    }
+    inet_ntop (servaddr.sin_family, &servaddr.sin_addr.s_addr, addrstr, 100);
+    debug_5("df_collector: CmC UDP IPv%d address: %s (%s) port: %d", res->ai_family == PF_INET6 ? 6 : 4, addrstr, res->ai_canonname, ntohs(servaddr.sin_port));
+	freeaddrinfo(res);
+
+    Setsockopt(CmC_udpfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+    Bind(CmC_udpfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
 
 	/********************************************************************/
 
