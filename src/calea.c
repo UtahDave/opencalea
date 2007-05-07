@@ -174,7 +174,7 @@ Msg *CtrlMsgBuild (HEADER *dfheader) {
     strcpy((char *)ctrlmsg->ctrlh.intercept.SubjectID, dfheader->correlationID);
 
     strcpy((char *)ctrlmsg->ctrlh.dfhost.protocol, "udp");
-    strcpy((char *)ctrlmsg->ctrlh.dfhost.host, "jabber.goes.com");
+    strcpy((char *)ctrlmsg->ctrlh.dfhost.host, "127.0.0.1");
 
     return msg;
 }
