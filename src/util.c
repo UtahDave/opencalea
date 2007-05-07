@@ -68,9 +68,7 @@ Config *add_config_item(Config *p, char *key, char *val) {
     int cond, i;
     char **oldvalue;
 
-debug_5 ("add_config_item called, addr of p is: %p", p);
-
-    if (p == NULL) {
+    if ((p == NULL) || (! p->key)) {
         debug_5 ("add_config_item: adding %s = %s", key, val);
         p = Calloc( sizeof(Config) );
         p->key = Strdup( key );
@@ -102,9 +100,7 @@ debug_5 ("add_config_item called, addr of p is: %p", p);
 Config *set_config_item(Config *p, char *key, char *val) {
     int cond, i;
 
-debug_5 ("set_config_item called, addr of p is: %p", p);
-
-    if (p == NULL) {
+    if ((p == NULL) || (! p->key)) {
         debug_5 ("set_config_item: setting %s via add_config_item", key);
         p = add_config_item(p, key, val);
     } else if ((cond = strcmp(key, p->key)) == 0) {
@@ -131,7 +127,7 @@ debug_5 ("set_config_item called, addr of p is: %p", p);
 void del_config_item(Config *p, char *key) {
     int cond, i;
 
-    if (p == NULL)
+    if ((p == NULL) || (! p->key))
         return;
     else if ((cond = strcmp(key, p->key)) == 0) {
         debug_5 ("del_config_item: deleting %s", key);
@@ -154,7 +150,7 @@ void del_config_item(Config *p, char *key) {
 Config *get_config(Config *p, char *key) {
     int cond;
 
-    if (p == NULL) {
+    if ((p == NULL) || (! p->key)) {
         debug_5 ("get_config: got NULL Config pointer");
         return (Config *)NULL;
     }
@@ -213,7 +209,6 @@ int parse_config(Config *cfg, char *section, char *file) {
             }
             for (keyptr = key; *keyptr; keyptr++) {
                 debug_5 ("parse_config: got %s value %s", *keysptr, *keyptr);
-debug_5 ("parse_config addr of cfg is now: %p", cfg);
                 if (keyptr == key)
                     cfg = set_config_item(cfg,*keysptr,*keyptr);  /* first item we set */
                 else
